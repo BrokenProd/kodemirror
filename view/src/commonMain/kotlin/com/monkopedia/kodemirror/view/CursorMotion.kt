@@ -173,37 +173,42 @@ fun moveVertically(
     forward: Boolean,
     extend: Boolean = false
 ): SelectionRange {
+    val doc = view.state.doc
+    val currentLine = doc.lineAt(sel.head)
+
+    // Preserve goalColumn across consecutive vertical moves so that
+    // moving down through a short line and back up remembers the
+    // original column.
+    val goalCol = sel.goalColumn
+        ?: (sel.head.value - currentLine.from.value)
+
     val coords = view.coordsAtPos(sel.head.value, if (forward) 1 else -1) ?: return sel
     val targetY = if (forward) {
         coords.bottom + 1f
     } else {
         coords.top - 1f
     }
-    val rawPos = view.posAtCoords(coords.centerX, targetY) ?: return sel
-    val doc = view.state.doc
-    val currentLine = doc.lineAt(sel.head)
-    val resultLine = doc.lineAt(DocPos(rawPos))
+    val rawPos = view.posAtCoords(coords.centerX, targetY)
+    val resultLine = rawPos?.let { doc.lineAt(DocPos(it)) }
 
-    // If posAtCoords snapped back to the same line (e.g., due to inter-line
-    // gap), move to the adjacent line at approximately the same column.
-    val newPos = if (resultLine.number == currentLine.number) {
-        val col = sel.head.value - currentLine.from.value
-        val adjLineNum = if (forward) {
-            currentLine.number.value + 1
-        } else {
-            currentLine.number.value - 1
-        }
-        if (adjLineNum in 1..doc.lines) {
-            val adjLine = doc.line(LineNumber(adjLineNum))
-            val targetCol = col.coerceAtMost(adjLine.text.length)
-            DocPos(adjLine.from.value + targetCol)
-        } else {
-            DocPos(rawPos)
-        }
+    // Determine target line number — if posAtCoords snapped back to the
+    // same line (e.g. inter-line gap), move to the adjacent line instead.
+    val targetLineNum = if (resultLine != null && resultLine.number != currentLine.number) {
+        resultLine.number.value
     } else {
-        DocPos(rawPos)
+        if (forward) currentLine.number.value + 1 else currentLine.number.value - 1
     }
 
+    if (targetLineNum !in 1..doc.lines) return sel
+
+    val targetLine = doc.line(LineNumber(targetLineNum))
+    val targetCol = goalCol.coerceAtMost(targetLine.text.length)
+    val newPos = DocPos(targetLine.from.value + targetCol)
+
     val anchor = if (extend) sel.anchor else newPos
-    return if (extend) EditorSelection.range(anchor, newPos) else EditorSelection.cursor(newPos)
+    return if (extend) {
+        EditorSelection.range(anchor, newPos, goalColumn = goalCol)
+    } else {
+        EditorSelection.cursor(newPos, goalColumn = goalCol)
+    }
 }
