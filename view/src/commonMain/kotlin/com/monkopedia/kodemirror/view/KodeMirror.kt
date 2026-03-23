@@ -297,7 +297,9 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                         Color.Transparent
                     ),
                     onValueChange = { newValue ->
-                        val inserted = newValue.text
+                        // Filter control characters (Tab, etc.) that leak through
+                        // when their key events aren't consumed by the keymap.
+                        val inserted = newValue.text.filter { !it.isISOControl() }
                         if (inserted.isNotEmpty()) {
                             val sel = session.state.selection.main
                             val from = sel.from
@@ -313,7 +315,8 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                         insert = inserted.asInsert()
                                     ),
                                     selection = com.monkopedia.kodemirror.state.SelectionSpec
-                                        .CursorSpec(newCursor)
+                                        .CursorSpec(newCursor),
+                                    userEvent = "input"
                                 )
                             )
                         }
