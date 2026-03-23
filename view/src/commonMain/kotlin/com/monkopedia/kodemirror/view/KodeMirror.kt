@@ -316,7 +316,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                     ),
                                     selection = com.monkopedia.kodemirror.state.SelectionSpec
                                         .CursorSpec(newCursor),
-                                    userEvent = "input"
+                                    userEvent = "input.type"
                                 )
                             )
                         }
