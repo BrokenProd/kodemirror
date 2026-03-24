@@ -47,7 +47,9 @@ private external fun jsClipboardWrite(text: String)
         'F7','F8','F9','F10','F11','F12'];
     document.addEventListener('keydown', function(e) {
         globalThis.__kodeKey = e.key;
-        if (e.ctrlKey || e.metaKey || e.altKey || special.indexOf(e.key) !== -1) {
+        var isModified = e.ctrlKey || e.metaKey || e.altKey;
+        if ((e.ctrlKey || e.metaKey) && e.key === 'v') return;
+        if (isModified || special.indexOf(e.key) !== -1) {
             e.preventDefault();
         }
     }, true);
@@ -87,7 +89,10 @@ internal actual fun keyEventLayoutKey(event: KeyEvent): String? {
 }
 
 internal actual fun platformClipboardGet(): String? {
-    // Clipboard API on web is async; not supported in synchronous context
+    // Clipboard API on web is async; not supported in synchronous context.
+    // Returns null so clipboardPaste returns false, letting the browser's
+    // native paste event flow through to the hidden BasicTextField's
+    // onValueChange handler.
     return null
 }
 

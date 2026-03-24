@@ -72,6 +72,11 @@ val clipboardPaste: (EditorSession) -> Boolean = { view ->
                 )
             )
         )
+        true
+    } else {
+        // No clipboard text available (e.g. wasmJs async API).
+        // Return false so the event propagates to the browser's native
+        // paste mechanism via the hidden BasicTextField.
+        false
     }
-    true
 }
