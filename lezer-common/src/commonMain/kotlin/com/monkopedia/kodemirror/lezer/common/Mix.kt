@@ -136,8 +136,10 @@ private class MixedParse(
         val done = innerP.parse.advance()
         if (done != null) {
             innerDone++
-            val props = innerP.target.type.props.toMutableMap()
-            props[NodeProp.mounted.id] = MountedTree(done, innerP.overlay, innerP.parser)
+            innerP.target.setProp(
+                NodeProp.mounted.id,
+                MountedTree(done, innerP.overlay, innerP.parser)
+            )
         }
         return null
     }
@@ -214,6 +216,11 @@ private class MixedParse(
                     if (nestResult != null &&
                         (cursor.from < cursor.to || nestResult.overlay == null)
                     ) {
+                        if (cursor.tree == null) {
+                            materialize(cursor)
+                            overlay?.let { it.depth++ }
+                            covered?.let { it.depth++ }
+                        }
                         val oldMounts = fragmentCursor.findMounts(
                             cursor.from,
                             nestResult.parser
@@ -612,4 +619,82 @@ private fun enterFragments(
         }
     }
     return result
+}
+
+private fun sliceBuf(
+    buf: TreeBuffer,
+    startI: Int,
+    endI: Int,
+    nodes: MutableList<Any>,
+    positions: MutableList<Int>,
+    off: Int
+) {
+    if (startI < endI) {
+        val from = buf.buffer[startI + 1]
+        nodes.add(buf.slice(startI, endI, from))
+        positions.add(from - off)
+    }
+}
+
+/**
+ * Converts a buffer node into a proper [Tree] node by splitting the
+ * enclosing [TreeBuffer]. Required by [MixedParse] so that inner
+ * parse results can be mounted onto the node via [NodeProp.mounted].
+ */
+private fun materialize(cursor: TreeCursor) {
+    val node = cursor.node as BufferNode
+    val indexStack = mutableListOf<Int>()
+    // Walk up to the nearest TreeNode
+    do {
+        indexStack.add(cursor.index)
+        cursor.parent()
+    } while (cursor.tree == null)
+    val base = cursor.tree!!
+    val buf = node.context.buffer
+    val bufIdx = base.children.indexOf(buf)
+    val b = buf.buffer
+    val newStack = mutableListOf(bufIdx)
+
+    fun split(
+        startI: Int,
+        endI: Int,
+        type: NodeType,
+        innerOffset: Int,
+        length: Int,
+        stackPos: Int
+    ): Tree {
+        val targetI = indexStack[stackPos]
+        val children = mutableListOf<Any>()
+        val positions = mutableListOf<Int>()
+        sliceBuf(buf, startI, targetI, children, positions, innerOffset)
+        val from = b[targetI + 1]
+        val to = b[targetI + 2]
+        newStack.add(children.size)
+        val child = if (stackPos > 0) {
+            split(
+                targetI + 4,
+                b[targetI + 3],
+                buf.set.types[b[targetI]],
+                from,
+                to - from,
+                stackPos - 1
+            )
+        } else {
+            node.toTree()
+        }
+        children.add(child)
+        positions.add(from - innerOffset)
+        sliceBuf(buf, b[targetI + 3], endI, children, positions, innerOffset)
+        return Tree(type, children, positions, length)
+    }
+
+    base.children[bufIdx] = split(
+        0, b.size, NodeType.none, 0, buf.length, indexStack.size - 1
+    )
+    // Re-navigate the cursor down to the materialized tree node
+    for (idx in newStack) {
+        val tree = cursor.tree!!.children[idx] as Tree
+        val pos = cursor.tree!!.positions[idx]
+        cursor.yieldNode(TreeNode(tree, pos + cursor.from, cursor._tree, idx))
+    }
 }

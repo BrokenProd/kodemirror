@@ -132,30 +132,14 @@ class TreeBuffer(
         var i = startI
         var j = 0
         while (i < endI) {
-            copy[j++] = buffer[i++]
-            copy[j++] = buffer[i++] - from
-            val to = buffer[i++] - from
-            copy[j - 1 + 1] = to // overwrite: copy[j] = to
-            // Actually let me redo this more carefully
-            j-- // back up
-            copy[j++] = buffer[i - 1] - from // start adjusted (but we already incremented i)
-            // Let me rewrite this properly
-            break
-        }
-        // Rewrite cleanly
-        val copy2 = IntArray(endI - startI)
-        var len2 = 0
-        i = startI
-        j = 0
-        while (i < endI) {
-            copy2[j++] = buffer[i++] // type id
-            copy2[j++] = buffer[i++] - from // start - from
+            copy[j++] = buffer[i++] // type id
+            copy[j++] = buffer[i++] - from // start - from
             val toVal = buffer[i++] - from // end - from
-            copy2[j++] = toVal
-            copy2[j++] = buffer[i++] - startI // endIndex - startI
-            if (toVal > len2) len2 = toVal
+            copy[j++] = toVal
+            copy[j++] = buffer[i++] - startI // endIndex - startI
+            if (toVal > len) len = toVal
         }
-        return TreeBuffer(copy2, len2, set)
+        return TreeBuffer(copy, len, set)
     }
 }
 

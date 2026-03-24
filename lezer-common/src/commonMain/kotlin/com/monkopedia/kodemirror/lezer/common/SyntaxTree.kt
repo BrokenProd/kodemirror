@@ -345,11 +345,16 @@ private const val BALANCE_BRANCH_FACTOR = 8
 class Tree(
     val type: NodeType,
     // Tree | TreeBuffer
-    val children: List<Any>,
+    children: List<Any>,
     val positions: List<Int>,
     val length: Int,
-    private val propValues: Map<Int, Any?> = emptyMap()
+    propValues: Map<Int, Any?> = emptyMap()
 ) {
+    // Mutable copies so parseMixed can mount inner trees and materialize
+    // can replace buffer children. Mirrors JS mutation patterns.
+    val children: MutableList<Any> = ArrayList(children)
+    private val propValues: MutableMap<Int, Any?> = HashMap(propValues)
+
     /** Look up a per-node prop value. */
     @Suppress("UNCHECKED_CAST")
     fun <T> prop(prop: NodeProp<T>): T? {
@@ -357,6 +362,11 @@ class Tree(
             return propValues[prop.id] as T?
         }
         return type.prop(prop)
+    }
+
+    /** Set a per-node prop value. Used internally by [parseMixed]. */
+    internal fun setProp(propId: Int, value: Any?) {
+        propValues[propId] = value
     }
 
     /** The top node of this tree (wraps the tree as a SyntaxNode). */
@@ -892,7 +902,7 @@ class TreeCursor internal constructor(
         private set
     override val name: String get() = type.name
 
-    private fun yieldNode(node: TreeNode?): Boolean {
+    internal fun yieldNode(node: TreeNode?): Boolean {
         if (node == null) return false
         _tree = node
         type = node.type

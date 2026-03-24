@@ -282,6 +282,50 @@ class HtmlParserTest {
         parse("<a v-bind:[attributeName]=\"url\">Link</a>")
     )
 
+    // === Mixed language parsing (with JS/CSS parser nesting) ===
+
+    @Test
+    fun parsesMixedLanguageScript() {
+        val input = "<script>var x = 1;</script>"
+        // This should not crash — exercises parseMixed with JS parser
+        val tree = htmlLanguage.parser.parse(input)
+        val str = treeToString(tree)
+        // At minimum, the HTML structure should be intact
+        assert(str.contains("ScriptText")) { "Expected ScriptText in: $str" }
+    }
+
+    @Test
+    fun parsesMixedLanguageStyle() {
+        val input = "<style>body { color: red; }</style>"
+        // This should not crash — exercises parseMixed with CSS parser
+        val tree = htmlLanguage.parser.parse(input)
+        val str = treeToString(tree)
+        assert(str.contains("StyleText")) { "Expected StyleText in: $str" }
+    }
+
+    @Test
+    fun parsesMixedLanguageFullDoc() {
+        val input = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>body { margin: 0; }</style>
+            </head>
+            <body>
+                <script>
+                    document.querySelector('h1').addEventListener('click', () => {
+                        alert('Clicked!');
+                    });
+                </script>
+            </body>
+            </html>
+        """.trimIndent()
+        val tree = htmlLanguage.parser.parse(input)
+        val str = treeToString(tree)
+        assert(str.contains("ScriptText")) { "Expected ScriptText in: $str" }
+        assert(str.contains("StyleText")) { "Expected StyleText in: $str" }
+    }
+
     // === mixed.txt tests (without JS parser nesting) ===
 
     @Test
