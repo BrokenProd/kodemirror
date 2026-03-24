@@ -256,6 +256,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                     ?.moveTo(pos)
                             },
                             onDragEnd = {
+                                recentlyDragged = false
                                 session.plugin(dropCursorViewPlugin)
                                     ?.moveTo(null)
                             },

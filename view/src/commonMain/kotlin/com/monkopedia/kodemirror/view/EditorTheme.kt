@@ -28,6 +28,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.SystemFont
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.state.Facet
 
@@ -62,7 +63,11 @@ data class EditorTheme(
         fontFamily = editorFontFamily,
         fontSize = 13.sp,
         lineHeight = (13 * 1.4).sp,
-        color = Color(0xFFABB2BF)
+        color = Color(0xFFABB2BF),
+        lineHeightStyle = LineHeightStyle(
+            alignment = LineHeightStyle.Alignment.Proportional,
+            trim = LineHeightStyle.Trim.Both
+        )
     ),
     /** Background for search matches. */
     val searchMatchBackground: Color = Color(0x5972A1FF),
