@@ -330,7 +330,10 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                     onValueChange = { newValue ->
                         // Filter control characters (Tab, etc.) that leak through
                         // when their key events aren't consumed by the keymap.
-                        val inserted = newValue.text.filter { !it.isISOControl() }
+                        // Preserve newlines — they are valid input (e.g. paste).
+                        val inserted = newValue.text.filter {
+                            it == '\n' || !it.isISOControl()
+                        }
                         if (inserted.isNotEmpty()) {
                             val sel = session.state.selection.main
                             val from = sel.from
