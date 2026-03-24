@@ -97,6 +97,7 @@ public final class com/monkopedia/kodemirror/lezer/common/MixKt {
 }
 
 public final class com/monkopedia/kodemirror/lezer/common/MountedTree {
+	public static final field Companion Lcom/monkopedia/kodemirror/lezer/common/MountedTree$Companion;
 	public fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Tree;Ljava/util/List;Lcom/monkopedia/kodemirror/lezer/common/Parser;)V
 	public final fun component1 ()Lcom/monkopedia/kodemirror/lezer/common/Tree;
 	public final fun component2 ()Ljava/util/List;
@@ -109,6 +110,10 @@ public final class com/monkopedia/kodemirror/lezer/common/MountedTree {
 	public final fun getTree ()Lcom/monkopedia/kodemirror/lezer/common/Tree;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/lezer/common/MountedTree$Companion {
+	public final fun get (Lcom/monkopedia/kodemirror/lezer/common/Tree;)Lcom/monkopedia/kodemirror/lezer/common/MountedTree;
 }
 
 public final class com/monkopedia/kodemirror/lezer/common/NestedParse {

@@ -607,6 +607,14 @@ internal class TreeNode(
                         )
                     }
                 } else if (next is Tree) {
+                    val mounted = if (mode and IterMode.IGNORE_MOUNTS == 0) {
+                        MountedTree.get(next)
+                    } else {
+                        null
+                    }
+                    if (mounted != null && mounted.overlay == null) {
+                        return TreeNode(mounted.tree, start, idx, parent)
+                    }
                     if (mode and IterMode.INCLUDE_ANONYMOUS != 0 ||
                         !next.type.isAnonymous || hasChild(next)
                     ) {
@@ -643,6 +651,25 @@ internal class TreeNode(
     }
 
     override fun enter(pos: Int, side: Int, mode: Int): SyntaxNode? {
+        if (mode and IterMode.IGNORE_OVERLAYS == 0) {
+            val mounted = MountedTree.get(_tree)
+            if (mounted != null && mounted.overlay != null) {
+                val rPos = pos - treeFrom
+                val enterBracketed = mode and IterMode.ENTER_BRACKETED != 0
+                for (r in mounted.overlay) {
+                    val fromOk = if (side > 0 || enterBracketed) r.from <= rPos else r.from < rPos
+                    val toOk = if (side < 0 || enterBracketed) r.to >= rPos else r.to > rPos
+                    if (fromOk && toOk) {
+                        return TreeNode(
+                            mounted.tree,
+                            mounted.overlay[0].from + treeFrom,
+                            -1,
+                            this
+                        )
+                    }
+                }
+            }
+        }
         return nextChild(0, 1, pos, side, mode)
     }
 

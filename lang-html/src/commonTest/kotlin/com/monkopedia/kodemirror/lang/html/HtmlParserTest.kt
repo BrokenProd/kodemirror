@@ -287,20 +287,21 @@ class HtmlParserTest {
     @Test
     fun parsesMixedLanguageScript() {
         val input = "<script>var x = 1;</script>"
-        // This should not crash — exercises parseMixed with JS parser
         val tree = htmlLanguage.parser.parse(input)
         val str = treeToString(tree)
-        // At minimum, the HTML structure should be intact
-        assert(str.contains("ScriptText")) { "Expected ScriptText in: $str" }
+        // Mounted JS tree replaces ScriptText with parsed JS AST
+        assert(str.contains("Script(")) { "Expected JS AST in: $str" }
+        assert(str.contains("VariableDeclaration")) { "Expected VariableDeclaration in: $str" }
     }
 
     @Test
     fun parsesMixedLanguageStyle() {
         val input = "<style>body { color: red; }</style>"
-        // This should not crash — exercises parseMixed with CSS parser
         val tree = htmlLanguage.parser.parse(input)
         val str = treeToString(tree)
-        assert(str.contains("StyleText")) { "Expected StyleText in: $str" }
+        // Mounted CSS tree replaces StyleText with parsed CSS AST
+        assert(str.contains("StyleSheet(")) { "Expected CSS AST in: $str" }
+        assert(str.contains("RuleSet")) { "Expected RuleSet in: $str" }
     }
 
     @Test
@@ -322,8 +323,9 @@ class HtmlParserTest {
         """.trimIndent()
         val tree = htmlLanguage.parser.parse(input)
         val str = treeToString(tree)
-        assert(str.contains("ScriptText")) { "Expected ScriptText in: $str" }
-        assert(str.contains("StyleText")) { "Expected StyleText in: $str" }
+        // Both inner parsers produce AST nodes
+        assert(str.contains("Script(")) { "Expected JS AST in: $str" }
+        assert(str.contains("StyleSheet(")) { "Expected CSS AST in: $str" }
     }
 
     // === mixed.txt tests (without JS parser nesting) ===

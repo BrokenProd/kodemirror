@@ -100,7 +100,12 @@ data class MountedTree(
     val tree: Tree,
     val overlay: List<TextRange>?,
     val parser: Parser
-)
+) {
+    companion object {
+        /** Retrieve the [MountedTree] from a [Tree], if any. */
+        fun get(tree: Tree): MountedTree? = tree.prop(NodeProp.mounted)
+    }
+}
 
 /**
  * A source that can provide values for a [NodeProp] on [NodeType]s.
