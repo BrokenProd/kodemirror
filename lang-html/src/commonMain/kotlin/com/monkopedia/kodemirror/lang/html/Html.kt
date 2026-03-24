@@ -20,6 +20,8 @@ package com.monkopedia.kodemirror.lang.html
 
 import com.monkopedia.kodemirror.autocomplete.CompletionConfig
 import com.monkopedia.kodemirror.autocomplete.autocompletion
+import com.monkopedia.kodemirror.lang.css.cssLanguage
+import com.monkopedia.kodemirror.lang.javascript.javascriptLanguage
 import com.monkopedia.kodemirror.language.CommentTokens
 import com.monkopedia.kodemirror.language.FoldRange
 import com.monkopedia.kodemirror.language.LRLanguage
@@ -27,6 +29,8 @@ import com.monkopedia.kodemirror.language.LanguageSupport
 import com.monkopedia.kodemirror.language.commentTokens
 import com.monkopedia.kodemirror.language.foldNodeProp
 import com.monkopedia.kodemirror.language.indentNodeProp
+import com.monkopedia.kodemirror.lezer.common.NestedParse
+import com.monkopedia.kodemirror.lezer.common.parseMixed
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
@@ -98,7 +102,14 @@ val htmlLanguage: LRLanguage = LRLanguage.define(
                         else -> null
                     }
                 }
-            )
+            ),
+            wrap = parseMixed { node, _ ->
+                when (node.name) {
+                    "ScriptText" -> NestedParse(javascriptLanguage.parser)
+                    "StyleText" -> NestedParse(cssLanguage.parser)
+                    else -> null
+                }
+            }
         )
     ),
     name = "html"

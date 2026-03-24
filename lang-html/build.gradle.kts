@@ -11,6 +11,8 @@ kotlin {
             implementation(project(":language"))
             implementation(project(":state"))
             implementation(project(":autocomplete"))
+            implementation(project(":lang-javascript"))
+            implementation(project(":lang-css"))
         }
     }
 }
