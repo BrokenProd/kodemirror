@@ -41,8 +41,15 @@ private external fun jsClipboardWrite(text: String)
 @JsFun(
     """() => {
     globalThis.__kodeKey = '';
+    var special = ['Home','End','Tab','Backspace','Delete','Enter','Escape',
+        'ArrowUp','ArrowDown','ArrowLeft','ArrowRight',
+        'PageUp','PageDown','F1','F2','F3','F4','F5','F6',
+        'F7','F8','F9','F10','F11','F12'];
     document.addEventListener('keydown', function(e) {
         globalThis.__kodeKey = e.key;
+        if (e.ctrlKey || e.metaKey || e.altKey || special.indexOf(e.key) !== -1) {
+            e.preventDefault();
+        }
     }, true);
 }"""
 )

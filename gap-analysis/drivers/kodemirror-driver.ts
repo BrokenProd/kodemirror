@@ -65,9 +65,16 @@ export class KodemirrorDriver implements EditorDriver {
   }
 
   async type(text: string): Promise<void> {
-    const ver = await this.getVersion();
-    await this.page.keyboard.type(text);
-    await this.waitForUpdate(ver);
+    // Type each character via fill() on the hidden textarea.
+    // keyboard.type() is unreliable after certain key combos (Ctrl+Home)
+    // because the browser's TEXTAREA input pipeline can get into a bad
+    // state where keydown events no longer produce input events.
+    const ta = this.page.locator("textarea");
+    for (const ch of text) {
+      const ver = await this.getVersion();
+      await ta.fill(ch);
+      await this.waitForUpdate(ver);
+    }
   }
 
   async press(key: string): Promise<void> {
