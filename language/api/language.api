@@ -141,7 +141,8 @@ public final class com/monkopedia/kodemirror/language/IndentKt {
 	public static final fun getIndentService ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getIndentUnit ()Lcom/monkopedia/kodemirror/state/Facet;
 	public static final fun getIndentUnit (Lcom/monkopedia/kodemirror/state/EditorState;)I
-	public static final fun getIndentation-FCwYIAs (Lcom/monkopedia/kodemirror/state/EditorState;I)Ljava/lang/Integer;
+	public static final fun getIndentation-8CNtWGo (Lcom/monkopedia/kodemirror/state/EditorState;ILcom/monkopedia/kodemirror/state/DocPos;Z)Ljava/lang/Integer;
+	public static synthetic fun getIndentation-8CNtWGo$default (Lcom/monkopedia/kodemirror/state/EditorState;ILcom/monkopedia/kodemirror/state/DocPos;ZILjava/lang/Object;)Ljava/lang/Integer;
 	public static final fun indentRange-sX5c8NE (Lcom/monkopedia/kodemirror/state/EditorState;II)Lcom/monkopedia/kodemirror/state/ChangeSpec;
 	public static final fun indentString (Lcom/monkopedia/kodemirror/state/EditorState;I)Ljava/lang/String;
 }
