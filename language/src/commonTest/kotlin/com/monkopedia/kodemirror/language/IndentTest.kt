@@ -48,9 +48,9 @@ class IndentTest {
     }
 
     @Test
-    fun getIndentUnitDefaultsTo4() {
+    fun getIndentUnitDefaultsTo2() {
         val state = createState("hello")
-        assertEquals(4, getIndentUnit(state))
+        assertEquals(2, getIndentUnit(state))
     }
 
     @Test

@@ -46,12 +46,12 @@ class IndentCommandsTest {
     fun testIndentMore() {
         val view = createView("hello\nworld", 0, 11)
         indentMore(view)
-        assertEquals("    hello\n    world", view.state.doc.toString())
+        assertEquals("  hello\n  world", view.state.doc.toString())
     }
 
     @Test
     fun testIndentLess() {
-        val view = createView("    hello\n    world", 0, 19)
+        val view = createView("  hello\n  world", 0, 15)
         indentLess(view)
         assertEquals("hello\nworld", view.state.doc.toString())
     }
@@ -67,7 +67,7 @@ class IndentCommandsTest {
     fun testIndentMoreSingleLine() {
         val view = createView("hello", 2)
         indentMore(view)
-        assertEquals("    hello", view.state.doc.toString())
+        assertEquals("  hello", view.state.doc.toString())
     }
 
     @Test

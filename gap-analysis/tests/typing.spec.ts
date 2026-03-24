@@ -98,7 +98,7 @@ test.describe("Typing", () => {
     if (km) await km.press("Enter");
 
     const cm6State = await cm6.getState();
-    // After Enter inside braces, cursor should be indented
+    const cm6CurLine = cm6State.doc.split("\n")[cm6State.cursor.line - 1] ?? "";
     expect(cm6State.cursor.col).toBeGreaterThan(0);
 
     if (km) {

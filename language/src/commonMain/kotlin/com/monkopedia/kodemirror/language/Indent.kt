@@ -46,7 +46,7 @@ val indentService: Facet<(IndentContext, DocPos) -> Int?, List<(IndentContext, D
  * level). Defaults to 2.
  */
 val indentUnit: Facet<Int, Int> = Facet.define(
-    combine = { values -> values.firstOrNull() ?: 4 }
+    combine = { values -> values.firstOrNull() ?: 2 }
 )
 
 /**
@@ -128,6 +128,7 @@ class TreeIndentContext(
     /** The text on the line after the indent position. */
     val textAfter: String
         get() {
+            if (simulateDoubleBreak && pos == simulateBreak) return ""
             val line = state.doc.lineAt(pos)
             return line.text.substring(pos - line.from)
         }
@@ -156,8 +157,13 @@ class TreeIndentContext(
  * Returns the desired indentation in columns, or null if no service
  * or strategy provides an answer.
  */
-fun getIndentation(state: EditorState, pos: DocPos): Int? {
-    val context = IndentContext(state)
+fun getIndentation(
+    state: EditorState,
+    pos: DocPos,
+    simulateBreak: DocPos? = null,
+    simulateDoubleBreak: Boolean = false
+): Int? {
+    val context = IndentContext(state, simulateBreak, simulateDoubleBreak)
     // Try indent services first
     for (service in state.facet(indentService)) {
         val result = service(context, pos)
@@ -167,7 +173,9 @@ fun getIndentation(state: EditorState, pos: DocPos): Int? {
     // Try tree-based indentation
     val tree = syntaxTree(state)
     if (tree.length > 0) {
-        return getTreeIndent(TreeIndentContext(state, pos))
+        return getTreeIndent(
+            TreeIndentContext(state, pos, simulateBreak, simulateDoubleBreak)
+        )
     }
 
     return null

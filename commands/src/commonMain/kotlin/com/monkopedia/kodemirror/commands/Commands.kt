@@ -794,8 +794,26 @@ val insertNewline: (EditorSession) -> Boolean = { view ->
 }
 
 /**
+ * Check if the cursor is between matching bracket characters
+ * (e.g., `{}`, `[]`, `()`). Returns true if bracket explosion
+ * should occur when Enter is pressed.
+ */
+private fun isBetweenBrackets(state: EditorState, pos: DocPos): Boolean {
+    val line = state.doc.lineAt(pos)
+    val col = pos.value - line.from.value
+    if (col <= 0 || col >= line.text.length) return false
+    val pair = "${line.text[col - 1]}${line.text[col]}"
+    return pair == "()" || pair == "[]" || pair == "{}"
+}
+
+/**
  * Insert a newline and indent using language-aware indentation when
  * available, falling back to copying leading whitespace.
+ *
+ * When the cursor is between matching brackets (e.g., `{|}`),
+ * performs "bracket explosion": inserts two newlines so the closing
+ * bracket ends up on its own line, with the cursor indented on the
+ * middle line.
  */
 val insertNewlineAndIndent: (EditorSession) -> Boolean = { view ->
     if (view.state.readOnly) {
@@ -804,26 +822,51 @@ val insertNewlineAndIndent: (EditorSession) -> Boolean = { view ->
         val state = view.state
         val spec = state.changeByRange { sel ->
             val line = state.doc.lineAt(sel.head)
-            val cols = getIndentation(state, sel.head)
+            val fromEqTo = sel.from == sel.to
+            val between = isBetweenBrackets(state, sel.from)
+            val explode = fromEqTo && between
+            val cols = getIndentation(
+                state,
+                sel.head,
+                simulateBreak = sel.head,
+                simulateDoubleBreak = explode
+            )
             val indent = if (cols != null) {
                 indentString(state, cols)
             } else {
                 line.text.takeWhile { it == ' ' || it == '\t' }
             }
-            val insert = state.lineBreak + indent
-            ChangeByRangeResult(
-                range = EditorSelection.cursor(sel.from + insert.length),
-                changes = ChangeSpec.Single(
-                    sel.from,
-                    sel.to,
-                    InsertContent.StringContent(insert)
+            if (explode) {
+                val closingIndent =
+                    line.text.takeWhile { it == ' ' || it == '\t' }
+                val insert =
+                    state.lineBreak + indent + state.lineBreak + closingIndent
+                ChangeByRangeResult(
+                    range = EditorSelection.cursor(
+                        sel.from + state.lineBreak.length + indent.length
+                    ),
+                    changes = ChangeSpec.Single(
+                        sel.from,
+                        sel.to,
+                        InsertContent.StringContent(insert)
+                    )
                 )
-            )
+            } else {
+                val insert = state.lineBreak + indent
+                ChangeByRangeResult(
+                    range = EditorSelection.cursor(sel.from + insert.length),
+                    changes = ChangeSpec.Single(
+                        sel.from,
+                        sel.to,
+                        InsertContent.StringContent(insert)
+                    )
+                )
+            }
         }
         view.dispatch(
             spec.copy(
                 scrollIntoView = true,
-                userEvent = "input.type"
+                userEvent = "input"
             )
         )
         true

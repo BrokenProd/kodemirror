@@ -79,6 +79,12 @@ export class KodemirrorDriver implements EditorDriver {
 
   async press(key: string): Promise<void> {
     const ver = await this.getVersion();
+    // Ensure the hidden textarea has browser focus so onPreviewKeyEvent fires.
+    // After fill() or canvas clicks, focus may have shifted to <body>.
+    await this.page.evaluate(() => {
+      const ta = document.querySelector("textarea");
+      if (ta) ta.focus();
+    });
     await this.page.keyboard.press(key);
     await this.waitForUpdate(ver);
   }

@@ -37,9 +37,11 @@ export class CM6Driver implements EditorDriver {
   }
 
   async type(text: string): Promise<void> {
-    const editor = this.page.locator(".cm-content");
-    await editor.click();
-    await this.page.keyboard.type(text);
+    // Type each character individually so that CM6's closeBrackets
+    // inputHandler fires for each character (it skips inputs > 2 chars).
+    for (const ch of text) {
+      await this.page.keyboard.type(ch);
+    }
   }
 
   async press(key: string): Promise<void> {

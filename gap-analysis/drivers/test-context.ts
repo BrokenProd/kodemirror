@@ -29,6 +29,7 @@ export const test = base.extend<GapTestFixtures>({
     await page.goto(`file://${cm6FixturePath}`);
     const driver = new CM6Driver(page);
     await driver.waitForReady();
+    await driver.focus();
     await use(driver);
     await page.close();
   },
