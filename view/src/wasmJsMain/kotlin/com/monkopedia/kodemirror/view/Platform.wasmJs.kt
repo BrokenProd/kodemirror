@@ -62,6 +62,7 @@ private external fun jsClipboardWrite(text: String)
         if (text) {
             globalThis.__kodePasteText = text;
         }
+        e.stopPropagation();
         e.preventDefault();
     }, true);
 }"""
