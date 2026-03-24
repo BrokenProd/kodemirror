@@ -41,6 +41,7 @@ private external fun jsClipboardWrite(text: String)
 @JsFun(
     """() => {
     globalThis.__kodeKey = '';
+    globalThis.__kodePasteText = '';
     var special = ['Home','End','Tab','Backspace','Delete','Enter','Escape',
         'ArrowUp','ArrowDown','ArrowLeft','ArrowRight',
         'PageUp','PageDown','F1','F2','F3','F4','F5','F6',
@@ -48,10 +49,20 @@ private external fun jsClipboardWrite(text: String)
     document.addEventListener('keydown', function(e) {
         globalThis.__kodeKey = e.key;
         var isModified = e.ctrlKey || e.metaKey || e.altKey;
-        if ((e.ctrlKey || e.metaKey) && e.key === 'v') return;
+        if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+            e.stopPropagation();
+            return;
+        }
         if (isModified || special.indexOf(e.key) !== -1) {
             e.preventDefault();
         }
+    }, true);
+    document.addEventListener('paste', function(e) {
+        var text = (e.clipboardData || window.clipboardData).getData('text');
+        if (text) {
+            globalThis.__kodePasteText = text;
+        }
+        e.preventDefault();
     }, true);
 }"""
 )
@@ -59,6 +70,12 @@ private external fun installKeyCapture()
 
 @JsFun("() => globalThis.__kodeKey || ''")
 private external fun readCapturedKey(): String
+
+@JsFun("() => globalThis.__kodePasteText || ''")
+private external fun readPasteText(): String
+
+@JsFun("() => { globalThis.__kodePasteText = ''; }")
+private external fun clearPasteText()
 
 // Eagerly install the capture listener when this file is first loaded.
 // platformOsName() is called during currentOs initialization (before any
@@ -102,4 +119,14 @@ internal actual fun platformClipboardSet(text: String) {
     } catch (_: Throwable) {
         // Clipboard API may not be available in all contexts
     }
+}
+
+internal actual fun platformCheckPendingPaste(): String? {
+    keyCaptureInstalled
+    val text = readPasteText()
+    if (text.isNotEmpty()) {
+        clearPasteText()
+        return text
+    }
+    return null
 }

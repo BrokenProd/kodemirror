@@ -72,6 +72,7 @@ import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.state.asInsert
+import kotlinx.coroutines.delay
 
 /**
  * The main editor composable.
@@ -101,6 +102,35 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
             lineLayoutCache.clear()
             impl.pluginHost = null
             impl.lineLayoutCache = null
+        }
+    }
+
+    // Poll for pending paste text from platform-specific paste handlers.
+    // On wasmJs, the browser clipboard API is async, so clipboard text is
+    // captured by a DOM paste event listener and consumed here each frame.
+    LaunchedEffect(session) {
+        while (true) {
+            delay(16)
+            val pasteText = platformCheckPendingPaste()
+            if (pasteText != null) {
+                val sel = session.state.selection.main
+                session.dispatch(
+                    TransactionSpec(
+                        changes = ChangeSpec.Single(
+                            from = sel.from,
+                            to = sel.to,
+                            insert = pasteText.asInsert()
+                        ),
+                        selection = com.monkopedia.kodemirror.state.SelectionSpec
+                            .CursorSpec(
+                                com.monkopedia.kodemirror.state.DocPos(
+                                    sel.from.value + pasteText.length
+                                )
+                            ),
+                        userEvent = "input.paste"
+                    )
+                )
+            }
         }
     }
 

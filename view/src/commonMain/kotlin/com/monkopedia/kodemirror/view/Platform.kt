@@ -48,3 +48,15 @@ internal expect fun platformClipboardGet(): String?
 
 /** Write text to the system clipboard. */
 internal expect fun platformClipboardSet(text: String)
+
+/**
+ * Check for pending paste text from platform-specific paste handling.
+ *
+ * On wasmJs, the browser clipboard API is async and cannot be read
+ * synchronously. Instead, a DOM `paste` event listener captures clipboard
+ * text into a buffer. This function reads and clears that buffer.
+ *
+ * Returns null on platforms where paste is handled synchronously through
+ * [platformClipboardGet] (e.g., JVM).
+ */
+internal expect fun platformCheckPendingPaste(): String?

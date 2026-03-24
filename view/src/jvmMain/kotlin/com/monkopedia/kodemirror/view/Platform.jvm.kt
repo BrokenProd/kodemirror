@@ -65,3 +65,5 @@ internal actual fun platformClipboardSet(text: String) {
         // Clipboard not available
     }
 }
+
+internal actual fun platformCheckPendingPaste(): String? = null
