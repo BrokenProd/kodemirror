@@ -173,7 +173,7 @@ class DocInput(private val doc: Text) : Input {
         return doc.sliceString(DocPos(from), DocPos(to))
     }
 
-    override val lineChunks: Boolean get() = true
+    override val lineChunks: Boolean get() = false
 }
 
 private class LanguageState(
