@@ -56,40 +56,36 @@ fun CollabDemo() {
 
     val sharedUpdates = remember { mutableListOf<Update>() }
 
+    fun syncOne(session: com.monkopedia.kodemirror.view.EditorSession) {
+        val version = getSyncedVersion(session.state)
+        val pending = sharedUpdates.drop(version)
+        if (pending.isNotEmpty()) {
+            session.dispatch(receiveUpdates(session.state, pending))
+        }
+    }
+
+    fun sendOne(session: com.monkopedia.kodemirror.view.EditorSession) {
+        val sendable = sendableUpdates(session.state)
+        for (u in sendable) {
+            sharedUpdates.add(
+                Update(
+                    changes = u.changes,
+                    clientID = u.clientID,
+                    effects = u.effects
+                )
+            )
+        }
+    }
+
     fun sync() {
-        // Collect updates from A
-        val updatesA = sendableUpdates(sessionA.state)
-        for (u in updatesA) {
-            sharedUpdates.add(
-                Update(
-                    changes = u.changes,
-                    clientID = u.clientID,
-                    effects = u.effects
-                )
-            )
-        }
-        // Collect updates from B
-        val updatesB = sendableUpdates(sessionB.state)
-        for (u in updatesB) {
-            sharedUpdates.add(
-                Update(
-                    changes = u.changes,
-                    clientID = u.clientID,
-                    effects = u.effects
-                )
-            )
-        }
-        // Apply to both
-        val versionA = getSyncedVersion(sessionA.state)
-        val forA = sharedUpdates.drop(versionA)
-        if (forA.isNotEmpty()) {
-            sessionA.dispatch(receiveUpdates(sessionA.state, forA))
-        }
-        val versionB = getSyncedVersion(sessionB.state)
-        val forB = sharedUpdates.drop(versionB)
-        if (forB.isNotEmpty()) {
-            sessionB.dispatch(receiveUpdates(sessionB.state, forB))
-        }
+        // Receive then send for each client in sequence,
+        // then receive again so both converge.
+        syncOne(sessionA)
+        sendOne(sessionA)
+        syncOne(sessionB)
+        sendOne(sessionB)
+        syncOne(sessionA)
+        syncOne(sessionB)
     }
 
     DemoScaffold(

@@ -19,7 +19,6 @@ jobs:
       - name: Lint and test
         run: >-
           ./gradlew apiCheck jvmTest
-          -x :collab:jvmTest
           :state:wasmJsTest
           :collab:wasmJsTest
           :lezer-common:wasmJsTest

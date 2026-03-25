@@ -24,6 +24,7 @@ import com.monkopedia.kodemirror.commands.redo
 import com.monkopedia.kodemirror.commands.undo
 import com.monkopedia.kodemirror.state.ChangeDesc
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.Extension
@@ -108,7 +109,7 @@ private class UndoServer(
         broadcast(client)
     }
 
-    fun type(client: Int, text: String, pos: Int = views[client].state.selection.main.head) {
+    fun type(client: Int, text: String, pos: DocPos = views[client].state.selection.main.head) {
         update(client) { s ->
             s.update(
                 TransactionSpec(
@@ -146,6 +147,183 @@ private class UndoServer(
     }
 }
 
+/**
+ * Tests that mimic the exact sync() pattern used in CollabDemo.kt:
+ * collect from A, collect from B, then apply to both using drop().
+ */
+class CollabDemoPatternTest {
+
+    private fun createSession(doc: String, clientID: String): EditorSession {
+        val state = EditorState.create(
+            EditorStateConfig(
+                doc = doc.asDoc(),
+                extensions = collab(CollabConfig(clientID = clientID))
+            )
+        )
+        return EditorSession(state)
+    }
+
+    private fun syncOne(session: EditorSession, sharedUpdates: MutableList<Update>) {
+        val version = getSyncedVersion(session.state)
+        val pending = sharedUpdates.drop(version)
+        if (pending.isNotEmpty()) {
+            session.dispatch(receiveUpdates(session.state, pending))
+        }
+    }
+
+    private fun sendOne(session: EditorSession, sharedUpdates: MutableList<Update>) {
+        val sendable = sendableUpdates(session.state)
+        for (u in sendable) {
+            sharedUpdates.add(Update(u.changes, u.clientID, u.effects))
+        }
+    }
+
+    /**
+     * Correct sync pattern: for each client, receive then send in sequence,
+     * then receive on all again to converge.
+     */
+    private fun sync(
+        sessionA: EditorSession,
+        sessionB: EditorSession,
+        sharedUpdates: MutableList<Update>
+    ) {
+        syncOne(sessionA, sharedUpdates)
+        sendOne(sessionA, sharedUpdates)
+        syncOne(sessionB, sharedUpdates)
+        sendOne(sessionB, sharedUpdates)
+        syncOne(sessionA, sharedUpdates)
+        syncOne(sessionB, sharedUpdates)
+    }
+
+    @Test
+    fun demoSyncConvergesForSimpleEdits() {
+        val sessionA = createSession("hello", "editor-a")
+        val sessionB = createSession("hello", "editor-b")
+        val sharedUpdates = mutableListOf<Update>()
+
+        // A types " world" at position 5
+        sessionA.dispatchTransaction(
+            sessionA.state.update(
+                TransactionSpec(
+                    changes = ChangeSpec.Single(
+                        from = DocPos(5),
+                        insert = InsertContent.StringContent(" world")
+                    )
+                )
+            )
+        )
+        sync(sessionA, sessionB, sharedUpdates)
+        assertEquals("hello world", sessionA.state.doc.toString())
+        assertEquals("hello world", sessionB.state.doc.toString())
+
+        // B types "!" at end
+        sessionB.dispatchTransaction(
+            sessionB.state.update(
+                TransactionSpec(
+                    changes = ChangeSpec.Single(
+                        from = DocPos(11),
+                        insert = InsertContent.StringContent("!")
+                    )
+                )
+            )
+        )
+        sync(sessionA, sessionB, sharedUpdates)
+        assertEquals("hello world!", sessionA.state.doc.toString())
+        assertEquals("hello world!", sessionB.state.doc.toString())
+    }
+
+    @Test
+    fun demoSyncConvergesForConcurrentEdits() {
+        val sessionA = createSession("hello", "editor-a")
+        val sessionB = createSession("hello", "editor-b")
+        val sharedUpdates = mutableListOf<Update>()
+
+        // Both edit before sync
+        sessionA.dispatchTransaction(
+            sessionA.state.update(
+                TransactionSpec(
+                    changes = ChangeSpec.Single(
+                        from = DocPos(5),
+                        insert = InsertContent.StringContent(" world")
+                    )
+                )
+            )
+        )
+        sessionB.dispatchTransaction(
+            sessionB.state.update(
+                TransactionSpec(
+                    changes = ChangeSpec.Single(
+                        from = DocPos(0),
+                        insert = InsertContent.StringContent("Say: ")
+                    )
+                )
+            )
+        )
+
+        // Now sync — both should converge
+        sync(sessionA, sessionB, sharedUpdates)
+        assertEquals(sessionA.state.doc.toString(), sessionB.state.doc.toString())
+        assertEquals("Say: hello world", sessionA.state.doc.toString())
+    }
+
+    @Test
+    fun demoSyncMultipleRoundsConverge() {
+        val sessionA = createSession("", "editor-a")
+        val sessionB = createSession("", "editor-b")
+        val sharedUpdates = mutableListOf<Update>()
+
+        // Round 1: A types
+        sessionA.dispatchTransaction(
+            sessionA.state.update(
+                TransactionSpec(
+                    changes = ChangeSpec.Single(
+                        from = DocPos(0),
+                        insert = InsertContent.StringContent("A")
+                    )
+                )
+            )
+        )
+        sync(sessionA, sessionB, sharedUpdates)
+
+        // Round 2: B types
+        sessionB.dispatchTransaction(
+            sessionB.state.update(
+                TransactionSpec(
+                    changes = ChangeSpec.Single(
+                        from = DocPos(1),
+                        insert = InsertContent.StringContent("B")
+                    )
+                )
+            )
+        )
+        sync(sessionA, sessionB, sharedUpdates)
+
+        // Round 3: Both type concurrently
+        sessionA.dispatchTransaction(
+            sessionA.state.update(
+                TransactionSpec(
+                    changes = ChangeSpec.Single(
+                        from = DocPos(2),
+                        insert = InsertContent.StringContent("C")
+                    )
+                )
+            )
+        )
+        sessionB.dispatchTransaction(
+            sessionB.state.update(
+                TransactionSpec(
+                    changes = ChangeSpec.Single(
+                        from = DocPos(2),
+                        insert = InsertContent.StringContent("D")
+                    )
+                )
+            )
+        )
+        sync(sessionA, sessionB, sharedUpdates)
+        assertEquals(sessionA.state.doc.toString(), sessionB.state.doc.toString())
+    }
+}
+
 class CollabUndoTest {
 
     @Test
@@ -178,10 +356,10 @@ class CollabUndoTest {
     fun supportsDeepUndo() {
         val s = UndoServer(doc = "hello bye")
         s.update(0) {
-            it.update(TransactionSpec(selection = SelectionSpec.CursorSpec(5)))
+            it.update(TransactionSpec(selection = SelectionSpec.CursorSpec(DocPos(5))))
         }
         s.update(1) {
-            it.update(TransactionSpec(selection = SelectionSpec.CursorSpec(9)))
+            it.update(TransactionSpec(selection = SelectionSpec.CursorSpec(DocPos(9))))
         }
         s.type(0, "!")
         s.type(1, "!")
@@ -224,20 +402,20 @@ class CollabUndoTest {
     @Test
     fun supportsUndoWithClashingEvents() {
         val s = UndoServer(doc = "okay!")
-        s.type(0, "A", 5)
+        s.type(0, "A", DocPos(5))
         s.delay(0) {
-            s.type(0, "B", 3)
-            s.type(0, "C", 4)
-            s.type(0, "D", 0)
+            s.type(0, "B", DocPos(3))
+            s.type(0, "C", DocPos(4))
+            s.type(0, "D", DocPos(0))
             s.update(1) {
-                it.update(TransactionSpec(changes = ChangeSpec.Single(1, 4)))
+                it.update(TransactionSpec(changes = ChangeSpec.Single(DocPos(1), DocPos(4))))
             }
         }
         s.conv("DoBC!A")
         s.doUndo(0)
         s.doUndo(0)
         s.conv("o!A")
-        assertEquals(3, s.states[0].selection.main.head)
+        assertEquals(DocPos(3), s.states[0].selection.main.head)
     }
 
     @Test
@@ -245,11 +423,11 @@ class CollabUndoTest {
         val s = UndoServer(doc = "abcde")
         s.delay(0) {
             s.update(0) {
-                it.update(TransactionSpec(changes = ChangeSpec.Single(2, 3)))
+                it.update(TransactionSpec(changes = ChangeSpec.Single(DocPos(2), DocPos(3))))
             }
             s.type(0, "x")
             s.update(1) {
-                it.update(TransactionSpec(changes = ChangeSpec.Single(1, 4)))
+                it.update(TransactionSpec(changes = ChangeSpec.Single(DocPos(1), DocPos(4))))
             }
         }
         s.doUndo(0)
@@ -261,9 +439,9 @@ class CollabUndoTest {
     fun canUndoSimultaneousTyping() {
         val s = UndoServer(doc = "A B")
         s.delay(0) {
-            s.type(0, "1", 1)
+            s.type(0, "1", DocPos(1))
             s.type(0, "2")
-            s.type(1, "x", 3)
+            s.type(1, "x", DocPos(3))
             s.type(1, "y")
         }
         s.conv("A12 Bxy")
@@ -276,8 +454,8 @@ class CollabUndoTest {
     @Test
     fun supportsSharedEffects() {
         data class Mark(
-            val from: Int,
-            val to: Int,
+            val from: DocPos,
+            val to: DocPos,
             val id: String
         ) {
             fun map(mapping: ChangeDesc): Mark? {
@@ -286,7 +464,7 @@ class CollabUndoTest {
                 return if (newFrom >= newTo) null else Mark(newFrom, newTo, id)
             }
 
-            override fun toString(): String = "$from-$to=$id"
+            override fun toString(): String = "${from.value}-${to.value}=$id"
         }
 
         val addMark = StateEffect.define<Mark> { v, m -> v.map(m) }
@@ -319,19 +497,19 @@ class CollabUndoTest {
                 s.update(0) {
                     it.update(
                         TransactionSpec(
-                            effects = listOf(addMark.of(Mark(1, 3, "a")))
+                            effects = listOf(addMark.of(Mark(DocPos(1), DocPos(3), "a")))
                         )
                     )
                 }
                 s.update(1) {
                     it.update(
                         TransactionSpec(
-                            effects = listOf(addMark.of(Mark(3, 5, "b")))
+                            effects = listOf(addMark.of(Mark(DocPos(3), DocPos(5), "b")))
                         )
                     )
                 }
-                s.type(0, "A", 4)
-                s.type(1, "B", 0)
+                s.type(0, "A", DocPos(4))
+                s.type(1, "B", DocPos(0))
                 assertEquals(
                     "1-3=a",
                     s.states[0].field(marks).joinToString(",")
