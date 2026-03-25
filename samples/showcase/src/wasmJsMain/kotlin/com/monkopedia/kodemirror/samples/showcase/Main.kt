@@ -25,15 +25,20 @@ import kotlinx.browser.document
 @JsFun("() => new URLSearchParams(window.location.search).get('test') || ''")
 private external fun getTestParam(): String
 
+@JsFun("(cb) => document.fonts.ready.then(() => cb())")
+private external fun onFontsReady(callback: () -> Unit)
+
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
-    val body = document.body ?: return
-    ComposeViewport(body) {
-        MaterialTheme(colorScheme = darkColorScheme()) {
-            if (getTestParam() == "true") {
-                TestEditorPage()
-            } else {
-                ShowcaseApp()
+    onFontsReady {
+        val body = document.body ?: return@onFontsReady
+        ComposeViewport(body) {
+            MaterialTheme(colorScheme = darkColorScheme()) {
+                if (getTestParam() == "true") {
+                    TestEditorPage()
+                } else {
+                    ShowcaseApp()
+                }
             }
         }
     }
