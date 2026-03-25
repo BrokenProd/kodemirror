@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -114,6 +115,17 @@ fun TranslateDemo() {
                         label = { Text(l.label) }
                     )
                 }
+            }
+            if (lang.phrases.isNotEmpty()) {
+                val samples = lang.phrases.entries.take(3).joinToString("  ·  ") {
+                    "\"${it.key}\" → \"${it.value}\""
+                }
+                Text(
+                    text = samples,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
             }
         }
     ) {

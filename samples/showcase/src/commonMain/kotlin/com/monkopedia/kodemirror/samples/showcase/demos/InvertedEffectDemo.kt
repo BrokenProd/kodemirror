@@ -24,10 +24,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
@@ -73,12 +69,12 @@ private val counterExtension = counterField +
 
 @Composable
 fun InvertedEffectDemo() {
-    var displayCounter by remember { mutableIntStateOf(0) }
-
     val session = rememberEditorSession(
         doc = SampleDocs.javascript,
         extensions = showcaseSetup + javascript().extension + counterExtension
     )
+
+    val displayCounter = session.state.field(counterField)
 
     DemoScaffold(
         title = "Inverted Effects",
@@ -93,13 +89,11 @@ fun InvertedEffectDemo() {
                     session.dispatch(
                         TransactionSpec(effects = listOf(addToCounter.of(1)))
                     )
-                    displayCounter = session.state.field(counterField)
                 }) { Text("+1") }
                 Button(onClick = {
                     session.dispatch(
                         TransactionSpec(effects = listOf(addToCounter.of(5)))
                     )
-                    displayCounter = session.state.field(counterField)
                 }) { Text("+5") }
                 Text(
                     text = "Counter: $displayCounter",
