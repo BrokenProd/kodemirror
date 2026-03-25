@@ -32,7 +32,13 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.state.Facet
 
-private val editorFontFamily = FontFamily(SystemFont("DejaVu Sans Mono"))
+private val editorFontFamily = FontFamily(
+    SystemFont("DejaVu Sans Mono"),
+    SystemFont("Noto Sans Mono"),
+    SystemFont("Courier New"),
+    SystemFont("monospace"),
+    SystemFont("sans-serif")
+)
 
 /**
  * Color/style tokens for the editor.  Passed through a [CompositionLocal] so
