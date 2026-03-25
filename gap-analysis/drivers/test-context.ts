@@ -25,6 +25,7 @@ let kmAvailable = false;
 
 export const test = base.extend<GapTestFixtures>({
   cm6: async ({ context }, use) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     const page = await context.newPage();
     await page.goto(`file://${cm6FixturePath}`);
     const driver = new CM6Driver(page);
