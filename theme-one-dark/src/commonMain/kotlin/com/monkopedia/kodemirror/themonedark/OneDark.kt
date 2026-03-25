@@ -55,7 +55,14 @@ object OneDarkColors {
     val cursor = Color(0xFF528BFF)
 }
 
-private val editorFontFamily = FontFamily(SystemFont("DejaVu Sans Mono"))
+private val editorFontFamily = FontFamily(
+    SystemFont("JetBrains Mono"),
+    SystemFont("DejaVu Sans Mono"),
+    SystemFont("Noto Sans Arabic"),
+    SystemFont("Noto Sans Hebrew"),
+    SystemFont("monospace"),
+    SystemFont("sans-serif")
+)
 
 /**
  * Complete One Dark editor theme with UI styling.
@@ -76,8 +83,8 @@ val oneDarkTheme: EditorTheme = EditorTheme(
     gutterBorderColor = Color.Transparent,
     contentTextStyle = TextStyle(
         fontFamily = editorFontFamily,
-        fontSize = 13.sp,
-        lineHeight = (13 * 1.4).sp,
+        fontSize = 15.sp,
+        lineHeight = (15 * 1.4).sp,
         color = OneDarkColors.ivory
     ),
     searchMatchBackground = Color(0x5972A1FF),

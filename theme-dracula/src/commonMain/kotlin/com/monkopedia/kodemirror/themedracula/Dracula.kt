@@ -60,7 +60,14 @@ object DraculaColors {
     val darkBackground = Color(0xFF21222C)
 }
 
-private val editorFontFamily = FontFamily(SystemFont("DejaVu Sans Mono"))
+private val editorFontFamily = FontFamily(
+    SystemFont("JetBrains Mono"),
+    SystemFont("DejaVu Sans Mono"),
+    SystemFont("Noto Sans Arabic"),
+    SystemFont("Noto Sans Hebrew"),
+    SystemFont("monospace"),
+    SystemFont("sans-serif")
+)
 
 /**
  * Dracula syntax highlighting style.
@@ -173,8 +180,8 @@ val draculaTheme: EditorTheme = EditorTheme(
     gutterBorderColor = Color.Transparent,
     contentTextStyle = TextStyle(
         fontFamily = editorFontFamily,
-        fontSize = 13.sp,
-        lineHeight = (13 * 1.4).sp,
+        fontSize = 15.sp,
+        lineHeight = (15 * 1.4).sp,
         color = DraculaColors.foreground
     ),
     searchMatchBackground = Color(0x59FFB86C),

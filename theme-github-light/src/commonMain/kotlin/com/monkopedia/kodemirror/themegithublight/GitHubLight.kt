@@ -64,7 +64,14 @@ object GitHubLightColors {
     val number = Color(0xFF0550AE)
 }
 
-private val editorFontFamily = FontFamily(SystemFont("DejaVu Sans Mono"))
+private val editorFontFamily = FontFamily(
+    SystemFont("JetBrains Mono"),
+    SystemFont("DejaVu Sans Mono"),
+    SystemFont("Noto Sans Arabic"),
+    SystemFont("Noto Sans Hebrew"),
+    SystemFont("monospace"),
+    SystemFont("sans-serif")
+)
 
 /**
  * GitHub Light syntax highlighting style.
@@ -174,8 +181,8 @@ val gitHubLightTheme: EditorTheme = EditorTheme(
     gutterBorderColor = GitHubLightColors.gutterBorder,
     contentTextStyle = TextStyle(
         fontFamily = editorFontFamily,
-        fontSize = 13.sp,
-        lineHeight = (13 * 1.4).sp,
+        fontSize = 15.sp,
+        lineHeight = (15 * 1.4).sp,
         color = GitHubLightColors.foreground
     ),
     searchMatchBackground = Color(0x80FFF8C5),

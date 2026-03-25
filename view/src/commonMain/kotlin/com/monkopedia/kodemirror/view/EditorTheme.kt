@@ -33,8 +33,11 @@ import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.state.Facet
 
 private val editorFontFamily = FontFamily(
+    SystemFont("JetBrains Mono"),
     SystemFont("DejaVu Sans Mono"),
     SystemFont("Noto Sans Mono"),
+    SystemFont("Noto Sans Arabic"),
+    SystemFont("Noto Sans Hebrew"),
     SystemFont("Courier New"),
     SystemFont("monospace"),
     SystemFont("sans-serif")
@@ -67,8 +70,8 @@ data class EditorTheme(
     /** Default text style for content. */
     val contentTextStyle: TextStyle = TextStyle(
         fontFamily = editorFontFamily,
-        fontSize = 13.sp,
-        lineHeight = (13 * 1.4).sp,
+        fontSize = 15.sp,
+        lineHeight = (15 * 1.4).sp,
         color = Color(0xFFABB2BF),
         lineHeightStyle = LineHeightStyle(
             alignment = LineHeightStyle.Alignment.Proportional,
@@ -125,8 +128,8 @@ val lightEditorTheme: EditorTheme = EditorTheme(
     gutterBorderColor = Color(0xFFDDDDDD),
     contentTextStyle = TextStyle(
         fontFamily = editorFontFamily,
-        fontSize = 13.sp,
-        lineHeight = (13 * 1.4).sp,
+        fontSize = 15.sp,
+        lineHeight = (15 * 1.4).sp,
         color = Color(0xFF000000)
     ),
     searchMatchBackground = Color(0x80FFD54F),
@@ -208,8 +211,8 @@ fun editorThemeFromColors(
         gutterBorderColor = outline,
         contentTextStyle = TextStyle(
             fontFamily = editorFontFamily,
-            fontSize = 13.sp,
-            lineHeight = (13 * 1.4).sp,
+            fontSize = 15.sp,
+            lineHeight = (15 * 1.4).sp,
             color = foreground
         ),
         searchMatchBackground = primary.copy(alpha = 0.35f),
