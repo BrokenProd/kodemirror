@@ -20,36 +20,70 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.basicsetup.basicSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
+import com.monkopedia.kodemirror.state.Annotation
+import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.Transaction
+import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.themedracula.dracula
 import com.monkopedia.kodemirror.themonedark.oneDark
+import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.rememberEditorSession
+
+private val syncAnnotation = Annotation.define<Boolean>()
 
 @Composable
 fun SplitDemo() {
     DemoScaffold(
         title = "Split View",
-        description = "Two independent editors side by side with different themes."
+        description = "Two editors sharing a document. " +
+            "Edits in one are reflected in the other."
     ) {
+        val sessions = remember { arrayOfNulls<EditorSession>(2) }
+
+        fun syncDispatch(tr: Transaction, otherIndex: Int) {
+            val other = sessions[otherIndex] ?: return
+            if (!tr.changes.empty && tr.annotation(syncAnnotation) == null) {
+                val annotations = buildList {
+                    add(syncAnnotation.of(true))
+                    tr.annotation(Transaction.userEvent)?.let {
+                        add(Transaction.userEvent.of(it))
+                    }
+                }
+                other.dispatch(
+                    TransactionSpec(
+                        changes = ChangeSpec.Set(tr.changes),
+                        annotations = annotations
+                    )
+                )
+            }
+        }
+
+        val sessionLeft = rememberEditorSession(
+            doc = SampleDocs.javascript,
+            extensions = basicSetup + javascript().extension + oneDark
+        ) { tr -> syncDispatch(tr, 1) }
+
+        val sessionRight = rememberEditorSession(
+            doc = SampleDocs.javascript,
+            extensions = basicSetup + javascript().extension + dracula
+        ) { tr -> syncDispatch(tr, 0) }
+
+        sessions[0] = sessionLeft
+        sessions[1] = sessionRight
+
         Row(
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            val sessionLeft = rememberEditorSession(
-                doc = SampleDocs.javascript,
-                extensions = basicSetup + javascript().extension + oneDark
-            )
-            val sessionRight = rememberEditorSession(
-                doc = SampleDocs.javascript,
-                extensions = basicSetup + javascript().extension + dracula
-            )
             KodeMirror(
                 session = sessionLeft,
                 modifier = Modifier.weight(1f).fillMaxHeight()

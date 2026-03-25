@@ -420,8 +420,8 @@ public final class com/monkopedia/kodemirror/view/KeymapKt {
 
 public final class com/monkopedia/kodemirror/view/KodeMirrorKt {
 	public static final fun KodeMirror (Lcom/monkopedia/kodemirror/view/EditorSession;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
-	public static final fun rememberEditorSession (Lcom/monkopedia/kodemirror/state/EditorStateConfig;Landroidx/compose/runtime/Composer;I)Lcom/monkopedia/kodemirror/view/EditorSession;
-	public static final fun rememberEditorSession (Ljava/lang/String;Lcom/monkopedia/kodemirror/state/Extension;Landroidx/compose/runtime/Composer;II)Lcom/monkopedia/kodemirror/view/EditorSession;
+	public static final fun rememberEditorSession (Lcom/monkopedia/kodemirror/state/EditorStateConfig;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)Lcom/monkopedia/kodemirror/view/EditorSession;
+	public static final fun rememberEditorSession (Ljava/lang/String;Lcom/monkopedia/kodemirror/state/Extension;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)Lcom/monkopedia/kodemirror/view/EditorSession;
 }
 
 public final class com/monkopedia/kodemirror/view/LineDecoration : com/monkopedia/kodemirror/view/Decoration {

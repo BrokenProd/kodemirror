@@ -69,6 +69,7 @@ import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.Extension
+import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.state.asInsert
@@ -513,13 +514,17 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
  * Create and remember an [EditorSession] with the given document text and extensions.
  */
 @Composable
-fun rememberEditorSession(doc: String = "", extensions: Extension? = null): EditorSession {
+fun rememberEditorSession(
+    doc: String = "",
+    extensions: Extension? = null,
+    onUpdate: (Transaction) -> Unit = {}
+): EditorSession {
     return remember {
         val config = EditorStateConfig(
             doc = doc.asDoc(),
             extensions = extensions
         )
-        EditorSession(EditorState.create(config))
+        EditorSession(EditorState.create(config), onUpdate)
     }
 }
 
@@ -527,6 +532,9 @@ fun rememberEditorSession(doc: String = "", extensions: Extension? = null): Edit
  * Create and remember an [EditorSession] from an [EditorStateConfig].
  */
 @Composable
-fun rememberEditorSession(config: EditorStateConfig): EditorSession {
-    return remember { EditorSession(EditorState.create(config)) }
+fun rememberEditorSession(
+    config: EditorStateConfig,
+    onUpdate: (Transaction) -> Unit = {}
+): EditorSession {
+    return remember { EditorSession(EditorState.create(config), onUpdate) }
 }
