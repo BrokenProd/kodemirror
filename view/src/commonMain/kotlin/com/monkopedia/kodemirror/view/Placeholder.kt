@@ -32,9 +32,10 @@ import com.monkopedia.kodemirror.state.RangeSetBuilder
  */
 fun placeholder(text: String): Extension = placeholder {
     val theme = LocalEditorTheme.current
+    val contentStyle = LocalContentTextStyle.current
     BasicText(
         text = text,
-        style = theme.contentTextStyle.copy(color = theme.gutterForeground),
+        style = contentStyle.copy(color = theme.gutterForeground),
         maxLines = 1,
         overflow = TextOverflow.Ellipsis
     )

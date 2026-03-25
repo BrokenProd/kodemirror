@@ -32,7 +32,18 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.state.Facet
 
-private val editorFontFamily = FontFamily(
+/**
+ * Default font family for the editor.
+ *
+ * Provides a fallback chain from monospace fonts to sans-serif for
+ * broad Unicode coverage (including Arabic and Hebrew). On wasmJs,
+ * fonts must be loaded in the host page (e.g. via Google Fonts) for
+ * Skiko to find them.
+ *
+ * To use a custom font, provide an [editorContentStyle] extension with
+ * a different [TextStyle.fontFamily][androidx.compose.ui.text.TextStyle].
+ */
+val defaultEditorFontFamily: FontFamily = FontFamily(
     SystemFont("JetBrains Mono"),
     SystemFont("DejaVu Sans Mono"),
     SystemFont("Noto Sans Mono"),
@@ -51,7 +62,7 @@ private val editorFontFamily = FontFamily(
 data class EditorTheme(
     /** Background color of the editor container. */
     val background: Color = Color(0xFF282C34),
-    /** Default foreground (text) color. */
+    /** Default foreground (text) color. Can be overridden by setting a color in [editorContentStyle]. */
     val foreground: Color = Color(0xFFABB2BF),
     /** Cursor color. */
     val cursor: Color = Color(0xFF528BFF),
@@ -67,17 +78,6 @@ data class EditorTheme(
     val gutterActiveForeground: Color = Color(0xFFCCCCCC),
     /** Gutter right border color. */
     val gutterBorderColor: Color = Color.Transparent,
-    /** Default text style for content. */
-    val contentTextStyle: TextStyle = TextStyle(
-        fontFamily = editorFontFamily,
-        fontSize = 15.sp,
-        lineHeight = (15 * 1.4).sp,
-        color = Color(0xFFABB2BF),
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Proportional,
-            trim = LineHeightStyle.Trim.Both
-        )
-    ),
     /** Background for search matches. */
     val searchMatchBackground: Color = Color(0x5972A1FF),
     /** Background for the selected/active search match. */
@@ -126,12 +126,6 @@ val lightEditorTheme: EditorTheme = EditorTheme(
     gutterForeground = Color(0xFF6C6C6C),
     gutterActiveForeground = Color(0xFF333333),
     gutterBorderColor = Color(0xFFDDDDDD),
-    contentTextStyle = TextStyle(
-        fontFamily = editorFontFamily,
-        fontSize = 15.sp,
-        lineHeight = (15 * 1.4).sp,
-        color = Color(0xFF000000)
-    ),
     searchMatchBackground = Color(0x80FFD54F),
     searchMatchSelectedBackground = Color(0x4000BFA5),
     selectionMatchBackground = Color(0x30A0D000),
@@ -157,6 +151,41 @@ val LocalEditorTheme = compositionLocalOf { defaultEditorTheme }
 val editorTheme: Facet<EditorTheme, EditorTheme> = Facet.define(
     combine = { values -> values.lastOrNull() ?: defaultEditorTheme }
 )
+
+/** Default content text style with font metrics but no color. */
+val defaultContentTextStyle: TextStyle = TextStyle(
+    fontFamily = defaultEditorFontFamily,
+    fontSize = 15.sp,
+    lineHeight = (15 * 1.4).sp,
+    lineHeightStyle = LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Proportional,
+        trim = LineHeightStyle.Trim.Both
+    )
+)
+
+/**
+ * Facet for editor content text styling (font family, size, line height, color).
+ *
+ * Multiple values are merged via [TextStyle.merge] — later extensions override
+ * earlier ones field-by-field. If no extension specifies a text color, the
+ * editor falls back to [EditorTheme.foreground].
+ *
+ * ```kotlin
+ * // Override just font size:
+ * editorContentStyle.of(TextStyle(fontSize = 18.sp, lineHeight = (18 * 1.4).sp))
+ *
+ * // Override font family:
+ * editorContentStyle.of(TextStyle(fontFamily = myFont))
+ * ```
+ */
+val editorContentStyle: Facet<TextStyle, TextStyle> = Facet.define(
+    combine = { values ->
+        values.fold(defaultContentTextStyle) { acc, style -> acc.merge(style) }
+    }
+)
+
+/** CompositionLocal that provides the resolved content text style. */
+val LocalContentTextStyle = compositionLocalOf { defaultContentTextStyle }
 
 /** Convenience extension to build a [SpanStyle] from theme colors. */
 fun EditorTheme.selectionStyle(): SpanStyle = SpanStyle(background = selection)
@@ -209,12 +238,6 @@ fun editorThemeFromColors(
         gutterForeground = dimForeground,
         gutterActiveForeground = foreground,
         gutterBorderColor = outline,
-        contentTextStyle = TextStyle(
-            fontFamily = editorFontFamily,
-            fontSize = 15.sp,
-            lineHeight = (15 * 1.4).sp,
-            color = foreground
-        ),
         searchMatchBackground = primary.copy(alpha = 0.35f),
         searchMatchSelectedBackground = primary.copy(alpha = 0.2f),
         selectionMatchBackground = primary.copy(alpha = 0.1f),

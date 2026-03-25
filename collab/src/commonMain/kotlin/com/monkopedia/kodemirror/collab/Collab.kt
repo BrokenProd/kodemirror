@@ -24,13 +24,13 @@ import com.monkopedia.kodemirror.state.ChangeSet
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
-import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.extensionListOf
 import kotlin.random.Random
 
 /**
@@ -130,7 +130,7 @@ fun collab(config: CollabConfig = CollabConfig()): Extension {
         clientID = config.clientID ?: generatedID,
         sharedEffects = config.sharedEffects ?: { emptyList() }
     )
-    return ExtensionList(listOf(collabField, collabConfig.of(resolved)))
+    return extensionListOf(collabField, collabConfig.of(resolved))
 }
 
 /**

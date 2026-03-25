@@ -19,9 +19,9 @@
 package com.monkopedia.kodemirror.view
 
 import com.monkopedia.kodemirror.state.Extension
-import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.RangeSet
+import com.monkopedia.kodemirror.state.extensionListOf
 
 /**
  * Facet that collects all [ViewPlugin] instances registered in the state's
@@ -78,7 +78,7 @@ class ViewPlugin<V : PluginValue>(val spec: PluginSpec<V>) {
         val registrationExt: Extension = viewPluginRegistry.of(this)
         val providedExt = spec.provide?.invoke(this)
         return if (providedExt != null) {
-            ExtensionList(listOf(registrationExt, providedExt))
+            extensionListOf(registrationExt, providedExt)
         } else {
             registrationExt
         }

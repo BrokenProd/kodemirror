@@ -94,8 +94,8 @@ private class FoldPlaceholderWidget : WidgetType() {
     override fun Content() {
         androidx.compose.foundation.text.BasicText(
             text = "\u2026",
-            style = com.monkopedia.kodemirror.view.LocalEditorTheme.current
-                .contentTextStyle.copy(
+            style = com.monkopedia.kodemirror.view.LocalContentTextStyle.current
+                .copy(
                     color = androidx.compose.ui.graphics.Color.Gray
                 )
         )

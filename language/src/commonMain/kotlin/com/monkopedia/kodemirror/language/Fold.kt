@@ -20,7 +20,11 @@ package com.monkopedia.kodemirror.language
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.lezer.common.NodeProp
@@ -28,7 +32,6 @@ import com.monkopedia.kodemirror.lezer.common.SyntaxNode
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
-import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.RangeSet
@@ -39,13 +42,21 @@ import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.endPos
+import com.monkopedia.kodemirror.state.extensionListOf
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.EditorTheme
+import com.monkopedia.kodemirror.view.GutterConfig
+import com.monkopedia.kodemirror.view.GutterMarker
+import com.monkopedia.kodemirror.view.GutterType
 import com.monkopedia.kodemirror.view.KeyBinding
+import com.monkopedia.kodemirror.view.LocalContentTextStyle
+import com.monkopedia.kodemirror.view.LocalEditorTheme
 import com.monkopedia.kodemirror.view.ReplaceDecorationSpec
 import com.monkopedia.kodemirror.view.WidgetType
 import com.monkopedia.kodemirror.view.decorations
+import com.monkopedia.kodemirror.view.gutter
 
 /** A range that can be folded. */
 data class FoldRange(val from: DocPos, val to: DocPos)
@@ -98,22 +109,21 @@ val unfoldEffect: StateEffectType<FoldRange> = StateEffect.define(
 )
 
 private class FoldWidget : WidgetType() {
-    @androidx.compose.runtime.Composable
+    @Composable
     override fun Content() {
-        val theme = com.monkopedia.kodemirror.view.LocalEditorTheme.current
-        val shape = androidx.compose.foundation.shape.RoundedCornerShape(
-            2.dp
-        )
-        androidx.compose.foundation.layout.Box(
-            modifier = androidx.compose.ui.Modifier
+        val theme = LocalEditorTheme.current
+        val contentStyle = LocalContentTextStyle.current
+        val shape = RoundedCornerShape(2.dp)
+        Box(
+            modifier = Modifier
                 .padding(horizontal = 1.dp)
                 .background(theme.foldPlaceholderBackground, shape)
                 .border(1.dp, theme.foldPlaceholderColor.copy(alpha = 0.3f), shape)
                 .padding(horizontal = 1.dp)
         ) {
-            androidx.compose.foundation.text.BasicText(
+            BasicText(
                 text = "\u2026",
-                style = theme.contentTextStyle.copy(
+                style = contentStyle.copy(
                     color = theme.foldPlaceholderColor
                 )
             )
@@ -337,53 +347,52 @@ val foldKeymap: List<KeyBinding> = listOf(
  * folded or unfolded.
  */
 fun foldGutter(): Extension {
-    return ExtensionList(
-        listOf(
-            codeFolding(),
-            com.monkopedia.kodemirror.view.gutter(
-                com.monkopedia.kodemirror.view.GutterConfig(
-                    type = com.monkopedia.kodemirror.view.GutterType.Custom("fold"),
-                    lineMarker = { view, lineFrom ->
-                        val state = view.state
-                        val lineFromPos = DocPos(lineFrom)
-                        val line = state.doc.lineAt(lineFromPos)
-                        val folded = foldedRanges(state)
-                        var hasFold = false
-                        folded.between(lineFromPos, line.to) { from, _, _ ->
-                            if (from >= lineFrom && DocPos(from) <= line.to) {
-                                hasFold = true
-                                false
-                            } else {
-                                true
-                            }
-                        }
-                        if (hasFold) {
-                            FoldGutterMarker(folded = true)
+    return extensionListOf(
+        codeFolding(),
+        gutter(
+            GutterConfig(
+                type = GutterType.Custom("fold"),
+                lineMarker = { view, lineFrom ->
+                    val state = view.state
+                    val lineFromPos = DocPos(lineFrom)
+                    val line = state.doc.lineAt(lineFromPos)
+                    val folded = foldedRanges(state)
+                    var hasFold = false
+                    folded.between(lineFromPos, line.to) { from, _, _ ->
+                        if (from >= lineFrom && DocPos(from) <= line.to) {
+                            hasFold = true
+                            false
                         } else {
-                            val canFold = foldable(state, lineFromPos) != null
-                            if (canFold) FoldGutterMarker(folded = false) else null
-                        }
-                    },
-                    lineMarkerChange = { update ->
-                        update.docChanged || update.transactions.any { tr ->
-                            tr.effects.any {
-                                it.asType(foldEffect) != null || it.asType(unfoldEffect) != null
-                            }
+                            true
                         }
                     }
-                )
+                    if (hasFold) {
+                        FoldGutterMarker(folded = true)
+                    } else {
+                        val canFold = foldable(state, lineFromPos) != null
+                        if (canFold) FoldGutterMarker(folded = false) else null
+                    }
+                },
+                lineMarkerChange = { update ->
+                    update.docChanged || update.transactions.any { tr ->
+                        tr.effects.any {
+                            it.asType(foldEffect) != null || it.asType(unfoldEffect) != null
+                        }
+                    }
+                }
             )
         )
     )
 }
 
 private class FoldGutterMarker(val folded: Boolean) :
-    com.monkopedia.kodemirror.view.GutterMarker() {
-    @androidx.compose.runtime.Composable
-    override fun Content(theme: com.monkopedia.kodemirror.view.EditorTheme) {
-        androidx.compose.foundation.text.BasicText(
+    GutterMarker() {
+    @Composable
+    override fun Content(theme: EditorTheme) {
+        val contentStyle = LocalContentTextStyle.current
+        BasicText(
             text = if (folded) "\u203A" else "\u2304",
-            style = theme.contentTextStyle.copy(
+            style = contentStyle.copy(
                 color = theme.gutterForeground
             )
         )

@@ -84,7 +84,7 @@ private class SpecialCharWidget(val label: String, val codePoint: Int) : WidgetT
     override fun Content() {
         BasicText(
             text = label,
-            style = LocalEditorTheme.current.contentTextStyle.copy(
+            style = LocalContentTextStyle.current.copy(
                 color = Color.White,
                 background = Color(0xFFCC0000)
             )

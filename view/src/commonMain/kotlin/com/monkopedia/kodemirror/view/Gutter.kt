@@ -112,9 +112,10 @@ fun GutterView(session: EditorSession, lineNumber: Int, modifier: Modifier = Mod
                     modifier = Modifier.weight(1f).padding(start = 5.dp, end = 3.dp),
                     contentAlignment = Alignment.CenterEnd
                 ) {
+                    val contentStyle = LocalContentTextStyle.current
                     BasicText(
                         text = lineNumber.toString(),
-                        style = theme.contentTextStyle.copy(
+                        style = contentStyle.copy(
                             color = if (isActive) {
                                 theme.gutterActiveForeground
                             } else {

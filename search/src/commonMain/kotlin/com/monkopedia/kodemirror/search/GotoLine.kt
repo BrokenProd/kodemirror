@@ -49,6 +49,7 @@ import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.LocalContentTextStyle
 import com.monkopedia.kodemirror.view.LocalEditorTheme
 
 private val toggleGotoLinePanel: StateEffectType<Boolean> =
@@ -86,9 +87,10 @@ val gotoLine: (EditorSession) -> Boolean = { view ->
 @Composable
 internal fun GoToLinePanel(view: EditorSession) {
     val theme = LocalEditorTheme.current
-    val panelTextStyle = theme.contentTextStyle.copy(
+    val contentStyle = LocalContentTextStyle.current
+    val panelTextStyle = contentStyle.copy(
         color = theme.foreground,
-        fontSize = (theme.contentTextStyle.fontSize.value * 0.8).sp
+        fontSize = (contentStyle.fontSize.value * 0.8).sp
     )
     var lineText by remember { mutableStateOf("") }
 

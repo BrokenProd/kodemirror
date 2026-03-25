@@ -16,26 +16,19 @@
  * Originally based on CodeMirror 6 by Marijn Haverbeke, licensed under MIT.
  * See NOTICE file for details.
  */
-@file:OptIn(ExperimentalTextApi::class)
-
 package com.monkopedia.kodemirror.themegithublight
 
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.SystemFont
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.language.HighlightStyle
 import com.monkopedia.kodemirror.language.TagStyleSpec
 import com.monkopedia.kodemirror.language.syntaxHighlighting
 import com.monkopedia.kodemirror.lezer.highlight.Tags
 import com.monkopedia.kodemirror.state.Extension
-import com.monkopedia.kodemirror.state.ExtensionList
+import com.monkopedia.kodemirror.state.extensionListOf
 import com.monkopedia.kodemirror.view.EditorTheme
 import com.monkopedia.kodemirror.view.editorTheme
 
@@ -63,15 +56,6 @@ object GitHubLightColors {
     val constant = Color(0xFF0550AE)
     val number = Color(0xFF0550AE)
 }
-
-private val editorFontFamily = FontFamily(
-    SystemFont("JetBrains Mono"),
-    SystemFont("DejaVu Sans Mono"),
-    SystemFont("Noto Sans Arabic"),
-    SystemFont("Noto Sans Hebrew"),
-    SystemFont("monospace"),
-    SystemFont("sans-serif")
-)
 
 /**
  * GitHub Light syntax highlighting style.
@@ -179,12 +163,6 @@ val gitHubLightTheme: EditorTheme = EditorTheme(
     gutterForeground = GitHubLightColors.gutterForeground,
     gutterActiveForeground = GitHubLightColors.gutterActiveForeground,
     gutterBorderColor = GitHubLightColors.gutterBorder,
-    contentTextStyle = TextStyle(
-        fontFamily = editorFontFamily,
-        fontSize = 15.sp,
-        lineHeight = (15 * 1.4).sp,
-        color = GitHubLightColors.foreground
-    ),
     searchMatchBackground = Color(0x80FFF8C5),
     searchMatchSelectedBackground = Color(0xBFFFF8C5),
     selectionMatchBackground = Color(0x30A0D000),
@@ -209,9 +187,7 @@ val gitHubLightTheme: EditorTheme = EditorTheme(
  *
  * Drop this into an editor's extension list for a complete GitHub Light look.
  */
-val gitHubLight: Extension = ExtensionList(
-    listOf(
-        editorTheme.of(gitHubLightTheme),
-        syntaxHighlighting(gitHubLightHighlightStyle)
-    )
+val gitHubLight: Extension = extensionListOf(
+    editorTheme.of(gitHubLightTheme),
+    syntaxHighlighting(gitHubLightHighlightStyle)
 )

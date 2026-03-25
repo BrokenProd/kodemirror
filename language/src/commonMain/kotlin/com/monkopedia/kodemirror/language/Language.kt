@@ -25,13 +25,13 @@ import com.monkopedia.kodemirror.lezer.common.Tree
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
-import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.FacetEnabler
 import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.Transaction
+import com.monkopedia.kodemirror.state.extensionListOf
 
 // Internal state field holding the parsed tree.
 // Defined first so the `language` facet can reference it in enables.
@@ -90,7 +90,7 @@ class LanguageSupport(
     val support: Extension? = null
 ) {
     val extension: Extension = if (support != null) {
-        ExtensionList(listOf(language.extension, support))
+        extensionListOf(language.extension, support)
     } else {
         language.extension
     }

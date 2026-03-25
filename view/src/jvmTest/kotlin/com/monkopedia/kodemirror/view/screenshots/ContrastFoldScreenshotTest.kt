@@ -97,6 +97,7 @@ private class ContrastFoldWidget : WidgetType() {
     @androidx.compose.runtime.Composable
     override fun Content() {
         val theme = com.monkopedia.kodemirror.view.LocalEditorTheme.current
+        val contentStyle = com.monkopedia.kodemirror.view.LocalContentTextStyle.current
         val shape = androidx.compose.foundation.shape.RoundedCornerShape(
             2.dp
         )
@@ -113,7 +114,7 @@ private class ContrastFoldWidget : WidgetType() {
         ) {
             androidx.compose.foundation.text.BasicText(
                 text = "\u2026",
-                style = theme.contentTextStyle.copy(
+                style = contentStyle.copy(
                     color = theme.foldPlaceholderColor
                 )
             )

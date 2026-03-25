@@ -22,12 +22,12 @@ import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
-import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.TransactionFilterResult
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.endPos
+import com.monkopedia.kodemirror.state.extensionListOf
 import com.monkopedia.kodemirror.state.transactionFilter
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
@@ -142,7 +142,7 @@ fun closeBrackets(config: CloseBracketsConfig = CloseBracketsConfig()): Extensio
         TransactionFilterResult.Filtered(tr)
     }
 
-    return ExtensionList(listOf(filter, keymap.of(closeBracketsKeymap)))
+    return extensionListOf(filter, keymap.of(closeBracketsKeymap))
 }
 
 /** Delete bracket pair command: when cursor is between a pair, delete both. */

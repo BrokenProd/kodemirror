@@ -85,20 +85,20 @@
   },
   "suites": [
     {
-      "title": "typing.spec.ts",
-      "file": "typing.spec.ts",
+      "title": "clipboard.spec.ts",
+      "file": "clipboard.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Typing",
-          "file": "typing.spec.ts",
-          "line": 3,
+          "title": "Clipboard",
+          "file": "clipboard.spec.ts",
+          "line": 20,
           "column": 6,
           "specs": [
             {
-              "title": "special characters - quotes",
+              "title": "copy and paste single-line text",
               "ok": false,
               "tags": [],
               "tests": [
@@ -113,57 +113,333 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 1669,
+                      "duration": 2344,
                       "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mfalse\u001b[39m\nReceived: \u001b[31mtrue\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mfalse\u001b[39m\nReceived: \u001b[31mtrue\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/typing.spec.ts:84:29",
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts:54:43",
                         "location": {
-                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/typing.spec.ts",
-                          "column": 29,
-                          "line": 84
+                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts",
+                          "column": 43,
+                          "line": 54
                         },
-                        "snippet": "  82 |       const kmDoubleQuote =\n  83 |         kmState.doc.split(\"\\n\").pop()?.includes('\"\"') ?? false;\n> 84 |       expect(kmDoubleQuote).toBe(cm6DoubleQuote);\n     |                             ^\n  85 |     }\n  86 |   });\n  87 |"
+                        "snippet": "  52 |     if (km) {\n  53 |       const kmDoc = await km.getDoc();\n> 54 |       expect(kmDoc.endsWith(cm6Selected)).toBe(true);\n     |                                           ^\n  55 |     }\n  56 |   });\n  57 |"
                       },
                       "errors": [
                         {
                           "location": {
-                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/typing.spec.ts",
-                            "column": 29,
-                            "line": 84
+                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts",
+                            "column": 43,
+                            "line": 54
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mfalse\u001b[39m\nReceived: \u001b[31mtrue\u001b[39m\n\n  82 |       const kmDoubleQuote =\n  83 |         kmState.doc.split(\"\\n\").pop()?.includes('\"\"') ?? false;\n> 84 |       expect(kmDoubleQuote).toBe(cm6DoubleQuote);\n     |                             ^\n  85 |     }\n  86 |   });\n  87 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/typing.spec.ts:84:29"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  52 |     if (km) {\n  53 |       const kmDoc = await km.getDoc();\n> 54 |       expect(kmDoc.endsWith(cm6Selected)).toBe(true);\n     |                                           ^\n  55 |     }\n  56 |   });\n  57 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts:54:43"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-24T12:35:54.167Z",
+                      "startTime": "2026-03-24T21:31:45.897Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/typing-Typing-special-characters---quotes-gap-analysis/test-failed-1.png"
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/clipboard-Clipboard-copy-and-paste-single-line-text-gap-analysis/test-failed-1.png"
                         },
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/typing-Typing-special-characters---quotes-gap-analysis/test-failed-2.png"
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/clipboard-Clipboard-copy-and-paste-single-line-text-gap-analysis/test-failed-2.png"
                         }
                       ],
                       "errorLocation": {
-                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/typing.spec.ts",
-                        "column": 29,
-                        "line": 84
+                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts",
+                        "column": 43,
+                        "line": 54
                       }
                     }
                   ],
                   "status": "unexpected"
                 }
               ],
-              "id": "55c4864cc1d114f1b841-8c521bafaf92955effcb",
-              "file": "typing.spec.ts",
-              "line": 67,
+              "id": "5efbc57afed27a1b3902-fa07abb12bf760ff29ff",
+              "file": "clipboard.spec.ts",
+              "line": 26,
+              "column": 7
+            },
+            {
+              "title": "paste does not duplicate text",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 2193,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m1\u001b[39m\nReceived: \u001b[31m0\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m1\u001b[39m\nReceived: \u001b[31m0\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts:94:21",
+                        "location": {
+                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts",
+                          "column": 21,
+                          "line": 94
+                        },
+                        "snippet": "  92 |       // The pasted text should appear exactly once on the last line\n  93 |       const count = lastLine.split(selectedText).length - 1;\n> 94 |       expect(count).toBe(1);\n     |                     ^\n  95 |     }\n  96 |   });\n  97 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts",
+                            "column": 21,
+                            "line": 94
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m1\u001b[39m\nReceived: \u001b[31m0\u001b[39m\n\n  92 |       // The pasted text should appear exactly once on the last line\n  93 |       const count = lastLine.split(selectedText).length - 1;\n> 94 |       expect(count).toBe(1);\n     |                     ^\n  95 |     }\n  96 |   });\n  97 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts:94:21"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-24T21:31:49.026Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/clipboard-Clipboard-paste-does-not-duplicate-text-gap-analysis/test-failed-2.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/clipboard-Clipboard-paste-does-not-duplicate-text-gap-analysis/test-failed-1.png"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts",
+                        "column": 21,
+                        "line": 94
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "5efbc57afed27a1b3902-7b64ec8db67cf343657b",
+              "file": "clipboard.spec.ts",
+              "line": 58,
+              "column": 7
+            },
+            {
+              "title": "cut removes text and paste restores it",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 1686,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts:140:46",
+                        "location": {
+                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts",
+                          "column": 46,
+                          "line": 140
+                        },
+                        "snippet": "  138 |     if (km) {\n  139 |       const kmAfterPaste = await km.getDoc();\n> 140 |       expect(kmAfterPaste.endsWith(cutText)).toBe(true);\n      |                                              ^\n  141 |     }\n  142 |   });\n  143 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts",
+                            "column": 46,
+                            "line": 140
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  138 |     if (km) {\n  139 |       const kmAfterPaste = await km.getDoc();\n> 140 |       expect(kmAfterPaste.endsWith(cutText)).toBe(true);\n      |                                              ^\n  141 |     }\n  142 |   });\n  143 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts:140:46"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-24T21:31:51.984Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/clipboard-Clipboard-cut-removes-text-and-paste-restores-it-gap-analysis/test-failed-2.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/clipboard-Clipboard-cut-removes-text-and-paste-restores-it-gap-analysis/test-failed-1.png"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts",
+                        "column": 46,
+                        "line": 140
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "5efbc57afed27a1b3902-952410f8a6c98faea282",
+              "file": "clipboard.spec.ts",
+              "line": 98,
+              "column": 7
+            },
+            {
+              "title": "paste multi-line text preserves newlines",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 2236,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m3\u001b[39m\nReceived: \u001b[31m0\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m3\u001b[39m\nReceived: \u001b[31m0\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts:189:26",
+                        "location": {
+                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts",
+                          "column": 26,
+                          "line": 189
+                        },
+                        "snippet": "  187 |       const kmNewLines =\n  188 |         kmAfter.docInfo.lines - kmBeforePaste!.docInfo.lines;\n> 189 |       expect(kmNewLines).toBe(expectedNewlines);\n      |                          ^\n  190 |     }\n  191 |   });\n  192 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts",
+                            "column": 26,
+                            "line": 189
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m3\u001b[39m\nReceived: \u001b[31m0\u001b[39m\n\n  187 |       const kmNewLines =\n  188 |         kmAfter.docInfo.lines - kmBeforePaste!.docInfo.lines;\n> 189 |       expect(kmNewLines).toBe(expectedNewlines);\n      |                          ^\n  190 |     }\n  191 |   });\n  192 |\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts:189:26"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-24T21:31:54.418Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/clipboard-Clipboard-paste-multi-line-text-preserves-newlines-gap-analysis/test-failed-2.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/clipboard-Clipboard-paste-multi-line-text-preserves-newlines-gap-analysis/test-failed-1.png"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts",
+                        "column": 26,
+                        "line": 189
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "5efbc57afed27a1b3902-e0d287a92ca9d8a9601c",
+              "file": "clipboard.spec.ts",
+              "line": 144,
+              "column": 7
+            },
+            {
+              "title": "paste replaces selection",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 13262,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m0\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m0\u001b[39m\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts:231:23",
+                        "location": {
+                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts",
+                          "column": 23,
+                          "line": 231
+                        },
+                        "snippet": "  229 |       const kmAfter = await km.getDoc();\n  230 |       const kmCount = (kmAfter.match(/REPLACE_ME/g) || []).length;\n> 231 |       expect(kmCount).toBe(cm6Count);\n      |                       ^\n  232 |     }\n  233 |   });\n  234 | });"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts",
+                            "column": 23,
+                            "line": 231
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m2\u001b[39m\nReceived: \u001b[31m0\u001b[39m\n\n  229 |       const kmAfter = await km.getDoc();\n  230 |       const kmCount = (kmAfter.match(/REPLACE_ME/g) || []).length;\n> 231 |       expect(kmCount).toBe(cm6Count);\n      |                       ^\n  232 |     }\n  233 |   });\n  234 | });\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts:231:23"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-24T21:31:57.406Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/clipboard-Clipboard-paste-replaces-selection-gap-analysis/test-failed-2.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/clipboard-Clipboard-paste-replaces-selection-gap-analysis/test-failed-1.png"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/clipboard.spec.ts",
+                        "column": 23,
+                        "line": 231
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "5efbc57afed27a1b3902-d020e03f609216cbdba0",
+              "file": "clipboard.spec.ts",
+              "line": 193,
               "column": 7
             }
           ]
@@ -173,11 +449,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-03-24T12:35:53.383Z",
-    "duration": 2689.422,
+    "startTime": "2026-03-24T21:31:45.017Z",
+    "duration": 25748.511,
     "expected": 0,
     "skipped": 0,
-    "unexpected": 1,
+    "unexpected": 5,
     "flaky": 0
   }
 }

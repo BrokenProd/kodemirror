@@ -81,11 +81,11 @@ internal class DropCursorPlugin : PluginValue {
 private class DropCursorWidget : WidgetType() {
     @Composable
     override fun Content() {
-        val theme = LocalEditorTheme.current
+        val contentStyle = LocalContentTextStyle.current
         val lineHeight = with(LocalDensity.current) {
-            theme.contentTextStyle.lineHeight.toDp()
+            contentStyle.lineHeight.toDp()
         }
-        val cursorColor = theme.cursor
+        val cursorColor = LocalEditorTheme.current.cursor
         Canvas(
             modifier = Modifier
                 .width(2.dp)

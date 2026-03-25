@@ -16,20 +16,13 @@
  * Originally based on CodeMirror 6 by Marijn Haverbeke, licensed under MIT.
  * See NOTICE file for details.
  */
-@file:OptIn(ExperimentalTextApi::class)
-
 package com.monkopedia.kodemirror.themonedark
 
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.ExperimentalTextApi
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.platform.SystemFont
-import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.language.oneDarkHighlightStyle
 import com.monkopedia.kodemirror.language.syntaxHighlighting
 import com.monkopedia.kodemirror.state.Extension
-import com.monkopedia.kodemirror.state.ExtensionList
+import com.monkopedia.kodemirror.state.extensionListOf
 import com.monkopedia.kodemirror.view.EditorTheme
 import com.monkopedia.kodemirror.view.editorTheme
 
@@ -55,15 +48,6 @@ object OneDarkColors {
     val cursor = Color(0xFF528BFF)
 }
 
-private val editorFontFamily = FontFamily(
-    SystemFont("JetBrains Mono"),
-    SystemFont("DejaVu Sans Mono"),
-    SystemFont("Noto Sans Arabic"),
-    SystemFont("Noto Sans Hebrew"),
-    SystemFont("monospace"),
-    SystemFont("sans-serif")
-)
-
 /**
  * Complete One Dark editor theme with UI styling.
  *
@@ -81,12 +65,6 @@ val oneDarkTheme: EditorTheme = EditorTheme(
     gutterForeground = OneDarkColors.stone,
     gutterActiveForeground = Color(0xFFCCCCCC),
     gutterBorderColor = Color.Transparent,
-    contentTextStyle = TextStyle(
-        fontFamily = editorFontFamily,
-        fontSize = 15.sp,
-        lineHeight = (15 * 1.4).sp,
-        color = OneDarkColors.ivory
-    ),
     searchMatchBackground = Color(0x5972A1FF),
     searchMatchSelectedBackground = Color(0x2F6199FF),
     selectionMatchBackground = Color(0x1AAAFE66),
@@ -111,9 +89,7 @@ val oneDarkTheme: EditorTheme = EditorTheme(
  *
  * Drop this into an editor's extension list for a complete One Dark look.
  */
-val oneDark: Extension = ExtensionList(
-    listOf(
-        editorTheme.of(oneDarkTheme),
-        syntaxHighlighting(oneDarkHighlightStyle)
-    )
+val oneDark: Extension = extensionListOf(
+    editorTheme.of(oneDarkTheme),
+    syntaxHighlighting(oneDarkHighlightStyle)
 )

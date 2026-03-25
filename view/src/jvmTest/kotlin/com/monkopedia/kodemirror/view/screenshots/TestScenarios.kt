@@ -36,8 +36,9 @@ import com.monkopedia.kodemirror.lezer.highlight.Tags
 import com.monkopedia.kodemirror.lezer.lr.ParserConfig
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
-import com.monkopedia.kodemirror.state.ExtensionList
+import com.monkopedia.kodemirror.state.extensionListOf
 import com.monkopedia.kodemirror.view.EditorTheme
+import com.monkopedia.kodemirror.view.editorContentStyle
 import com.monkopedia.kodemirror.view.editorTheme
 
 /**
@@ -114,7 +115,7 @@ object TestScenarios {
     fun jsLanguageExtensions(light: Boolean = true): Extension {
         val lang = Language(configuredParser, "javascript")
         val style = if (light) defaultHighlightStyle else oneDarkHighlightStyle
-        return ExtensionList(listOf(lang.extension, syntaxHighlighting(style)))
+        return extensionListOf(lang.extension, syntaxHighlighting(style))
     }
 
     val extremeContrastTheme = EditorTheme(
@@ -127,11 +128,6 @@ object TestScenarios {
         gutterForeground = Color(0xFF00FFFF),
         gutterActiveForeground = Color(0xFFFF8800),
         gutterBorderColor = Color(0xFFFF00FF),
-        contentTextStyle = TextStyle(
-            fontSize = 13.sp,
-            lineHeight = (13 * 1.4).sp,
-            color = Color(0xFFFFFFFF)
-        ),
         searchMatchBackground = Color(0x80AAFF00.toInt()),
         searchMatchSelectedBackground = Color(0x80FF4400.toInt()),
         selectionMatchBackground = Color(0x6600AAFF),
@@ -191,11 +187,12 @@ object TestScenarios {
 
     fun jsExtensionsContrast(): Extension {
         val lang = Language(configuredParser, "javascript")
-        return ExtensionList(
-            listOf(
-                lang.extension,
-                syntaxHighlighting(extremeContrastHighlightStyle),
-                editorTheme.of(extremeContrastTheme)
+        return extensionListOf(
+            lang.extension,
+            syntaxHighlighting(extremeContrastHighlightStyle),
+            editorTheme.of(extremeContrastTheme),
+            editorContentStyle.of(
+                TextStyle(fontSize = 13.sp, lineHeight = (13 * 1.4).sp)
             )
         )
     }

@@ -16,26 +16,19 @@
  * Originally based on CodeMirror 6 by Marijn Haverbeke, licensed under MIT.
  * See NOTICE file for details.
  */
-@file:OptIn(ExperimentalTextApi::class)
-
 package com.monkopedia.kodemirror.themedracula
 
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.platform.SystemFont
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.language.HighlightStyle
 import com.monkopedia.kodemirror.language.TagStyleSpec
 import com.monkopedia.kodemirror.language.syntaxHighlighting
 import com.monkopedia.kodemirror.lezer.highlight.Tags
 import com.monkopedia.kodemirror.state.Extension
-import com.monkopedia.kodemirror.state.ExtensionList
+import com.monkopedia.kodemirror.state.extensionListOf
 import com.monkopedia.kodemirror.view.EditorTheme
 import com.monkopedia.kodemirror.view.editorTheme
 
@@ -59,15 +52,6 @@ object DraculaColors {
     val selection = Color(0xFF44475A)
     val darkBackground = Color(0xFF21222C)
 }
-
-private val editorFontFamily = FontFamily(
-    SystemFont("JetBrains Mono"),
-    SystemFont("DejaVu Sans Mono"),
-    SystemFont("Noto Sans Arabic"),
-    SystemFont("Noto Sans Hebrew"),
-    SystemFont("monospace"),
-    SystemFont("sans-serif")
-)
 
 /**
  * Dracula syntax highlighting style.
@@ -178,12 +162,6 @@ val draculaTheme: EditorTheme = EditorTheme(
     gutterForeground = DraculaColors.comment,
     gutterActiveForeground = DraculaColors.foreground,
     gutterBorderColor = Color.Transparent,
-    contentTextStyle = TextStyle(
-        fontFamily = editorFontFamily,
-        fontSize = 15.sp,
-        lineHeight = (15 * 1.4).sp,
-        color = DraculaColors.foreground
-    ),
     searchMatchBackground = Color(0x59FFB86C),
     searchMatchSelectedBackground = Color(0x2FFFB86C),
     selectionMatchBackground = Color(0x1ABD93F9),
@@ -208,9 +186,7 @@ val draculaTheme: EditorTheme = EditorTheme(
  *
  * Drop this into an editor's extension list for a complete Dracula look.
  */
-val dracula: Extension = ExtensionList(
-    listOf(
-        editorTheme.of(draculaTheme),
-        syntaxHighlighting(draculaHighlightStyle)
-    )
+val dracula: Extension = extensionListOf(
+    editorTheme.of(draculaTheme),
+    syntaxHighlighting(draculaHighlightStyle)
 )

@@ -29,7 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
-import com.monkopedia.kodemirror.state.ExtensionList
+import com.monkopedia.kodemirror.state.extensionListOf
 import com.monkopedia.kodemirror.view.EditorTheme
 import com.monkopedia.kodemirror.view.GutterConfig
 import com.monkopedia.kodemirror.view.GutterMarker
@@ -108,5 +108,5 @@ fun lintGutter(config: LintGutterConfig = LintGutterConfig()): Extension {
         }
     }
 
-    return ExtensionList(listOf(gutterExt, hoverExt))
+    return extensionListOf(gutterExt, hoverExt)
 }

@@ -137,6 +137,9 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
 
     // Derive rendering data from current state
     val theme = state.facet(editorTheme)
+    val contentStyle = state.facet(editorContentStyle).let { style ->
+        if (style.color == Color.Unspecified) style.copy(color = theme.foreground) else style
+    }
     val allPanels = buildList {
         state.facet(showPanel)?.let { add(it) }
         addAll(state.facet(showPanels))
@@ -167,14 +170,14 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     var recentlyDragged by remember { mutableStateOf(false) }
 
     val density = LocalDensity.current
-    val lineHeightDp = with(density) { theme.contentTextStyle.lineHeight.toDp() }
+    val lineHeightDp = with(density) { contentStyle.lineHeight.toDp() }
 
     // Compute gutter width based on digit count + padding (5dp + 3dp)
     val configs = state.facet(gutters)
     val gutterWidthDp = if (hasGutters) {
         val maxDigits = state.doc.lines.toString().length
         val charWidthDp = with(density) {
-            (theme.contentTextStyle.fontSize.toPx() * 0.65f).toDp()
+            (contentStyle.fontSize.toPx() * 0.65f).toDp()
         }
         val lineNumberWidth = charWidthDp * maxDigits + 8.dp
         val extraGutterWidth =
@@ -191,6 +194,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
 
     CompositionLocalProvider(
         LocalEditorTheme provides theme,
+        LocalContentTextStyle provides contentStyle,
         LocalEditorSession provides session
     ) {
         Column(modifier = modifier.fillMaxSize()) {
@@ -450,7 +454,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                     ) {
                                         BasicText(
                                             text = item.content,
-                                            style = theme.contentTextStyle,
+                                            style = contentStyle,
                                             onTextLayout = { result: TextLayoutResult ->
                                                 textLayout = result
                                             }

@@ -45,15 +45,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.LocalContentTextStyle
 import com.monkopedia.kodemirror.view.LocalEditorTheme
 
 /** Composable search/replace panel UI. */
 @Composable
 internal fun SearchPanel(view: EditorSession) {
     val theme = LocalEditorTheme.current
-    val panelTextStyle = theme.contentTextStyle.copy(
+    val contentStyle = LocalContentTextStyle.current
+    val panelTextStyle = contentStyle.copy(
         color = theme.foreground,
-        fontSize = (theme.contentTextStyle.fontSize.value * 0.8).sp
+        fontSize = (contentStyle.fontSize.value * 0.8).sp
     )
     val buttonShape = RoundedCornerShape(1.dp)
     val buttonMod = Modifier
