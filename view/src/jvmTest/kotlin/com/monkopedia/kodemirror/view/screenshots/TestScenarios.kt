@@ -61,6 +61,29 @@ object TestScenarios {
         |console.log(results);
     """.trimMargin()
 
+    val BIDI_CODE = """
+        |// مرحبا بالعالم - Hello World in Arabic
+        |// שלום עולם - Hello World in Hebrew
+        |
+        |function greet(name) {
+        |  // التحية بالاسم
+        |  const greeting = "مرحبا، " + name + "!";
+        |  console.log(greeting);
+        |}
+        |
+        |const names = [
+        |  "Alice",
+        |  "أحمد",     // Ahmed
+        |  "דוד",       // David
+        |  "خالد",     // Khaled
+        |];
+        |
+        |// حلقة لطباعة كل الأسماء
+        |for (const n of names) {
+        |  greet(n); // استدعاء الدالة
+        |}
+    """.trimMargin()
+
     val PLACEHOLDER_TEXT = "Enter your code here..."
 
     private val foldPropSource = foldNodeProp.add { type ->
