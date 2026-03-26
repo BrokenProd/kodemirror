@@ -494,6 +494,91 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 
 ---
 
+## Priority 5 — Configuration Parity with CM6
+
+*Identified 2026-03-26 via gap analysis comparing CM6 CSS/config customizability vs KM.*
+
+CM6 allows extensive customization through CSS overrides and configuration objects.
+KM has hardcoded values in many places where CM6 allows user control. These gaps
+prevent users from creating cohesive custom themes or replacing built-in UI components.
+
+### 33. Add `SearchConfig` with `createPanel` option
+- **Effort:** 1–2 days | **Source:** Gap Analysis
+- CM6's `search()` accepts a `SearchConfig` with `createPanel` (custom panel factory),
+  `top` (panel position), and default query options.
+- KM's `SearchPanel` is `internal` with hardcoded layout: `200.dp` input width, `0.8`
+  font scale, `4.dp` spacing, `12.dp` checkboxes, `1.dp` button corners.
+- **Fix:** Add a `SearchConfig` data class and expose it as a parameter to `search()`.
+  Include a `createPanel: (@Composable (EditorSession) -> Unit)?` slot for full
+  replacement, plus individual layout properties for lighter customization.
+- Also applies to `GoToLinePanel` (hardcoded `80.dp` input width).
+- **Files:** `search/src/commonMain/.../Search.kt`, `search/src/commonMain/.../SearchPanel.kt`,
+  `search/src/commonMain/.../GotoLine.kt`
+
+### 34. Make autocomplete colors and styling themeable
+- **Effort:** 1 day | **Source:** Gap Analysis
+- **Critical:** Autocomplete list has `Color.White` background and `Color(0xFFE0E0FF)`
+  selection — hardcoded, not from `EditorTheme`. Renders broken in dark themes.
+- Add to `EditorTheme`: `completionBackground`, `completionSelectedBackground`,
+  `completionForeground`, `completionSelectedForeground`.
+- Also: icon column width (`20.dp`) and item padding (`4.dp`/`2.dp`) are hardcoded.
+- **Files:** `autocomplete/src/commonMain/.../View.kt`,
+  `view/src/commonMain/.../EditorTheme.kt`
+
+### 35. Make lint severity colors and panel styling themeable
+- **Effort:** 1 day | **Source:** Gap Analysis
+- Lint gutter markers and diagnostic panel use hardcoded Material Design colors:
+  hint=`#2196F3`, info=`#4CAF50`, warning=`#FF9800`, error=`#F44336`.
+- These don't match any editor theme. Add to `EditorTheme` (or a `LintTheme`):
+  `diagnosticHintColor`, `diagnosticInfoColor`, `diagnosticWarningColor`,
+  `diagnosticErrorColor`.
+- Marker size (`8.dp`) and panel padding (`4.dp`) also hardcoded.
+- **Files:** `lint/src/commonMain/.../LintGutter.kt`, `lint/src/commonMain/.../LintPanel.kt`,
+  `view/src/commonMain/.../EditorTheme.kt`
+
+### 36. Add missing `EditorTheme` properties for full CM6 parity
+- **Effort:** 1 day | **Source:** Gap Analysis
+- `EditorTheme` covers ~25 color properties but CM6 themes can style many more elements.
+  Missing properties include:
+  - Indent guide color (`.cm-indentGuide`)
+  - Tooltip border color (`.cm-tooltip`)
+  - Scrollbar colors (`.cm-scroller` scrollbar pseudo-elements)
+  - Line number hover background
+- Also: whitespace highlighting uses hardcoded `Color(0x40808080)` for space/tab marks
+  and `Color(0x30FF6666)` for trailing whitespace. Special char widgets use hardcoded
+  `Color.White` text on `Color(0xFFCC0000)` background.
+- **Files:** `view/src/commonMain/.../EditorTheme.kt`,
+  `view/src/commonMain/.../HighlightWhitespace.kt`,
+  `view/src/commonMain/.../SpecialChars.kt`
+
+### 37. Expose gutter and content padding as configurable
+- **Effort:** < 1 day | **Source:** Gap Analysis
+- Line number gutter: hardcoded `padding(start = 5.dp, end = 3.dp)`, custom gutter
+  columns `width(14.dp)`, content padding `4.dp` top/bottom.
+- Character width multiplier `0.65f` and panel border `height(1.dp)` also hardcoded.
+- Drop cursor width hardcoded at `2.dp`.
+- These should either be in `EditorTheme` or a layout configuration object.
+- **Files:** `view/src/commonMain/.../Gutter.kt`, `view/src/commonMain/.../KodeMirror.kt`,
+  `view/src/commonMain/.../Panel.kt`, `view/src/commonMain/.../DropCursor.kt`
+
+### 38. Add missing `CompletionConfig` options
+- **Effort:** 1 day | **Source:** Gap Analysis
+- CM6's autocomplete config has options KM doesn't expose: `defaultKeymap`,
+  `addToOptions`, `optionClass`, `tooltipClass`, `completeThroughSelection`.
+- Also: the completion list composable is `internal` — users cannot replace it with
+  a custom popup (CM6 allows full DOM control via `createPanel`-style patterns).
+- **Files:** `autocomplete/src/commonMain/.../Config.kt`,
+  `autocomplete/src/commonMain/.../View.kt`
+
+### 39. Add `LintConfig` with `createPanel` option
+- **Effort:** < 1 day | **Source:** Gap Analysis
+- CM6's lint supports `createPanel` for custom lint panel UI. KM's `LintPanelContent`
+  is `internal` and not replaceable.
+- Also missing: custom marker rendering configuration.
+- **Files:** `lint/src/commonMain/.../LintTypes.kt`, `lint/src/commonMain/.../LintPanel.kt`
+
+---
+
 ## Summary
 
 | Priority | Done | Pending | Blocked | Skipped | Description |
@@ -502,5 +587,6 @@ Skipped: #12, #13 (subsumed by #3b), #53 (bit flags idiomatic), #57 (lambdas suf
 | 2 | 6 | — | 1 | — | Medium impact ergonomics |
 | 3 | 9 | — | — | 1 | Documentation gaps |
 | 4 | 6 | — | — | 1 | Polish and nice-to-have |
+| 5 | — | 7 | — | — | Configuration parity with CM6 |
 | Carried | 3 | 0 | 4 | 2 | Carried over from round 1 |
-| **Total** | **32** | **0** | **5** | **4** | |
+| **Total** | **32** | **7** | **5** | **4** | |
