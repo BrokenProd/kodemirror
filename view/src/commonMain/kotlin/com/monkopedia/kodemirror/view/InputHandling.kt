@@ -48,7 +48,10 @@ fun keyEventToName(event: KeyEvent): String {
     val keyName = if (isSpecialKey(event.key)) {
         keyName(event.key)
     } else {
-        keyEventLayoutKey(event) ?: keyName(event.key)
+        val layoutKey = keyEventLayoutKey(event)
+        // Normalize space character to "Space" for consistent key binding
+        // matching (browser reports " " but bindings use "Space").
+        if (layoutKey == " ") "Space" else layoutKey ?: keyName(event.key)
     }
     parts.add(keyName)
     return parts.joinToString("-")
@@ -232,7 +235,8 @@ private fun keyEventToNameWithoutShift(event: KeyEvent): String {
     val name = if (isSpecialKey(event.key)) {
         keyName(event.key)
     } else {
-        keyEventLayoutKey(event) ?: keyName(event.key)
+        val layoutKey = keyEventLayoutKey(event)
+        if (layoutKey == " ") "Space" else layoutKey ?: keyName(event.key)
     }
     parts.add(name)
     return parts.joinToString("-")
