@@ -72,19 +72,29 @@ private class InfoWidget : WidgetType() {
 private fun buildDecorations(doc: Text): DecorationSet {
     val builder = RangeSetBuilder<Decoration>()
     val text = doc.toString()
+    // Collect all decorations, then add sorted by position.
+    data class Entry(val from: Int, val to: Int, val deco: Decoration)
+
+    val entries = mutableListOf<Entry>()
     // Highlight "function" keywords
     var idx = text.indexOf("function")
     while (idx >= 0) {
-        builder.add(DocPos(idx), DocPos(idx + 8), highlightMark)
+        entries.add(Entry(idx, idx + 8, highlightMark))
         idx = text.indexOf("function", idx + 1)
     }
     // Widget after first line
     if (doc.lines >= 1) {
-        val firstLineEnd = doc.line(LineNumber(1)).to
-        builder.add(
-            firstLineEnd, firstLineEnd,
-            Decoration.widget(WidgetDecorationSpec(InfoWidget()))
+        val pos = doc.line(LineNumber(1)).to.value
+        entries.add(
+            Entry(
+                pos, pos,
+                Decoration.widget(WidgetDecorationSpec(InfoWidget()))
+            )
         )
+    }
+    entries.sortBy { it.from }
+    for (e in entries) {
+        builder.add(DocPos(e.from), DocPos(e.to), e.deco)
     }
     return builder.finish()
 }

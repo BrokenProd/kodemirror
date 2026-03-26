@@ -156,6 +156,52 @@ class DecorationTest {
     }
 
     @Test
+    fun unsortedDecorationsThrows() {
+        // Reproduces the showcase DecorationDemo crash: adding marks for
+        // "function" keywords (starting at pos 22+) then a widget at end
+        // of line 1 (pos 21) is out of order.
+        val text = "// Fibonacci sequence\nfunction fibonacci(n) {\n}"
+        val builder = RangeSetBuilder<Decoration>()
+        val mark = Decoration.mark(MarkDecorationSpec())
+        var idx = text.indexOf("function")
+        while (idx >= 0) {
+            builder.add(DocPos(idx), DocPos(idx + 8), mark)
+            idx = text.indexOf("function", idx + 1)
+        }
+        val firstLineEnd = text.indexOf('\n')
+        val widget = Decoration.widget(WidgetDecorationSpec(widget = SimpleWidget()))
+        kotlin.test.assertFailsWith<IllegalStateException> {
+            builder.add(DocPos(firstLineEnd), DocPos(firstLineEnd), widget)
+        }
+    }
+
+    @Test
+    fun sortedDecorationsSucceeds() {
+        // Same scenario as above but with ranges sorted — the fix.
+        val text = "// Fibonacci sequence\nfunction fibonacci(n) {\n}"
+        val mark = Decoration.mark(MarkDecorationSpec())
+        val widget = Decoration.widget(WidgetDecorationSpec(widget = SimpleWidget()))
+        data class Entry(val from: Int, val to: Int, val deco: Decoration)
+
+        val entries = mutableListOf<Entry>()
+        var idx = text.indexOf("function")
+        while (idx >= 0) {
+            entries.add(Entry(idx, idx + 8, mark))
+            idx = text.indexOf("function", idx + 1)
+        }
+        val firstLineEnd = text.indexOf('\n')
+        entries.add(Entry(firstLineEnd, firstLineEnd, widget))
+        entries.sortBy { it.from }
+
+        val builder = RangeSetBuilder<Decoration>()
+        for (e in entries) {
+            builder.add(DocPos(e.from), DocPos(e.to), e.deco)
+        }
+        val set = builder.finish()
+        assertEquals(2, set.size)
+    }
+
+    @Test
     fun widgetTypeEquality() {
         val w1 = SimpleWidget()
         val w2 = SimpleWidget()
