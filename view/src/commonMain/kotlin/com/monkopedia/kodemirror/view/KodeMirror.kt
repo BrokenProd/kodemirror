@@ -99,6 +99,11 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     val pendingLineLayouts = remember(session) {
         mutableMapOf<Int, PendingLineLayout>()
     }
+    // TextLayoutResult per line, populated from onTextLayout (always reliable).
+    // Used as a fallback for tap positioning when lineLayoutCache is incomplete.
+    val textLayoutResults = remember(session) {
+        mutableMapOf<Int, TextLayoutResult>()
+    }
 
     // Wire up session internals
     DisposableEffect(session) {
@@ -293,7 +298,27 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                 return@detectTapGestures
                             }
                             focusRequester.requestFocus()
-                            handleTap(session, offset)
+                            // Use LazyColumn layout info (always reliable) with
+                            // cache-based positioning as fallback.
+                            val pos = posFromVisibleItems(
+                                offset,
+                                lazyState,
+                                columnItems,
+                                textLayoutResults,
+                                hasGutters,
+                                gutterWidthDp,
+                                density
+                            )
+                                ?: session.posAtCoords(offset.x, offset.y)
+                                ?: return@detectTapGestures
+                            session.dispatch(
+                                TransactionSpec(
+                                    selection = com.monkopedia.kodemirror.state
+                                        .SelectionSpec.CursorSpec(
+                                            com.monkopedia.kodemirror.state.DocPos(pos)
+                                        )
+                                )
+                            )
                         }
                     }
                     .pointerInput(session) {
@@ -507,6 +532,8 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                             style = contentStyle,
                                             onTextLayout = { result: TextLayoutResult ->
                                                 textLayout = result
+                                                textLayoutResults[capturedLineNum.value] =
+                                                    result
                                             }
                                         )
                                         for (widget in item.inlineWidgets) {
@@ -592,3 +619,38 @@ private class PendingLineLayout(
     val coords: LayoutCoordinates,
     val result: TextLayoutResult
 )
+
+/**
+ * Compute a document position from a tap offset using the [LazyColumn]'s own
+ * layout info. This is reliable even when [LineLayoutCache] hasn't been
+ * populated yet (first render / page switch).
+ */
+private fun posFromVisibleItems(
+    offset: Offset,
+    lazyState: androidx.compose.foundation.lazy.LazyListState,
+    columnItems: List<ColumnItem>,
+    textLayoutResults: Map<Int, TextLayoutResult>,
+    hasGutters: Boolean,
+    gutterWidthDp: androidx.compose.ui.unit.Dp,
+    density: androidx.compose.ui.unit.Density
+): Int? {
+    val contentStartPx = with(density) {
+        (if (hasGutters) gutterWidthDp.toPx() else 0f) + 6.dp.toPx()
+    }
+    for (info in lazyState.layoutInfo.visibleItemsInfo) {
+        val item = columnItems.getOrNull(info.index)
+            as? ColumnItem.TextLine ?: continue
+        val itemTop = info.offset.toFloat()
+        val itemBottom = itemTop + info.size.toFloat()
+        if (offset.y >= itemTop && offset.y < itemBottom) {
+            val layout = textLayoutResults[item.lineNumber.value]
+                ?: return item.from.value // no layout yet, return line start
+            val localY = offset.y - itemTop
+            val localX = (offset.x - contentStartPx).coerceAtLeast(0f)
+            val charOffset = layout.getOffsetForPosition(Offset(localX, localY))
+            return item.from.value +
+                charOffset.coerceIn(0, layout.layoutInput.text.length)
+        }
+    }
+    return null
+}
