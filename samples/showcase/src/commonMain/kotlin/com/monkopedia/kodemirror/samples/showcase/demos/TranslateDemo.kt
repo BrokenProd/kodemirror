@@ -34,6 +34,7 @@ import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
 import com.monkopedia.kodemirror.samples.showcase.SampleDocs
+import com.monkopedia.kodemirror.search.openSearchPanel
 import com.monkopedia.kodemirror.state.Compartment
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
@@ -93,7 +94,7 @@ fun TranslateDemo() {
     DemoScaffold(
         title = "Phrase Translation",
         description = "Translate editor UI phrases (Find, Replace, etc.) via the phrases facet. " +
-            "Open search with Ctrl+F to see translated labels.",
+            "Select a language to open the search panel with translated labels.",
         controls = {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
@@ -111,6 +112,9 @@ fun TranslateDemo() {
                                     )
                                 )
                             )
+                            if (l.phrases.isNotEmpty()) {
+                                openSearchPanel(session)
+                            }
                         },
                         label = { Text(l.label) }
                     )
