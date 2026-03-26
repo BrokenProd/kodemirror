@@ -58,6 +58,7 @@ private fun keyName(key: Key): String = when (key) {
     Key.Enter -> "Enter"
     Key.Escape -> "Escape"
     Key.Tab -> "Tab"
+    Key.Spacebar -> "Space"
     Key.Backspace -> "Backspace"
     Key.Delete -> "Delete"
     Key.DirectionLeft -> "ArrowLeft"
@@ -124,7 +125,7 @@ private fun keyName(key: Key): String = when (key) {
  * should always come from the physical key code, not the keyboard layout.
  */
 private fun isSpecialKey(key: Key): Boolean = when (key) {
-    Key.Enter, Key.Escape, Key.Tab, Key.Backspace, Key.Delete,
+    Key.Enter, Key.Escape, Key.Tab, Key.Spacebar, Key.Backspace, Key.Delete,
     Key.DirectionLeft, Key.DirectionRight, Key.DirectionUp, Key.DirectionDown,
     Key.Home, Key.MoveEnd, Key.PageUp, Key.PageDown,
     Key.F1, Key.F2, Key.F3, Key.F4, Key.F5, Key.F6,
