@@ -235,8 +235,11 @@ public final class com/monkopedia/kodemirror/autocomplete/ViewKt {
 	public static final fun getCloseCompletion ()Lkotlin/jvm/functions/Function1;
 	public static final fun getCompleteAnyWord ()Lkotlin/jvm/functions/Function1;
 	public static final fun getCompletionBackground ()Lcom/monkopedia/kodemirror/view/ThemeKey;
+	public static final fun getCompletionDetailColor ()Lcom/monkopedia/kodemirror/view/ThemeKey;
+	public static final fun getCompletionIconColor ()Lcom/monkopedia/kodemirror/view/ThemeKey;
 	public static final fun getCompletionKeymap ()Ljava/util/List;
 	public static final fun getCompletionSelectedBackground ()Lcom/monkopedia/kodemirror/view/ThemeKey;
+	public static final fun getCompletionTextColor ()Lcom/monkopedia/kodemirror/view/ThemeKey;
 	public static final fun getStartCompletion ()Lkotlin/jvm/functions/Function1;
 	public static final fun ifIn (Ljava/util/List;Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function1;
 	public static final fun ifNotIn (Ljava/util/List;Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function1;

@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
@@ -60,6 +61,15 @@ val completionBackground = ThemeKey(default = Color(0xFF353A42))
 
 /** Background color for the selected completion item. */
 val completionSelectedBackground = ThemeKey(default = Color(0xFF3E4451))
+
+/** Text color for completion labels. */
+val completionTextColor = ThemeKey(default = Color(0xFFABB2BF))
+
+/** Text color for completion detail/info text. */
+val completionDetailColor = ThemeKey(default = Color(0xFF7F848E))
+
+/** Text color for completion type icons. */
+val completionIconColor = ThemeKey(default = Color(0xFF61AFEF))
 
 // ── Commands ──
 
@@ -246,9 +256,11 @@ private fun CompletionList(
                         .clickable { applyCompletion(view, item.completion, result) }
                         .padding(horizontal = 4.dp, vertical = 2.dp)
                 ) {
+                    val textColor = theme[completionTextColor]
                     if (config.icons && item.completion.type != null) {
                         BasicText(
                             text = typeIcon(item.completion.type),
+                            style = TextStyle(color = theme[completionIconColor]),
                             modifier = Modifier.width(20.dp)
                         )
                     }
@@ -256,11 +268,13 @@ private fun CompletionList(
                         text = buildHighlightedLabel(
                             item.completion.displayLabel ?: item.completion.label,
                             item.highlighted
-                        )
+                        ),
+                        style = TextStyle(color = textColor)
                     )
                     if (item.completion.detail != null) {
                         BasicText(
                             text = " ${item.completion.detail}",
+                            style = TextStyle(color = theme[completionDetailColor]),
                             modifier = Modifier.padding(start = 4.dp)
                         )
                     }
