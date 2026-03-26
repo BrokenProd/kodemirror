@@ -502,80 +502,160 @@ CM6 allows extensive customization through CSS overrides and configuration objec
 KM has hardcoded values in many places where CM6 allows user control. These gaps
 prevent users from creating cohesive custom themes or replacing built-in UI components.
 
-### 33. Add `SearchConfig` with `createPanel` option
+### 33a. Add `ThemeKey<T>` extensible theme lookup system
+- **Effort:** < 1 day | **Source:** Gap Analysis
+- `EditorTheme` currently has ~25 named color properties. Adding per-module colors
+  (lint severity, autocomplete, whitespace, special chars, indent guides) would balloon
+  it to 35+ and require modifying `EditorTheme` for every new module.
+- **Fix:** Add a `ThemeKey<T>` typed key system, following the `LanguageDataKey<T>` precedent.
+  Modules define their own keys with defaults; themes can override them via an extras map.
+  ```kotlin
+  // ThemeKey definition — each module owns its keys
+  class ThemeKey<T>(val default: T)
+
+  // EditorTheme gains an extensible extras map
+  data class EditorTheme(
+      val background: Color = ...,
+      // ...existing core properties stay as named fields...
+      val extras: Map<ThemeKey<*>, Any?> = emptyMap()
+  ) {
+      operator fun <T> get(key: ThemeKey<T>): T =
+          (extras[key] as? T) ?: key.default
+  }
+
+  // Usage in lint module:
+  val diagnosticErrorColor = ThemeKey(default = Color(0xFFF44336))
+  val color = theme[diagnosticErrorColor]
+
+  // User overrides via themeExtras():
+  val myTheme = EditorTheme(...) + themeExtras(
+      diagnosticErrorColor to Color(0xFFE06C75),
+      completionBackground to Color(0xFF21252B),
+  )
+  ```
+- Core properties (background, foreground, cursor, selection, etc.) remain as named
+  fields — they're universal. Module-specific colors use `ThemeKey`.
+- **Prerequisite for:** #34, #35, #36.
+- **Files:** `view/src/commonMain/.../EditorTheme.kt`
+
+### 33b. Expose `BoxScope` on `Panel.content` and add `panelModifier` to `search()`
 - **Effort:** 1–2 days | **Source:** Gap Analysis
-- CM6's `search()` accepts a `SearchConfig` with `createPanel` (custom panel factory),
-  `top` (panel position), and default query options.
-- KM's `SearchPanel` is `internal` with hardcoded layout: `200.dp` input width, `0.8`
-  font scale, `4.dp` spacing, `12.dp` checkboxes, `1.dp` button corners.
-- **Fix:** Add a `SearchConfig` data class and expose it as a parameter to `search()`.
-  Include a `createPanel: (@Composable (EditorSession) -> Unit)?` slot for full
-  replacement, plus individual layout properties for lighter customization.
+- **Panel API change:** `Panel.content` is currently `@Composable () -> Unit` but always
+  renders inside a `Box` in `PanelLayout`. Change to `@Composable BoxScope.() -> Unit`
+  to expose the real scope — gives all panel users access to `align()`, `matchParentSize()`,
+  etc. This benefits search, lint, goto-line, and any user-provided panels.
+- **Search customization:** Add a `panelModifier` parameter to `search()`:
+  ```kotlin
+  fun search(
+      panelModifier: (BoxScope.() -> Modifier)? = null
+  ): Extension
+  ```
+  Usage:
+  ```kotlin
+  val extensions = basicSetup + search(panelModifier = {
+      Modifier.widthIn(max = 300.dp).align(Alignment.TopEnd)
+  })
+  ```
+  The modifier is applied to the built-in `SearchPanel`'s root inside the panel Box.
+  Users get layout control (width, alignment, padding) without replacing the panel.
+- **Future:** A full `createPanel` slot can be added later if users need complete
+  replacement. The `BoxScope` change makes that addition straightforward.
+- KM's `SearchPanel` also has hardcoded layout: `200.dp` input width, `0.8` font scale,
+  `4.dp` spacing, `12.dp` checkboxes — these remain as reasonable defaults.
 - Also applies to `GoToLinePanel` (hardcoded `80.dp` input width).
-- **Files:** `search/src/commonMain/.../Search.kt`, `search/src/commonMain/.../SearchPanel.kt`,
-  `search/src/commonMain/.../GotoLine.kt`
+- **Files:** `view/src/commonMain/.../Panel.kt`, `search/src/commonMain/.../Search.kt`,
+  `search/src/commonMain/.../SearchPanel.kt`, `search/src/commonMain/.../GotoLine.kt`
 
-### 34. Make autocomplete colors and styling themeable
-- **Effort:** 1 day | **Source:** Gap Analysis
+### 34. Make autocomplete colors themeable via `ThemeKey`
+- **Effort:** < 1 day | **Source:** Gap Analysis | **Depends on:** #33a
 - **Critical:** Autocomplete list has `Color.White` background and `Color(0xFFE0E0FF)`
-  selection — hardcoded, not from `EditorTheme`. Renders broken in dark themes.
-- Add to `EditorTheme`: `completionBackground`, `completionSelectedBackground`,
-  `completionForeground`, `completionSelectedForeground`.
-- Also: icon column width (`20.dp`) and item padding (`4.dp`/`2.dp`) are hardcoded.
-- **Files:** `autocomplete/src/commonMain/.../View.kt`,
-  `view/src/commonMain/.../EditorTheme.kt`
+  selection — hardcoded, not from theme. Renders broken in dark themes.
+- Define `ThemeKey`s in the autocomplete module:
+  ```kotlin
+  val completionBackground = ThemeKey(default = Color(0xFF353A42))
+  val completionSelectedBackground = ThemeKey(default = Color(0xFF3E4451))
+  ```
+- Read via `theme[completionBackground]` instead of `Color.White`.
+- **Files:** `autocomplete/src/commonMain/.../View.kt`
 
-### 35. Make lint severity colors and panel styling themeable
-- **Effort:** 1 day | **Source:** Gap Analysis
-- Lint gutter markers and diagnostic panel use hardcoded Material Design colors:
-  hint=`#2196F3`, info=`#4CAF50`, warning=`#FF9800`, error=`#F44336`.
-- These don't match any editor theme. Add to `EditorTheme` (or a `LintTheme`):
-  `diagnosticHintColor`, `diagnosticInfoColor`, `diagnosticWarningColor`,
-  `diagnosticErrorColor`.
-- Marker size (`8.dp`) and panel padding (`4.dp`) also hardcoded.
-- **Files:** `lint/src/commonMain/.../LintGutter.kt`, `lint/src/commonMain/.../LintPanel.kt`,
-  `view/src/commonMain/.../EditorTheme.kt`
+### 35. Make lint severity colors themeable via `ThemeKey`
+- **Effort:** < 1 day | **Source:** Gap Analysis | **Depends on:** #33a
+- Lint gutter markers and diagnostic panel use hardcoded Material Design colors
+  (duplicated in `LintGutter.kt` and `LintPanel.kt`). Define `ThemeKey`s in the lint
+  module:
+  ```kotlin
+  val diagnosticHintColor = ThemeKey(default = Color(0xFF2196F3))
+  val diagnosticInfoColor = ThemeKey(default = Color(0xFF4CAF50))
+  val diagnosticWarningColor = ThemeKey(default = Color(0xFFFF9800))
+  val diagnosticErrorColor = ThemeKey(default = Color(0xFFF44336))
+  ```
+- Both gutter and panel read from the same keys — eliminates duplication.
+- **Files:** `lint/src/commonMain/.../LintGutter.kt`, `lint/src/commonMain/.../LintPanel.kt`
 
-### 36. Add missing `EditorTheme` properties for full CM6 parity
-- **Effort:** 1 day | **Source:** Gap Analysis
-- `EditorTheme` covers ~25 color properties but CM6 themes can style many more elements.
-  Missing properties include:
-  - Indent guide color (`.cm-indentGuide`)
-  - Tooltip border color (`.cm-tooltip`)
-  - Scrollbar colors (`.cm-scroller` scrollbar pseudo-elements)
-  - Line number hover background
-- Also: whitespace highlighting uses hardcoded `Color(0x40808080)` for space/tab marks
-  and `Color(0x30FF6666)` for trailing whitespace. Special char widgets use hardcoded
-  `Color.White` text on `Color(0xFFCC0000)` background.
-- **Files:** `view/src/commonMain/.../EditorTheme.kt`,
-  `view/src/commonMain/.../HighlightWhitespace.kt`,
+### 36. Move remaining hardcoded colors to `ThemeKey`s
+- **Effort:** < 1 day | **Source:** Gap Analysis | **Depends on:** #33a
+- Whitespace highlighting: `Color(0x40808080)` space/tab marks, `Color(0x30FF6666)`
+  trailing whitespace — define keys in the view module.
+- Special char widgets: `Color.White` text on `Color(0xFFCC0000)` background — define
+  keys in the view module.
+- Indent guide color, tooltip border color — define keys where used.
+- Each module owns its keys with sensible defaults; themes override via `themeExtras()`.
+- **Files:** `view/src/commonMain/.../HighlightWhitespace.kt`,
   `view/src/commonMain/.../SpecialChars.kt`
 
-### 37. Expose gutter and content padding as configurable
+### 37. Add `EditorLayout` data class nested in `EditorTheme`
 - **Effort:** < 1 day | **Source:** Gap Analysis
-- Line number gutter: hardcoded `padding(start = 5.dp, end = 3.dp)`, custom gutter
-  columns `width(14.dp)`, content padding `4.dp` top/bottom.
-- Character width multiplier `0.65f` and panel border `height(1.dp)` also hardcoded.
-- Drop cursor width hardcoded at `2.dp`.
-- These should either be in `EditorTheme` or a layout configuration object.
-- **Files:** `view/src/commonMain/.../Gutter.kt`, `view/src/commonMain/.../KodeMirror.kt`,
-  `view/src/commonMain/.../Panel.kt`, `view/src/commonMain/.../DropCursor.kt`
+- Core view module has hardcoded layout values across several files. These are all in
+  `:view` so they belong as named fields, but adding them directly to `EditorTheme`
+  would bloat the color-focused API. Nest them in an `EditorLayout` data class:
+  ```kotlin
+  data class EditorLayout(
+      val gutterStartPadding: Dp = 5.dp,
+      val gutterEndPadding: Dp = 3.dp,
+      val customGutterWidth: Dp = 14.dp,
+      val contentTopPadding: Dp = 4.dp,
+      val contentBottomPadding: Dp = 4.dp,
+      val panelBorderWidth: Dp = 1.dp,
+      val dropCursorWidth: Dp = 2.dp,
+  )
 
-### 38. Add missing `CompletionConfig` options
-- **Effort:** 1 day | **Source:** Gap Analysis
-- CM6's autocomplete config has options KM doesn't expose: `defaultKeymap`,
-  `addToOptions`, `optionClass`, `tooltipClass`, `completeThroughSelection`.
-- Also: the completion list composable is `internal` — users cannot replace it with
-  a custom popup (CM6 allows full DOM control via `createPanel`-style patterns).
-- **Files:** `autocomplete/src/commonMain/.../Config.kt`,
-  `autocomplete/src/commonMain/.../View.kt`
+  data class EditorTheme(
+      // ...existing color properties...
+      val layout: EditorLayout = EditorLayout(),
+      val extras: Map<ThemeKey<*>, Any?> = emptyMap(),
+  )
+  ```
+- Users who only care about colors never touch `layout`. Users who need layout
+  control get it without bloating `EditorTheme`'s top-level fields.
+- **Files:** `view/src/commonMain/.../EditorTheme.kt`, `view/src/commonMain/.../Gutter.kt`,
+  `view/src/commonMain/.../KodeMirror.kt`, `view/src/commonMain/.../Panel.kt`,
+  `view/src/commonMain/.../DropCursor.kt`
 
-### 39. Add `LintConfig` with `createPanel` option
-- **Effort:** < 1 day | **Source:** Gap Analysis
-- CM6's lint supports `createPanel` for custom lint panel UI. KM's `LintPanelContent`
-  is `internal` and not replaceable.
-- Also missing: custom marker rendering configuration.
-- **Files:** `lint/src/commonMain/.../LintTypes.kt`, `lint/src/commonMain/.../LintPanel.kt`
+### 38. Add `defaultKeymap` option to `CompletionConfig`
+- **Effort:** < 1 hour | **Source:** Gap Analysis
+- CM6's `CompletionConfig` has `defaultKeymap: boolean` to disable the built-in
+  Tab/Enter/Arrow keybindings. KM's `CompletionConfig` is missing this.
+- Add `val defaultKeymap: Boolean = true` to `CompletionConfig`. When `false`,
+  don't install the completion keymap — lets users provide their own bindings.
+- **Files:** `autocomplete/src/commonMain/.../Config.kt`
+
+### 39. [SKIP] Add `LintConfig` with `createPanel` option
+- **Skip reason:** Users can already build custom lint panels via the public `Panel` system
+  (`showPanels.of(...)`) and read diagnostics from state. No special lint-specific slot needed.
+  Lint colors are addressed by #35 via `ThemeKey`.
+
+---
+
+## Nice-to-Have (Backlog)
+
+*Ideas that could be implemented but aren't prioritized. Pull from here when relevant.*
+
+- **Custom completion row composable slot** — Let users provide a `@Composable` to render
+  each completion item (icon, label, detail). Equivalent to CM6's `addToOptions`. Would
+  require making the completion list composable public or adding a `renderOption` field
+  to `CompletionConfig`.
+- **`completeThroughSelection`** — CM6 option that controls whether completions replace
+  selected text. Niche use case.
 
 ---
 
@@ -587,6 +667,6 @@ prevent users from creating cohesive custom themes or replacing built-in UI comp
 | 2 | 6 | — | 1 | — | Medium impact ergonomics |
 | 3 | 9 | — | — | 1 | Documentation gaps |
 | 4 | 6 | — | — | 1 | Polish and nice-to-have |
-| 5 | — | 7 | — | — | Configuration parity with CM6 |
+| 5 | — | 6 | — | 1 | Configuration parity with CM6 |
 | Carried | 3 | 0 | 4 | 2 | Carried over from round 1 |
 | **Total** | **32** | **7** | **5** | **4** | |
