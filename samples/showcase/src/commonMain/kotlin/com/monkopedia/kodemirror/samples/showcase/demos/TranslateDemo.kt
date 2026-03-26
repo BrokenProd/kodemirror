@@ -118,7 +118,7 @@ fun TranslateDemo() {
             }
             if (lang.phrases.isNotEmpty()) {
                 val samples = lang.phrases.entries.take(3).joinToString("  ·  ") {
-                    "\"${it.key}\" → \"${it.value}\""
+                    "\"${it.key}\" -> \"${it.value}\""
                 }
                 Text(
                     text = samples,
