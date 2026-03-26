@@ -57,7 +57,8 @@ public final class com/monkopedia/kodemirror/search/SearchCursor : java/util/Ite
 }
 
 public final class com/monkopedia/kodemirror/search/SearchKt {
-	public static final fun search ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun search (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/Extension;
+	public static synthetic fun search$default (Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
 }
 
 public final class com/monkopedia/kodemirror/search/SearchMatch {

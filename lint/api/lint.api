@@ -97,6 +97,14 @@ public final class com/monkopedia/kodemirror/lint/LintStateKt {
 	public static final fun setDiagnostics (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/util/List;)V
 }
 
+public final class com/monkopedia/kodemirror/lint/LintTypesKt {
+	public static final fun getLintErrorColor ()Lcom/monkopedia/kodemirror/view/ThemeKey;
+	public static final fun getLintHintColor ()Lcom/monkopedia/kodemirror/view/ThemeKey;
+	public static final fun getLintInfoColor ()Lcom/monkopedia/kodemirror/view/ThemeKey;
+	public static final fun getLintSourceColor ()Lcom/monkopedia/kodemirror/view/ThemeKey;
+	public static final fun getLintWarningColor ()Lcom/monkopedia/kodemirror/view/ThemeKey;
+}
+
 public final class com/monkopedia/kodemirror/lint/Severity : java/lang/Enum {
 	public static final field ERROR Lcom/monkopedia/kodemirror/lint/Severity;
 	public static final field HINT Lcom/monkopedia/kodemirror/lint/Severity;

@@ -86,19 +86,21 @@ public final class com/monkopedia/kodemirror/autocomplete/CompletionApplyContext
 
 public final class com/monkopedia/kodemirror/autocomplete/CompletionConfig {
 	public fun <init> ()V
-	public fun <init> (ZZZIZLjava/util/List;)V
-	public synthetic fun <init> (ZZZIZLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZZZIZZLjava/util/List;)V
+	public synthetic fun <init> (ZZZIZZLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
 	public final fun component2 ()Z
 	public final fun component3 ()Z
 	public final fun component4 ()I
 	public final fun component5 ()Z
-	public final fun component6 ()Ljava/util/List;
-	public final fun copy (ZZZIZLjava/util/List;)Lcom/monkopedia/kodemirror/autocomplete/CompletionConfig;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/autocomplete/CompletionConfig;ZZZIZLjava/util/List;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/autocomplete/CompletionConfig;
+	public final fun component6 ()Z
+	public final fun component7 ()Ljava/util/List;
+	public final fun copy (ZZZIZZLjava/util/List;)Lcom/monkopedia/kodemirror/autocomplete/CompletionConfig;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/autocomplete/CompletionConfig;ZZZIZZLjava/util/List;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/autocomplete/CompletionConfig;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getActivateOnTyping ()Z
 	public final fun getCloseOnBlur ()Z
+	public final fun getDefaultKeymap ()Z
 	public final fun getIcons ()Z
 	public final fun getMaxRenderedOptions ()I
 	public final fun getOverride ()Ljava/util/List;
@@ -232,7 +234,9 @@ public final class com/monkopedia/kodemirror/autocomplete/ViewKt {
 	public static final fun getAcceptCompletion ()Lkotlin/jvm/functions/Function1;
 	public static final fun getCloseCompletion ()Lkotlin/jvm/functions/Function1;
 	public static final fun getCompleteAnyWord ()Lkotlin/jvm/functions/Function1;
+	public static final fun getCompletionBackground ()Lcom/monkopedia/kodemirror/view/ThemeKey;
 	public static final fun getCompletionKeymap ()Ljava/util/List;
+	public static final fun getCompletionSelectedBackground ()Lcom/monkopedia/kodemirror/view/ThemeKey;
 	public static final fun getStartCompletion ()Lkotlin/jvm/functions/Function1;
 	public static final fun ifIn (Ljava/util/List;Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function1;
 	public static final fun ifNotIn (Ljava/util/List;Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function1;

@@ -158,6 +158,30 @@ public final class com/monkopedia/kodemirror/view/DropCursorKt {
 	public static final fun getDropCursor ()Lcom/monkopedia/kodemirror/state/Extension;
 }
 
+public final class com/monkopedia/kodemirror/view/EditorLayout {
+	public synthetic fun <init> (FFFFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFFFFFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-D9Ej5fM ()F
+	public final fun component2-D9Ej5fM ()F
+	public final fun component3-D9Ej5fM ()F
+	public final fun component4-D9Ej5fM ()F
+	public final fun component5-D9Ej5fM ()F
+	public final fun component6-D9Ej5fM ()F
+	public final fun component7-D9Ej5fM ()F
+	public final fun copy-oRJhP44 (FFFFFFF)Lcom/monkopedia/kodemirror/view/EditorLayout;
+	public static synthetic fun copy-oRJhP44$default (Lcom/monkopedia/kodemirror/view/EditorLayout;FFFFFFFILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/EditorLayout;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContentBottomPadding-D9Ej5fM ()F
+	public final fun getContentTopPadding-D9Ej5fM ()F
+	public final fun getCustomGutterWidth-D9Ej5fM ()F
+	public final fun getDropCursorWidth-D9Ej5fM ()F
+	public final fun getGutterEndPadding-D9Ej5fM ()F
+	public final fun getGutterStartPadding-D9Ej5fM ()F
+	public final fun getPanelBorderWidth-D9Ej5fM ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract interface class com/monkopedia/kodemirror/view/EditorSession {
 	public static final field Companion Lcom/monkopedia/kodemirror/view/EditorSession$Companion;
 	public abstract fun bidiSpans (Lcom/monkopedia/kodemirror/state/Line;)Ljava/util/List;
@@ -204,8 +228,8 @@ public final class com/monkopedia/kodemirror/view/EditorSessionKt {
 }
 
 public final class com/monkopedia/kodemirror/view/EditorTheme {
-	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJJZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJJZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJJZLcom/monkopedia/kodemirror/view/EditorLayout;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJJZLcom/monkopedia/kodemirror/view/EditorLayout;Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1-0d7_KjU ()J
 	public final fun component10-0d7_KjU ()J
 	public final fun component11-0d7_KjU ()J
@@ -224,6 +248,8 @@ public final class com/monkopedia/kodemirror/view/EditorTheme {
 	public final fun component23-0d7_KjU ()J
 	public final fun component24-0d7_KjU ()J
 	public final fun component25 ()Z
+	public final fun component26 ()Lcom/monkopedia/kodemirror/view/EditorLayout;
+	public final fun component27 ()Ljava/util/Map;
 	public final fun component3-0d7_KjU ()J
 	public final fun component4-0d7_KjU ()J
 	public final fun component5-0d7_KjU ()J
@@ -231,9 +257,10 @@ public final class com/monkopedia/kodemirror/view/EditorTheme {
 	public final fun component7-0d7_KjU ()J
 	public final fun component8-0d7_KjU ()J
 	public final fun component9-0d7_KjU ()J
-	public final fun copy-tNwlRmA (JJJJJJJJJJJJJJJJJJJJJJJJZ)Lcom/monkopedia/kodemirror/view/EditorTheme;
-	public static synthetic fun copy-tNwlRmA$default (Lcom/monkopedia/kodemirror/view/EditorTheme;JJJJJJJJJJJJJJJJJJJJJJJJZILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/EditorTheme;
+	public final fun copy-0RxPSQ0 (JJJJJJJJJJJJJJJJJJJJJJJJZLcom/monkopedia/kodemirror/view/EditorLayout;Ljava/util/Map;)Lcom/monkopedia/kodemirror/view/EditorTheme;
+	public static synthetic fun copy-0RxPSQ0$default (Lcom/monkopedia/kodemirror/view/EditorTheme;JJJJJJJJJJJJJJJJJJJJJJJJZLcom/monkopedia/kodemirror/view/EditorLayout;Ljava/util/Map;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/EditorTheme;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun get (Lcom/monkopedia/kodemirror/view/ThemeKey;)Ljava/lang/Object;
 	public final fun getActiveLineBackground-0d7_KjU ()J
 	public final fun getActiveLineGutterBackground-0d7_KjU ()J
 	public final fun getBackground-0d7_KjU ()J
@@ -241,6 +268,7 @@ public final class com/monkopedia/kodemirror/view/EditorTheme {
 	public final fun getButtonBorderColor-0d7_KjU ()J
 	public final fun getCursor-0d7_KjU ()J
 	public final fun getDark ()Z
+	public final fun getExtras ()Ljava/util/Map;
 	public final fun getFoldPlaceholderBackground-0d7_KjU ()J
 	public final fun getFoldPlaceholderColor-0d7_KjU ()J
 	public final fun getForeground-0d7_KjU ()J
@@ -250,6 +278,7 @@ public final class com/monkopedia/kodemirror/view/EditorTheme {
 	public final fun getGutterForeground-0d7_KjU ()J
 	public final fun getInputBackground-0d7_KjU ()J
 	public final fun getInputBorderColor-0d7_KjU ()J
+	public final fun getLayout ()Lcom/monkopedia/kodemirror/view/EditorLayout;
 	public final fun getMatchingBracketBackground-0d7_KjU ()J
 	public final fun getNonMatchingBracketBackground-0d7_KjU ()J
 	public final fun getPanelBackground-0d7_KjU ()J
@@ -274,7 +303,13 @@ public final class com/monkopedia/kodemirror/view/EditorThemeKt {
 	public static final fun getLightEditorTheme ()Lcom/monkopedia/kodemirror/view/EditorTheme;
 	public static final fun getLocalContentTextStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalEditorTheme ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final fun getSpecialCharBackground ()Lcom/monkopedia/kodemirror/view/ThemeKey;
+	public static final fun getSpecialCharForeground ()Lcom/monkopedia/kodemirror/view/ThemeKey;
+	public static final fun getTrailingWhitespaceBackground ()Lcom/monkopedia/kodemirror/view/ThemeKey;
+	public static final fun getWhitespaceColor ()Lcom/monkopedia/kodemirror/view/ThemeKey;
+	public static final fun plus (Lcom/monkopedia/kodemirror/view/EditorTheme;Ljava/util/Map;)Lcom/monkopedia/kodemirror/view/EditorTheme;
 	public static final fun selectionStyle (Lcom/monkopedia/kodemirror/view/EditorTheme;)Landroidx/compose/ui/text/SpanStyle;
+	public static final fun themeExtras ([Lkotlin/Pair;)Ljava/util/Map;
 }
 
 public final class com/monkopedia/kodemirror/view/GutterConfig {
@@ -541,14 +576,14 @@ public final class com/monkopedia/kodemirror/view/MatchDecorator {
 }
 
 public final class com/monkopedia/kodemirror/view/Panel {
-	public fun <init> (ZLkotlin/jvm/functions/Function2;)V
-	public synthetic fun <init> (ZLkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZLkotlin/jvm/functions/Function3;)V
+	public synthetic fun <init> (ZLkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
-	public final fun component2 ()Lkotlin/jvm/functions/Function2;
-	public final fun copy (ZLkotlin/jvm/functions/Function2;)Lcom/monkopedia/kodemirror/view/Panel;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/view/Panel;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/Panel;
+	public final fun component2 ()Lkotlin/jvm/functions/Function3;
+	public final fun copy (ZLkotlin/jvm/functions/Function3;)Lcom/monkopedia/kodemirror/view/Panel;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/view/Panel;ZLkotlin/jvm/functions/Function3;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/Panel;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getContent ()Lkotlin/jvm/functions/Function2;
+	public final fun getContent ()Lkotlin/jvm/functions/Function3;
 	public final fun getTop ()Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -725,6 +760,11 @@ public final class com/monkopedia/kodemirror/view/StateSaversKt {
 	public static final fun getSelectionRangeSaver ()Landroidx/compose/runtime/saveable/Saver;
 	public static final fun getTextSaver ()Landroidx/compose/runtime/saveable/Saver;
 	public static final fun rememberSaveableEditorSession (Ljava/lang/String;Lcom/monkopedia/kodemirror/state/Extension;Ljava/util/Map;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)Lcom/monkopedia/kodemirror/view/EditorSession;
+}
+
+public final class com/monkopedia/kodemirror/view/ThemeKey {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun getDefault ()Ljava/lang/Object;
 }
 
 public final class com/monkopedia/kodemirror/view/Tooltip {
