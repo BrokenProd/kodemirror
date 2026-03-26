@@ -140,19 +140,26 @@ private fun isSpecialKey(key: Key): Boolean = when (key) {
  * Resolve the effective key name for a binding on the current platform.
  *
  * Prefers platform-specific overrides (mac/linux/win) when available,
- * falling back to the generic [KeyBinding.key].
+ * falling back to the generic [KeyBinding.key]. The `Mod-` prefix is
+ * resolved to `Meta-` on macOS and `Ctrl-` on other platforms, matching
+ * the CodeMirror convention.
  */
 private fun resolveBindingKey(binding: KeyBinding): String? {
-    val osName = currentOs
+    val isMac = currentOs.contains("mac", ignoreCase = true) ||
+        currentOs.contains("darwin", ignoreCase = true)
     val platformKey = when {
-        osName.contains("mac", ignoreCase = true) ||
-            osName.contains("darwin", ignoreCase = true) -> binding.mac
-        osName.contains("win", ignoreCase = true) -> binding.win
-        osName.contains("linux", ignoreCase = true) ||
-            osName.contains("nux", ignoreCase = true) -> binding.linux
+        isMac -> binding.mac
+        currentOs.contains("win", ignoreCase = true) -> binding.win
+        currentOs.contains("linux", ignoreCase = true) ||
+            currentOs.contains("nux", ignoreCase = true) -> binding.linux
         else -> null
     }
-    return platformKey ?: binding.key
+    val key = platformKey ?: binding.key ?: return null
+    return if ("Mod" in key) {
+        key.replace("Mod", if (isMac) "Meta" else "Ctrl")
+    } else {
+        key
+    }
 }
 
 /**

@@ -7,20 +7,35 @@ test.describe("Features", () => {
   });
 
   test("Ctrl+F opens search", async ({ cm6, km }) => {
+    // Verify search is initially closed
+    const cm6Before = await cm6.getState();
+    expect(cm6Before.searchPanelOpen).toBe(false);
+
     await cm6.press("Control+f");
 
-    const cm6HasSearch = await cm6.page.locator(".cm-search").isVisible();
-    expect(cm6HasSearch).toBe(true);
+    const cm6After = await cm6.getState();
+    expect(cm6After.searchPanelOpen).toBe(true);
 
     if (km) {
+      const kmBefore = await km.getState();
+      expect(kmBefore.searchPanelOpen).toBe(false);
+
       await km.press("Control+f");
-      // For canvas-based KM, just verify state is still accessible
-      const kmState = await km.getState();
-      expect(kmState).toBeTruthy();
+
+      const kmAfter = await km.getState();
+      expect(kmAfter.searchPanelOpen).toBe(true);
+      expect(kmAfter.panelCount).toBeGreaterThan(0);
+
+      // Close search in KM
+      await km.press("Escape");
+      const kmClosed = await km.getState();
+      expect(kmClosed.searchPanelOpen).toBe(false);
     }
 
-    // Close search
+    // Close search in CM6
     await cm6.press("Escape");
+    const cm6Closed = await cm6.getState();
+    expect(cm6Closed.searchPanelOpen).toBe(false);
   });
 
   test("initial document matches", async ({ cm6, km }) => {

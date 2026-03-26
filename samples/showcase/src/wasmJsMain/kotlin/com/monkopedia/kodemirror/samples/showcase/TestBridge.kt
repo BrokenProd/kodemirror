@@ -15,11 +15,13 @@
  */
 package com.monkopedia.kodemirror.samples.showcase
 
+import com.monkopedia.kodemirror.search.searchPanelOpen
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
+import com.monkopedia.kodemirror.view.getPanel
 import kotlin.JsFun
 
 @JsFun(
@@ -66,6 +68,9 @@ private fun serializeState(session: EditorSession): String {
         append(']')
     }
 
+    val panelCount = getPanel(session).size
+    val isSearchOpen = searchPanelOpen(state)
+
     return buildString {
         append("{\"doc\":")
         append(escapeJsonString(doc.toString()))
@@ -87,7 +92,11 @@ private fun serializeState(session: EditorSession): String {
         append(doc.lines)
         append(",\"length\":")
         append(doc.length)
-        append("}}")
+        append("},\"panelCount\":")
+        append(panelCount)
+        append(",\"searchPanelOpen\":")
+        append(isSearchOpen)
+        append('}')
     }
 }
 

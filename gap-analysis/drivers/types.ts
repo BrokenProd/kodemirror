@@ -30,6 +30,8 @@ export interface EditorStateSnapshot {
   cursor: CursorInfo;
   selection: SelectionInfo;
   docInfo: DocInfo;
+  panelCount?: number;
+  searchPanelOpen?: boolean;
 }
 
 export interface EditorDriver {
