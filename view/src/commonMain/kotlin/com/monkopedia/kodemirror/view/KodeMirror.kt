@@ -223,7 +223,33 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                     .testTag("KodeMirror")
                     .weight(1f)
                     .fillMaxWidth()
-                    .onGloballyPositioned { editorCoordinates = it }
+                    .onGloballyPositioned { coords ->
+                        editorCoordinates = coords
+                        // Process pending line layouts synchronously.
+                        // onGloballyPositioned fires bottom-up: children
+                        // stored their data in pendingLineLayouts because
+                        // editorCoordinates was null when they fired. Now
+                        // that the parent has coordinates, drain the map.
+                        if (pendingLineLayouts.isNotEmpty()) {
+                            val pending = pendingLineLayouts.toMap()
+                            pendingLineLayouts.clear()
+                            for ((_, p) in pending) {
+                                if (p.coords.isAttached) {
+                                    val pos = coords.localPositionOf(
+                                        p.coords,
+                                        Offset.Zero
+                                    )
+                                    lineLayoutCache.store(
+                                        p.lineNumber,
+                                        p.lineFrom,
+                                        pos.y,
+                                        pos.x,
+                                        p.result
+                                    )
+                                }
+                            }
+                        }
+                    }
                     .drawWithContent {
                         // Editor background
                         drawRect(theme.background)
@@ -493,31 +519,6 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                             is ColumnItem.BlockWidgetItem -> {
                                 item.widget.spec.widget.Content()
                             }
-                        }
-                    }
-                }
-
-                // Populate cache from deferred layouts once editorCoordinates
-                // becomes available (onGloballyPositioned fires bottom-up, so
-                // children fire before the parent on the first layout pass).
-                LaunchedEffect(editorCoordinates) {
-                    val editorCoords =
-                        editorCoordinates ?: return@LaunchedEffect
-                    val pending = pendingLineLayouts.entries.toList()
-                    pendingLineLayouts.clear()
-                    for ((_, p) in pending) {
-                        if (p.coords.isAttached) {
-                            val pos = editorCoords.localPositionOf(
-                                p.coords,
-                                Offset.Zero
-                            )
-                            lineLayoutCache.store(
-                                p.lineNumber,
-                                p.lineFrom,
-                                pos.y,
-                                pos.x,
-                                p.result
-                            )
                         }
                     }
                 }
