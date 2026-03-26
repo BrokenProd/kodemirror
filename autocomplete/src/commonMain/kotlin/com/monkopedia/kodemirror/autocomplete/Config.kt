@@ -42,5 +42,5 @@ data class CompletionConfig(
 
 /** Facet for completion configuration. */
 val completionConfig: Facet<CompletionConfig, CompletionConfig> = Facet.define(
-    combine = { values -> values.firstOrNull() ?: CompletionConfig() }
+    combine = { values -> values.lastOrNull() ?: CompletionConfig() }
 )

@@ -48,9 +48,6 @@ private external fun jsClipboardWrite(text: String)
         'F7','F8','F9','F10','F11','F12'];
     document.addEventListener('keydown', function(e) {
         globalThis.__kodeKey = e.key;
-        if (e.ctrlKey && e.key === ' ') {
-            console.log('[KM-DEBUG] JS keydown: Ctrl+Space detected, code=' + e.code + ' keyCode=' + e.keyCode);
-        }
         var isModified = e.ctrlKey || e.metaKey || e.altKey;
         if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
             e.stopPropagation();

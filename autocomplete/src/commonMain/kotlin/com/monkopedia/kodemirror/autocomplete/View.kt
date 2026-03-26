@@ -65,7 +65,6 @@ val completionSelectedBackground = ThemeKey(default = Color(0xFF3E4451))
 
 /** Explicitly start completion (Ctrl-Space). */
 val startCompletion: (EditorSession) -> Boolean = { view ->
-    println("[KM-DEBUG] startCompletion called")
     triggerCompletion(view, explicit = true)
     true
 }
@@ -137,13 +136,9 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
     val pos = state.selection.main.head
     val ctx = CompletionContext(state, pos, explicit)
     val sources = config.override ?: emptyList()
-    println("[KM-DEBUG] triggerCompletion: explicit=$explicit pos=$pos sources=${sources.size}")
-
     for (source in sources) {
         val result = source(ctx)
-        println("[KM-DEBUG]   source result: ${result?.options?.size ?: "null"} options")
         if (result != null && result.options.isNotEmpty()) {
-            println("[KM-DEBUG]   dispatching startCompletionEffect")
             view.dispatch(
                 TransactionSpec(
                     effects = listOf(startCompletionEffect.of(result))
@@ -154,7 +149,6 @@ private fun triggerCompletion(view: EditorSession, explicit: Boolean) {
     }
     // No results, close if open
     if (explicit) {
-        println("[KM-DEBUG]   no results, closing")
         view.dispatch(
             TransactionSpec(effects = listOf(closeCompletionEffect.of(Unit)))
         )
