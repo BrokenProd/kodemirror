@@ -97,7 +97,7 @@ data class EditorTheme(
     /** Panel button border. */
     val buttonBorderColor: Color = Color(0xFF888888),
     /** Text input fill. */
-    val inputBackground: Color = Color.Transparent,
+    val inputBackground: Color = Color(0xFF282C34),
     /** Text input border. */
     val inputBorderColor: Color = Color(0xFF555555),
     /** Tooltip background. */
