@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.lint
 
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.text.SpanStyle
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
@@ -246,11 +247,13 @@ internal class AsyncLinterPlugin(
         lintJob = scope.launch {
             delay(config.delay)
             val diagnostics = source(view)
-            view.dispatch(
-                TransactionSpec(
-                    effects = listOf(setDiagnosticsEffect.of(diagnostics))
+            Snapshot.withMutableSnapshot {
+                view.dispatch(
+                    TransactionSpec(
+                        effects = listOf(setDiagnosticsEffect.of(diagnostics))
+                    )
                 )
-            )
+            }
         }
     }
 
