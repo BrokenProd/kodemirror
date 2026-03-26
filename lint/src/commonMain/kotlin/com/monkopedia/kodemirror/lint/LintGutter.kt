@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
@@ -33,6 +34,7 @@ import com.monkopedia.kodemirror.view.EditorTheme
 import com.monkopedia.kodemirror.view.GutterConfig
 import com.monkopedia.kodemirror.view.GutterMarker
 import com.monkopedia.kodemirror.view.GutterType
+import com.monkopedia.kodemirror.view.LocalEditorTheme
 import com.monkopedia.kodemirror.view.Tooltip
 import com.monkopedia.kodemirror.view.gutter
 import com.monkopedia.kodemirror.view.hoverTooltip
@@ -98,10 +100,12 @@ fun lintGutter(config: LintGutterConfig = LintGutterConfig()): Extension {
             null
         } else {
             Tooltip(pos = line.from.value) {
+                val theme = LocalEditorTheme.current
                 BasicText(
                     text = filtered.joinToString("\n") { diag ->
                         "[${diag.severity.name.lowercase()}] ${diag.message}"
-                    }
+                    },
+                    style = TextStyle(color = theme.foreground)
                 )
             }
         }

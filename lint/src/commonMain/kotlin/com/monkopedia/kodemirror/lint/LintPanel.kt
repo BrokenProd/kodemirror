@@ -28,6 +28,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -62,18 +63,21 @@ internal val lintPanelOpen: StateField<Boolean> = StateField.define(
 /** Composable diagnostics panel content. */
 @Composable
 internal fun LintPanelContent(view: EditorSession) {
+    val theme = LocalEditorTheme.current
     val diagnostics = view.rememberField(lintState).diagnostics
+    val textStyle = TextStyle(color = theme.foreground)
 
     Column(modifier = Modifier.padding(4.dp)) {
         Row(modifier = Modifier.padding(bottom = 4.dp)) {
-            BasicText("Diagnostics (${diagnostics.size})")
+            BasicText("Diagnostics (${diagnostics.size})", style = textStyle)
             BasicText(
                 " [Close]",
-                modifier = Modifier.clickable { closeLintPanel(view) }
+                modifier = Modifier.clickable { closeLintPanel(view) },
+                style = textStyle
             )
         }
         if (diagnostics.isEmpty()) {
-            BasicText("No diagnostics")
+            BasicText("No diagnostics", style = textStyle)
         } else {
             LazyColumn {
                 items(diagnostics) { diag ->
@@ -125,7 +129,8 @@ private fun DiagnosticRow(diag: Diagnostic, view: EditorSession) {
                     }
                 }
                 append(diag.message)
-            }
+            },
+            style = TextStyle(color = theme.foreground)
         )
     }
 }

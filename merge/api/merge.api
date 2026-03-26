@@ -110,14 +110,14 @@ public final class com/monkopedia/kodemirror/merge/DiffKt {
 
 public final class com/monkopedia/kodemirror/merge/MergeColors {
 	public static final field INSTANCE Lcom/monkopedia/kodemirror/merge/MergeColors;
+	public final fun collapsedBackground-vNxB06k (Z)J
+	public final fun collapsedBorder-vNxB06k (Z)J
+	public final fun deletedChunkBackground-vNxB06k (Z)J
 	public final fun getChangedLineA-0d7_KjU ()J
 	public final fun getChangedLineB-0d7_KjU ()J
 	public final fun getChangedLineGutter-0d7_KjU ()J
 	public final fun getChangedTextA-0d7_KjU ()J
 	public final fun getChangedTextB-0d7_KjU ()J
-	public final fun getCollapsedBackground-0d7_KjU ()J
-	public final fun getCollapsedBorder-0d7_KjU ()J
-	public final fun getDeletedChunkBackground-0d7_KjU ()J
 	public final fun getDeletedLineGutter-0d7_KjU ()J
 	public final fun getDeletedText-0d7_KjU ()J
 	public final fun getSpacerBackground-0d7_KjU ()J

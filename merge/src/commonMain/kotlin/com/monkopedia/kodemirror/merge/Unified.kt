@@ -50,6 +50,7 @@ import com.monkopedia.kodemirror.view.GutterConfig
 import com.monkopedia.kodemirror.view.GutterMarker
 import com.monkopedia.kodemirror.view.GutterType
 import com.monkopedia.kodemirror.view.LineDecorationSpec
+import com.monkopedia.kodemirror.view.LocalEditorTheme
 import com.monkopedia.kodemirror.view.WidgetDecorationSpec
 import com.monkopedia.kodemirror.view.WidgetType
 import com.monkopedia.kodemirror.view.decorations
@@ -171,12 +172,13 @@ private class DeletionWidget(
 
     @Composable
     override fun Content() {
+        val theme = LocalEditorTheme.current
         val origDoc = state.field(originalDoc)
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MergeColors.deletedChunkBackground)
+                .background(MergeColors.deletedChunkBackground(theme.dark))
                 .padding(4.dp)
         ) {
             if (chunk.fromA < chunk.toA) {
@@ -184,7 +186,7 @@ private class DeletionWidget(
                     chunk.fromA,
                     maxOf(chunk.fromA, chunk.endA)
                 )
-                BasicText(text)
+                BasicText(text, style = TextStyle(color = theme.foreground))
             }
         }
     }
@@ -199,9 +201,13 @@ private class InlineDeletionWidget(private val text: String) : WidgetType() {
 
     @Composable
     override fun Content() {
+        val theme = LocalEditorTheme.current
         BasicText(
             text = text,
-            style = TextStyle(background = MergeColors.deletedText)
+            style = TextStyle(
+                color = theme.foreground,
+                background = MergeColors.deletedText
+            )
         )
     }
 }

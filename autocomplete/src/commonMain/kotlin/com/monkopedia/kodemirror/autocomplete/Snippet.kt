@@ -40,8 +40,10 @@ import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.MarkDecorationSpec
 import com.monkopedia.kodemirror.view.PluginValue
+import com.monkopedia.kodemirror.view.ThemeKey
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
+import com.monkopedia.kodemirror.view.editorTheme
 import com.monkopedia.kodemirror.view.keymap
 
 // ── Snippet field representation ──
@@ -288,25 +290,15 @@ val snippetKeymap: List<KeyBinding> = listOf(
     KeyBinding(key = "Escape", run = clearSnippet)
 )
 
+// ── Theme keys ──
+
+/** Background color for inactive snippet fields. */
+val snippetFieldBackground = ThemeKey(default = Color(0x44004488))
+
+/** Background color for the active snippet field. */
+val snippetFieldActiveBackground = ThemeKey(default = Color(0x66004488))
+
 // ── Decoration plugin ──
-
-private val snippetFieldDecoration = Decoration.mark(
-    MarkDecorationSpec(
-        cssClass = "cm-snippetField",
-        style = SpanStyle(
-            background = Color(0x44004488)
-        )
-    )
-)
-
-private val snippetFieldActiveDecoration = Decoration.mark(
-    MarkDecorationSpec(
-        cssClass = "cm-snippetFieldActive",
-        style = SpanStyle(
-            background = Color(0x66004488)
-        )
-    )
-)
 
 private class SnippetDecorationPlugin(
     private val view: EditorSession
@@ -324,17 +316,26 @@ private class SnippetDecorationPlugin(
     private fun buildDecorations(): DecorationSet {
         val active = view.state.field(snippetState, require = false)
             ?: return RangeSet.empty()
+        val theme = view.state.facet(editorTheme)
+        val fieldDeco = Decoration.mark(
+            MarkDecorationSpec(
+                cssClass = "cm-snippetField",
+                style = SpanStyle(background = theme[snippetFieldBackground])
+            )
+        )
+        val activeDeco = Decoration.mark(
+            MarkDecorationSpec(
+                cssClass = "cm-snippetFieldActive",
+                style = SpanStyle(background = theme[snippetFieldActiveBackground])
+            )
+        )
         val builder = RangeSetBuilder<Decoration>()
         val sorted = active.fields
             .mapIndexed { i, f -> i to f }
             .sortedWith(compareBy({ it.second.from }, { it.second.to }))
         for ((i, field) in sorted) {
             if (field.from == field.to) continue
-            val deco = if (i == active.fieldIndex) {
-                snippetFieldActiveDecoration
-            } else {
-                snippetFieldDecoration
-            }
+            val deco = if (i == active.fieldIndex) activeDeco else fieldDeco
             builder.add(field.from, field.to, deco)
         }
         return builder.finish()

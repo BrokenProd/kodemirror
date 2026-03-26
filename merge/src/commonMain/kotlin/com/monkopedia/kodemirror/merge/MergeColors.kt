@@ -24,24 +24,22 @@ import androidx.compose.ui.graphics.Color
  * Color definitions for merge view decorations.
  */
 object MergeColors {
-    // Side A (deletions) — red tones
+    // Semi-transparent overlays (work on any background)
     val changedLineA = Color(0x14A08064)
     val changedTextA = Color(0x66FFAA99)
-    val deletedLineGutter = Color(0xFFF44336)
-
-    // Side B (insertions) — green tones
     val changedLineB = Color(0x1464A080)
     val changedTextB = Color(0x66AAFFAA)
+    val deletedText = Color(0x66FFAAAA)
+    val spacerBackground = Color(0x08000000)
+
+    // Gutter markers (red/green are universal)
+    val deletedLineGutter = Color(0xFFF44336)
     val changedLineGutter = Color(0xFF4CAF50)
 
-    // Deleted chunk display
-    val deletedChunkBackground = Color(0xFFFBE9E7)
-    val deletedText = Color(0x66FFAAAA)
+    // Opaque colors — dark/light pairs
+    fun deletedChunkBackground(dark: Boolean) = if (dark) Color(0xFF3D2020) else Color(0xFFFBE9E7)
 
-    // Collapsed lines
-    val collapsedBackground = Color(0xFFF5F5F5)
-    val collapsedBorder = Color(0xFFBDBDBD)
+    fun collapsedBackground(dark: Boolean) = if (dark) Color(0xFF2D2D2D) else Color(0xFFF5F5F5)
 
-    // Spacer
-    val spacerBackground = Color(0x08000000)
+    fun collapsedBorder(dark: Boolean) = if (dark) Color(0xFF555555) else Color(0xFFBDBDBD)
 }

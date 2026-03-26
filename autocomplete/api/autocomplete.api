@@ -209,6 +209,8 @@ public final class com/monkopedia/kodemirror/autocomplete/SnippetKt {
 	public static final fun getClearSnippet ()Lkotlin/jvm/functions/Function1;
 	public static final fun getNextSnippetField ()Lkotlin/jvm/functions/Function1;
 	public static final fun getPrevSnippetField ()Lkotlin/jvm/functions/Function1;
+	public static final fun getSnippetFieldActiveBackground ()Lcom/monkopedia/kodemirror/view/ThemeKey;
+	public static final fun getSnippetFieldBackground ()Lcom/monkopedia/kodemirror/view/ThemeKey;
 	public static final fun getSnippetKeymap ()Ljava/util/List;
 	public static final fun getSnippetState ()Lcom/monkopedia/kodemirror/state/StateField;
 	public static final fun hasNextSnippetField (Lcom/monkopedia/kodemirror/state/EditorState;)Z

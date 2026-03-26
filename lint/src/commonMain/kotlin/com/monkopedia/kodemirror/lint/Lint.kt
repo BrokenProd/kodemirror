@@ -19,11 +19,13 @@
 package com.monkopedia.kodemirror.lint
 
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.ui.text.TextStyle
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.Slot
 import com.monkopedia.kodemirror.view.LocalEditorSession
+import com.monkopedia.kodemirror.view.LocalEditorTheme
 import com.monkopedia.kodemirror.view.Panel
 import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.Tooltip
@@ -84,10 +86,12 @@ private fun <V : PluginValue> createLinterExtension(
             null
         } else {
             Tooltip(pos = pos) {
+                val theme = LocalEditorTheme.current
                 BasicText(
                     text = filtered.joinToString("\n") { diag ->
                         "[${diag.severity.name.lowercase()}] ${diag.message}"
-                    }
+                    },
+                    style = TextStyle(color = theme.foreground)
                 )
             }
         }
