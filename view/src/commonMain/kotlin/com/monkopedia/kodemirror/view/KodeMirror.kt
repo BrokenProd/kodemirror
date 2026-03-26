@@ -449,7 +449,9 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                                 val layout = textLayout
                                                     ?: return@onGloballyPositioned
                                                 val editorCoords = editorCoordinates
-                                                if (editorCoords != null) {
+                                                if (editorCoords != null &&
+                                                    editorCoords.isAttached
+                                                ) {
                                                     val pos = editorCoords.localPositionOf(
                                                         contentCoords,
                                                         Offset.Zero
