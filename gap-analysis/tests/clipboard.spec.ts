@@ -191,43 +191,53 @@ test.describe("Clipboard", () => {
   });
 
   test("paste replaces selection", async ({ cm6, km }) => {
+    // Select the first word from the beginning of the document, copy it,
+    // then select a different word and paste over it.
     await cm6.press("Control+Home");
     if (km) await km.press("Control+Home");
 
-    // Type a known string, select it, copy
-    await cm6.type("REPLACE_ME");
-    if (km) await km.type("REPLACE_ME");
+    // Select the first word and copy
+    await cm6.press("Control+Shift+ArrowRight");
+    if (km) await km.press("Control+Shift+ArrowRight");
 
-    // Select "REPLACE_ME" by going back 10 chars with shift
-    for (let i = 0; i < 10; i++) {
-      await cm6.press("Shift+ArrowLeft");
-      if (km) await km.press("Shift+ArrowLeft");
-    }
+    const cm6Sel = await cm6.getSelection();
+    const cm6State = await cm6.getState();
+    const copiedText = cm6State.doc.slice(
+      cm6Sel.ranges[0].from,
+      cm6Sel.ranges[0].to
+    );
+
     await cm6.press("Control+c");
     if (km) await km.press("Control+c");
 
-    // Now select the first word of the original document (after our insertion)
-    await cm6.press("ArrowRight"); // deselect
+    // Move to the second word and select it
+    await cm6.press("ArrowRight"); // deselect, move past space
     if (km) await km.press("ArrowRight");
     await cm6.press("Control+Shift+ArrowRight");
     if (km) await km.press("Control+Shift+ArrowRight");
 
     const cm6BeforePaste = await cm6.getState();
-    if (km) var kmBeforePaste = await km.getState();
+    const cm6SelectedWord = cm6BeforePaste.doc.slice(
+      cm6BeforePaste.selection.ranges[0].from,
+      cm6BeforePaste.selection.ranges[0].to
+    );
 
-    // Paste over the selection
+    // Paste over the selection — the second word should be replaced
     await cm6.press("Control+v");
     if (km) await km.press("Control+v");
 
-    // The selected word should be replaced with "REPLACE_ME"
+    // Verify: the copied text now appears at least twice (original + pasted)
     const cm6After = await cm6.getDoc();
-    // Check that REPLACE_ME appears at least twice (start + pasted)
-    const cm6Count = (cm6After.match(/REPLACE_ME/g) || []).length;
+    const cm6Count = (cm6After.match(new RegExp(copiedText, "g")) || []).length;
     expect(cm6Count).toBeGreaterThanOrEqual(2);
+    // The replaced word should no longer appear at its original position
+    expect(cm6After).not.toContain(
+      copiedText + " " + cm6SelectedWord + " "
+    );
 
     if (km) {
       const kmAfter = await km.getDoc();
-      const kmCount = (kmAfter.match(/REPLACE_ME/g) || []).length;
+      const kmCount = (kmAfter.match(new RegExp(copiedText, "g")) || []).length;
       expect(kmCount).toBe(cm6Count);
     }
   });

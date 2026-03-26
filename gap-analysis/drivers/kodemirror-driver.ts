@@ -65,10 +65,9 @@ export class KodemirrorDriver implements EditorDriver {
   }
 
   async type(text: string): Promise<void> {
-    // Type each character via fill() on the hidden textarea.
-    // keyboard.type() is unreliable after certain key combos (Ctrl+Home)
-    // because the browser's TEXTAREA input pipeline can get into a bad
-    // state where keydown events no longer produce input events.
+    // Compose for Web renders inside a shadow DOM on <body>.
+    // Use Playwright's locator (which pierces shadow DOM) to fill the
+    // hidden textarea character-by-character.
     const ta = this.page.locator("textarea");
     for (const ch of text) {
       const ver = await this.getVersion();
@@ -77,14 +76,22 @@ export class KodemirrorDriver implements EditorDriver {
     }
   }
 
+  private async ensureFocus(): Promise<void> {
+    // Focus the textarea inside shadow DOM
+    await this.page.evaluate(() => {
+      const shadow = document.body.shadowRoot;
+      if (shadow) {
+        const ta = shadow.querySelector("textarea");
+        if (ta) ta.focus();
+      }
+    });
+  }
+
   async press(key: string): Promise<void> {
     const ver = await this.getVersion();
     // Ensure the hidden textarea has browser focus so onPreviewKeyEvent fires.
-    // After fill() or canvas clicks, focus may have shifted to <body>.
-    await this.page.evaluate(() => {
-      const ta = document.querySelector("textarea");
-      if (ta) ta.focus();
-    });
+    // The textarea lives inside a shadow DOM on <body>.
+    await this.ensureFocus();
     await this.page.keyboard.press(key);
     await this.waitForUpdate(ver);
   }
