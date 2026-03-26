@@ -18,7 +18,10 @@
  */
 package com.monkopedia.kodemirror.view
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
@@ -26,6 +29,7 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.SelectionSpec
+import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asInsert
@@ -238,6 +242,26 @@ fun onSelectionAsync(callback: suspend CoroutineScope.(EditorSelection) -> Unit)
     ViewPlugin.define(
         create = { _ -> AsyncSelectionPlugin(callback) }
     ).asExtension()
+
+/**
+ * Remember the current value of a [StateField], recomposing only when its value changes.
+ *
+ * This is more efficient than reading `session.state.field(field)` directly, which
+ * triggers recomposition on every state change (keystroke, cursor move, etc.).
+ */
+@Composable
+fun <T> EditorSession.rememberField(field: StateField<T>): T =
+    remember(this) { derivedStateOf { state.field(field) } }.value
+
+/**
+ * Remember the current value of a [Facet], recomposing only when its value changes.
+ *
+ * This is more efficient than reading `session.state.facet(facet)` directly, which
+ * triggers recomposition on every state change (keystroke, cursor move, etc.).
+ */
+@Composable
+fun <T> EditorSession.rememberFacet(facet: Facet<*, T>): T =
+    remember(this) { derivedStateOf { state.facet(facet) } }.value
 
 private class AsyncChangePlugin(
     private val callback: suspend CoroutineScope.(String) -> Unit

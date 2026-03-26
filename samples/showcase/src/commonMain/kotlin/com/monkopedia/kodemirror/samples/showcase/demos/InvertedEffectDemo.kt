@@ -38,6 +38,7 @@ import com.monkopedia.kodemirror.state.invertedEffects
 import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.rememberEditorSession
+import com.monkopedia.kodemirror.view.rememberField
 
 private val addToCounter = StateEffect.define<Int>()
 
@@ -74,7 +75,7 @@ fun InvertedEffectDemo() {
         extensions = showcaseSetup + javascript().extension + counterExtension
     )
 
-    val displayCounter = session.state.field(counterField)
+    val displayCounter = session.rememberField(counterField)
 
     DemoScaffold(
         title = "Inverted Effects",
