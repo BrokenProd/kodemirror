@@ -18,8 +18,15 @@
  */
 package com.monkopedia.kodemirror.view
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
@@ -71,6 +78,9 @@ fun TooltipLayer(session: EditorSession) {
         addAll(hoverPlugins)
     }
 
+    val theme = LocalEditorTheme.current
+    val tooltipShape = RoundedCornerShape(4.dp)
+
     for (tooltip in all) {
         val coords = session.coordsAtPos(tooltip.pos) ?: continue
         Popup(
@@ -84,7 +94,14 @@ fun TooltipLayer(session: EditorSession) {
                 }
             )
         ) {
-            tooltip.content()
+            Box(
+                modifier = Modifier
+                    .background(theme.tooltipBackground, tooltipShape)
+                    .border(1.dp, theme.panelBorderColor, tooltipShape)
+                    .padding(4.dp)
+            ) {
+                tooltip.content()
+            }
         }
     }
 }
