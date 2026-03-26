@@ -186,8 +186,10 @@ var currentOs: String = platformOsName()
 fun handleKeyEvent(view: EditorSession, event: KeyEvent): Boolean {
     if (event.type != KeyEventType.KeyDown) return false
     val name = keyEventToName(event)
+    println("[KM-DEBUG] handleKeyEvent: name=$name key=${event.key} type=${event.type}")
     val isShift = event.isShiftPressed
     val bindings = view.state.facet(keymap)
+    println("[KM-DEBUG]   bindings count=${bindings.size}")
 
     // Build the name without Shift for shift-variant matching
     val nameWithoutShift = if (isShift) {

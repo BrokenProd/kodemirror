@@ -71,8 +71,11 @@ fun TooltipLayer(session: EditorSession) {
         addAll(hoverPlugins)
     }
 
+    println("[KM-DEBUG] TooltipLayer: ${all.size} tooltips")
     for (tooltip in all) {
-        val coords = session.coordsAtPos(tooltip.pos) ?: continue
+        val coords = session.coordsAtPos(tooltip.pos)
+        println("[KM-DEBUG]   tooltip pos=${tooltip.pos} coords=$coords")
+        if (coords == null) continue
         Popup(
             alignment = androidx.compose.ui.Alignment.TopStart,
             offset = androidx.compose.ui.unit.IntOffset(
