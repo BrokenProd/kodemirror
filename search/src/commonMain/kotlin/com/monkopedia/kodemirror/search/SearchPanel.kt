@@ -43,6 +43,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -94,7 +100,23 @@ internal fun SearchPanel(view: EditorSession, modifier: Modifier = Modifier) {
         )
     }
 
-    Column(modifier = modifier.then(Modifier.padding(4.dp))) {
+    Column(
+        modifier = modifier.then(Modifier.padding(4.dp))
+            .onPreviewKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                when (event.key) {
+                    Key.Escape -> {
+                        closeSearchPanel(view)
+                        true
+                    }
+                    Key.Enter -> {
+                        if (event.isShiftPressed) findPrevious(view) else findNext(view)
+                        true
+                    }
+                    else -> false
+                }
+            }
+    ) {
         // Row 1: Find input + navigation + options + close
         Row(
             verticalAlignment = Alignment.CenterVertically,

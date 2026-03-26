@@ -42,6 +42,7 @@ export const test = base.extend<GapTestFixtures>({
       return;
     }
 
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     let driver: KodemirrorDriver | null = null;
     let page: Page | null = null;
     try {
