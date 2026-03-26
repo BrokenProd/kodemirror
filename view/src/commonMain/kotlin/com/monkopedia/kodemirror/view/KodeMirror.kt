@@ -93,6 +93,12 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
         ViewPluginHost(session).also { it.syncToState(state, null) }
     }
     val lineLayoutCache = remember(session) { LineLayoutCache() }
+    // Deferred layouts: onGloballyPositioned fires bottom-up (children before
+    // parent), so editorCoordinates is null on the first layout pass. We store
+    // the child coordinates here and populate the cache once the parent fires.
+    val pendingLineLayouts = remember(session) {
+        mutableMapOf<Int, PendingLineLayout>()
+    }
 
     // Wire up session internals
     DisposableEffect(session) {
@@ -440,14 +446,14 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                                 textLayout
                                             )
                                             .onGloballyPositioned { contentCoords ->
-                                                val editorCoords =
-                                                    editorCoordinates ?: return@onGloballyPositioned
-                                                val pos = editorCoords.localPositionOf(
-                                                    contentCoords,
-                                                    Offset.Zero
-                                                )
                                                 val layout = textLayout
-                                                if (layout != null) {
+                                                    ?: return@onGloballyPositioned
+                                                val editorCoords = editorCoordinates
+                                                if (editorCoords != null) {
+                                                    val pos = editorCoords.localPositionOf(
+                                                        contentCoords,
+                                                        Offset.Zero
+                                                    )
                                                     lineLayoutCache.store(
                                                         capturedLineNum.value,
                                                         capturedFrom.value,
@@ -455,6 +461,16 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                                         pos.x,
                                                         layout
                                                     )
+                                                    pendingLineLayouts
+                                                        .remove(capturedLineNum.value)
+                                                } else {
+                                                    pendingLineLayouts[capturedLineNum.value] =
+                                                        PendingLineLayout(
+                                                            capturedLineNum.value,
+                                                            capturedFrom.value,
+                                                            contentCoords,
+                                                            layout
+                                                        )
                                                 }
                                             }
                                     ) {
@@ -479,13 +495,30 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                     }
                 }
 
-                // Trigger relayout when editor coordinates are first captured,
-                // so line layout caches can be populated on the next pass.
-                // (onGloballyPositioned fires bottom-up: child content boxes
-                // fire before the parent, so editorCoordinates is null on the
-                // first layout pass. Reading it here triggers a recomposition
-                // once the parent sets it, allowing content callbacks to work.)
-                remember(editorCoordinates) { editorCoordinates }
+                // Populate cache from deferred layouts once editorCoordinates
+                // becomes available (onGloballyPositioned fires bottom-up, so
+                // children fire before the parent on the first layout pass).
+                LaunchedEffect(editorCoordinates) {
+                    val editorCoords =
+                        editorCoordinates ?: return@LaunchedEffect
+                    val pending = pendingLineLayouts.entries.toList()
+                    pendingLineLayouts.clear()
+                    for ((_, p) in pending) {
+                        if (p.coords.isAttached) {
+                            val pos = editorCoords.localPositionOf(
+                                p.coords,
+                                Offset.Zero
+                            )
+                            lineLayoutCache.store(
+                                p.lineNumber,
+                                p.lineFrom,
+                                pos.y,
+                                pos.x,
+                                p.result
+                            )
+                        }
+                    }
+                }
 
                 // Sync viewport/height tracking for ViewUpdate flags
                 // Evict stale cache entries for scrolled-off lines
@@ -548,3 +581,11 @@ fun rememberEditorSession(
 ): EditorSession {
     return remember { EditorSession(EditorState.create(config), onUpdate) }
 }
+
+/** Layout info saved when [onGloballyPositioned] fires before the parent. */
+private class PendingLineLayout(
+    val lineNumber: Int,
+    val lineFrom: Int,
+    val coords: LayoutCoordinates,
+    val result: TextLayoutResult
+)
