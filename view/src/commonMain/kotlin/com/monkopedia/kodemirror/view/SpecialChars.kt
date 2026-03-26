@@ -20,7 +20,6 @@ package com.monkopedia.kodemirror.view
 
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.RangeSet
 
@@ -82,11 +81,12 @@ private fun specialCharLabel(codePoint: Int): String = when {
 private class SpecialCharWidget(val label: String, val codePoint: Int) : WidgetType() {
     @Composable
     override fun Content() {
+        val theme = LocalEditorTheme.current
         BasicText(
             text = label,
             style = LocalContentTextStyle.current.copy(
-                color = Color.White,
-                background = Color(0xFFCC0000)
+                color = theme[specialCharForeground],
+                background = theme[specialCharBackground]
             )
         )
     }

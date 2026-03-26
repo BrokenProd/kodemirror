@@ -28,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.LineNumber
@@ -109,7 +108,10 @@ fun GutterView(session: EditorSession, lineNumber: Int, modifier: Modifier = Mod
             if (config.type == GutterType.LineNumbers) {
                 // Line number column
                 Box(
-                    modifier = Modifier.weight(1f).padding(start = 5.dp, end = 3.dp),
+                    modifier = Modifier.weight(1f).padding(
+                        start = theme.layout.gutterStartPadding,
+                        end = theme.layout.gutterEndPadding
+                    ),
                     contentAlignment = Alignment.CenterEnd
                 ) {
                     val contentStyle = LocalContentTextStyle.current
@@ -128,7 +130,7 @@ fun GutterView(session: EditorSession, lineNumber: Int, modifier: Modifier = Mod
             } else if (config.lineMarker != null) {
                 // Other gutter columns (fold gutter, etc.)
                 Box(
-                    modifier = Modifier.width(14.dp),
+                    modifier = Modifier.width(theme.layout.customGutterWidth),
                     contentAlignment = Alignment.Center
                 ) {
                     val marker = config.lineMarker.invoke(session, line.from.value)

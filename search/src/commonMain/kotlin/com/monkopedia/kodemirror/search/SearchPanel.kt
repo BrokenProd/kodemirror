@@ -53,7 +53,7 @@ import com.monkopedia.kodemirror.view.LocalEditorTheme
 
 /** Composable search/replace panel UI. */
 @Composable
-internal fun SearchPanel(view: EditorSession) {
+internal fun SearchPanel(view: EditorSession, modifier: Modifier = Modifier) {
     val theme = LocalEditorTheme.current
     val contentStyle = LocalContentTextStyle.current
     val panelTextStyle = contentStyle.copy(
@@ -94,7 +94,7 @@ internal fun SearchPanel(view: EditorSession) {
         )
     }
 
-    Column(modifier = Modifier.padding(4.dp)) {
+    Column(modifier = modifier.then(Modifier.padding(4.dp))) {
         // Row 1: Find input + navigation + options + close
         Row(
             verticalAlignment = Alignment.CenterVertically,

@@ -25,7 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.RangeSet
@@ -86,9 +85,10 @@ private class DropCursorWidget : WidgetType() {
             contentStyle.lineHeight.toDp()
         }
         val cursorColor = LocalEditorTheme.current.cursor
+        val dropWidth = LocalEditorTheme.current.layout.dropCursorWidth
         Canvas(
             modifier = Modifier
-                .width(2.dp)
+                .width(dropWidth)
                 .height(lineHeight)
         ) {
             drawLine(

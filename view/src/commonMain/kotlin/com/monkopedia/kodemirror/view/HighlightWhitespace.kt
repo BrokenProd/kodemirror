@@ -18,7 +18,6 @@
  */
 package com.monkopedia.kodemirror.view
 
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.RangeSet
@@ -29,26 +28,18 @@ import com.monkopedia.kodemirror.state.RangeSet
  * centered dot character and tabs with an arrow.
  */
 val highlightWhitespace: Extension = run {
-    val spaceMark = Decoration.mark(
-        MarkDecorationSpec(
-            style = SpanStyle(color = Color(0x40808080)),
-            cssClass = "cm-highlightSpace"
-        )
-    )
-    val tabMark = Decoration.mark(
-        MarkDecorationSpec(
-            style = SpanStyle(color = Color(0x40808080)),
-            cssClass = "cm-highlightTab"
-        )
-    )
-
     val decorator = MatchDecorator(
         regexp = Regex("[ \t]"),
-        decorate = { add, match, _ ->
-            val from = match.range.first
-            val to = match.range.last + 1
-            val mark = if (match.value == "\t") tabMark else spaceMark
-            add(from, to, mark)
+        decorate = { add, match, view ->
+            val theme = view.state.facet(editorTheme)
+            val color = theme[whitespaceColor]
+            val mark = Decoration.mark(
+                MarkDecorationSpec(
+                    style = SpanStyle(color = color),
+                    cssClass = if (match.value == "\t") "cm-highlightTab" else "cm-highlightSpace"
+                )
+            )
+            add(match.range.first, match.range.last + 1, mark)
         }
     )
 
@@ -69,17 +60,17 @@ val highlightWhitespace: Extension = run {
  * end of lines) with a warning-style background.
  */
 val highlightTrailingWhitespace: Extension = run {
-    val trailingMark = Decoration.mark(
-        MarkDecorationSpec(
-            style = SpanStyle(background = Color(0x30FF6666)),
-            cssClass = "cm-trailingSpace"
-        )
-    )
-
     val decorator = MatchDecorator(
         regexp = Regex("[ \t]+$", RegexOption.MULTILINE),
-        decorate = { add, match, _ ->
-            add(match.range.first, match.range.last + 1, trailingMark)
+        decorate = { add, match, view ->
+            val theme = view.state.facet(editorTheme)
+            val mark = Decoration.mark(
+                MarkDecorationSpec(
+                    style = SpanStyle(background = theme[trailingWhitespaceBackground]),
+                    cssClass = "cm-trailingSpace"
+                )
+            )
+            add(match.range.first, match.range.last + 1, mark)
         }
     )
 

@@ -25,7 +25,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
@@ -48,10 +47,10 @@ internal class LintGutterMarker(val severity: Severity) : GutterMarker() {
     @Composable
     override fun Content(theme: EditorTheme) {
         val color = when (severity) {
-            Severity.HINT -> Color(0xFF2196F3)
-            Severity.INFO -> Color(0xFF4CAF50)
-            Severity.WARNING -> Color(0xFFFF9800)
-            Severity.ERROR -> Color(0xFFF44336)
+            Severity.HINT -> theme[lintHintColor]
+            Severity.INFO -> theme[lintInfoColor]
+            Severity.WARNING -> theme[lintWarningColor]
+            Severity.ERROR -> theme[lintErrorColor]
         }
         Box(modifier = Modifier.size(8.dp).background(color, CircleShape))
     }

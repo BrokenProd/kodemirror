@@ -36,6 +36,7 @@ data class CompletionConfig(
     val closeOnBlur: Boolean = true,
     val maxRenderedOptions: Int = 100,
     val icons: Boolean = true,
+    val defaultKeymap: Boolean = true,
     val override: List<CompletionSource>? = null
 )
 

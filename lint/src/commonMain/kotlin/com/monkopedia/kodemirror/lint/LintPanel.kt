@@ -27,7 +27,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
@@ -39,6 +38,7 @@ import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.LocalEditorTheme
 import com.monkopedia.kodemirror.view.rememberField
 
 internal val openPanelEffect: StateEffectType<Boolean> = StateEffect.define()
@@ -86,11 +86,12 @@ internal fun LintPanelContent(view: EditorSession) {
 
 @Composable
 private fun DiagnosticRow(diag: Diagnostic, view: EditorSession) {
+    val theme = LocalEditorTheme.current
     val severityColor = when (diag.severity) {
-        Severity.HINT -> Color(0xFF2196F3)
-        Severity.INFO -> Color(0xFF4CAF50)
-        Severity.WARNING -> Color(0xFFFF9800)
-        Severity.ERROR -> Color(0xFFF44336)
+        Severity.HINT -> theme[lintHintColor]
+        Severity.INFO -> theme[lintInfoColor]
+        Severity.WARNING -> theme[lintWarningColor]
+        Severity.ERROR -> theme[lintErrorColor]
     }
     val severityLabel = when (diag.severity) {
         Severity.HINT -> "hint"
@@ -119,7 +120,7 @@ private fun DiagnosticRow(diag: Diagnostic, view: EditorSession) {
                 }
                 append(" ")
                 if (diag.source != null) {
-                    withStyle(SpanStyle(color = Color.Gray)) {
+                    withStyle(SpanStyle(color = theme[lintSourceColor])) {
                         append("${diag.source}: ")
                     }
                 }

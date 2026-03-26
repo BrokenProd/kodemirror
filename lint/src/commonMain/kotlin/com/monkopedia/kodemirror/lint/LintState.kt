@@ -18,7 +18,6 @@
  */
 package com.monkopedia.kodemirror.lint
 
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
@@ -32,11 +31,13 @@ import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.EditorTheme
 import com.monkopedia.kodemirror.view.MarkDecorationSpec
 import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.decorations
+import com.monkopedia.kodemirror.view.editorTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -51,22 +52,6 @@ val setDiagnosticsEffect: StateEffectType<List<Diagnostic>> = StateEffect.define
 /** Internal effect to signal forced linting. */
 internal val forceLintEffect: StateEffectType<Unit> = StateEffect.define()
 
-private val hintStyle = SpanStyle(
-    background = Color(0x1A2196F3)
-)
-
-private val infoStyle = SpanStyle(
-    background = Color(0x1A4CAF50)
-)
-
-private val warningStyle = SpanStyle(
-    background = Color(0x33FF9800)
-)
-
-private val errorStyle = SpanStyle(
-    background = Color(0x33F44336)
-)
-
 /** Internal state holding diagnostics and their decorations. */
 internal class LintStateValue(
     val diagnostics: List<Diagnostic>,
@@ -75,7 +60,11 @@ internal class LintStateValue(
     companion object {
         val empty = LintStateValue(emptyList(), RangeSet.empty())
 
-        fun build(diagnostics: List<Diagnostic>, docLength: Int): LintStateValue {
+        fun build(
+            diagnostics: List<Diagnostic>,
+            docLength: Int,
+            theme: EditorTheme
+        ): LintStateValue {
             if (diagnostics.isEmpty()) return empty
             val docEnd = DocPos(docLength)
             val sorted = diagnostics.sortedBy { it.from }
@@ -84,16 +73,22 @@ internal class LintStateValue(
                 val from = maxOf(DocPos.ZERO, minOf(diag.from, docEnd))
                 val to = maxOf(from, minOf(diag.to, docEnd))
                 if (from < to) {
-                    val style = when (diag.severity) {
-                        Severity.HINT -> hintStyle
-                        Severity.INFO -> infoStyle
-                        Severity.WARNING -> warningStyle
-                        Severity.ERROR -> errorStyle
+                    val color = when (diag.severity) {
+                        Severity.HINT -> theme[lintHintColor]
+                        Severity.INFO -> theme[lintInfoColor]
+                        Severity.WARNING -> theme[lintWarningColor]
+                        Severity.ERROR -> theme[lintErrorColor]
                     }
                     builder.add(
                         from,
                         to,
-                        Decoration.mark(MarkDecorationSpec(style = style))
+                        Decoration.mark(
+                            MarkDecorationSpec(
+                                style = SpanStyle(
+                                    background = color.copy(alpha = 0.2f)
+                                )
+                            )
+                        )
                     )
                 }
             }
@@ -107,11 +102,16 @@ internal val lintState: StateField<LintStateValue> = StateField.define(
     StateFieldSpec(
         create = { LintStateValue.empty },
         update = { value, tr ->
+            val theme = tr.startState.facet(editorTheme)
             var result = value
             for (effect in tr.effects) {
                 val diagEffect = effect.asType(setDiagnosticsEffect)
                 if (diagEffect != null) {
-                    result = LintStateValue.build(diagEffect.value, tr.newDoc.length)
+                    result = LintStateValue.build(
+                        diagEffect.value,
+                        tr.newDoc.length,
+                        theme
+                    )
                 }
             }
             if (result === value && tr.docChanged) {
@@ -125,7 +125,7 @@ internal val lintState: StateField<LintStateValue> = StateField.define(
                         null
                     }
                 }
-                result = LintStateValue.build(mapped, tr.newDoc.length)
+                result = LintStateValue.build(mapped, tr.newDoc.length, theme)
             }
             result
         },

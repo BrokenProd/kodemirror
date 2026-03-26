@@ -29,6 +29,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.SystemFont
 import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.monkopedia.kodemirror.state.Facet
 
@@ -52,6 +54,29 @@ val defaultEditorFontFamily: FontFamily = FontFamily(
     SystemFont("Courier New"),
     SystemFont("monospace"),
     SystemFont("sans-serif")
+)
+
+/**
+ * A typed key for extensible theme properties. Modules define their own keys
+ * with sensible defaults; themes can override them via [themeExtras].
+ *
+ * Uses identity equality so each `ThemeKey` instance is unique.
+ */
+class ThemeKey<T>(val default: T)
+
+/**
+ * Layout measurements for the editor. Nested inside [EditorTheme] to separate
+ * layout concerns from color properties.
+ */
+@Immutable
+data class EditorLayout(
+    val gutterStartPadding: Dp = 5.dp,
+    val gutterEndPadding: Dp = 3.dp,
+    val customGutterWidth: Dp = 14.dp,
+    val contentTopPadding: Dp = 4.dp,
+    val contentBottomPadding: Dp = 4.dp,
+    val panelBorderWidth: Dp = 1.dp,
+    val dropCursorWidth: Dp = 2.dp
 )
 
 /**
@@ -109,8 +134,36 @@ data class EditorTheme(
     /** Active line gutter background. */
     val activeLineGutterBackground: Color = Color(0x0B6699FF),
     /** Whether this is a dark theme (affects some rendering decisions). */
-    val dark: Boolean = true
-)
+    val dark: Boolean = true,
+    /** Layout measurements for the editor. */
+    val layout: EditorLayout = EditorLayout(),
+    /** Extensible theme properties for module-specific colors/values. */
+    val extras: Map<ThemeKey<*>, Any?> = emptyMap()
+) {
+    /** Look up a module-specific theme value by its [ThemeKey]. */
+    @Suppress("UNCHECKED_CAST")
+    operator fun <T> get(key: ThemeKey<T>): T =
+        if (extras.containsKey(key)) extras[key] as T else key.default
+}
+
+/** Build a theme extras map from key-value pairs. */
+fun themeExtras(vararg entries: Pair<ThemeKey<*>, Any?>): Map<ThemeKey<*>, Any?> = mapOf(*entries)
+
+/** Merge additional [extras] into this theme's extras map. */
+operator fun EditorTheme.plus(extras: Map<ThemeKey<*>, Any?>): EditorTheme =
+    copy(extras = this.extras + extras)
+
+/** Color for visible whitespace marks (spaces and tabs). */
+val whitespaceColor = ThemeKey(default = Color(0x40808080))
+
+/** Background color for trailing whitespace. */
+val trailingWhitespaceBackground = ThemeKey(default = Color(0x30FF6666))
+
+/** Text color for special (non-printing) character placeholders. */
+val specialCharForeground = ThemeKey(default = Color.White)
+
+/** Background color for special (non-printing) character placeholders. */
+val specialCharBackground = ThemeKey(default = Color(0xFFCC0000))
 
 /** A default dark theme. */
 val defaultEditorTheme: EditorTheme = EditorTheme()

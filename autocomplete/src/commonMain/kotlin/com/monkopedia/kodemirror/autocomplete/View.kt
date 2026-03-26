@@ -46,12 +46,20 @@ import com.monkopedia.kodemirror.state.Slot
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
+import com.monkopedia.kodemirror.view.LocalEditorTheme
 import com.monkopedia.kodemirror.view.PluginValue
+import com.monkopedia.kodemirror.view.ThemeKey
 import com.monkopedia.kodemirror.view.Tooltip
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.keymap
 import com.monkopedia.kodemirror.view.showTooltip
+
+/** Background color for the completion popup. */
+val completionBackground = ThemeKey(default = Color(0xFF353A42))
+
+/** Background color for the selected completion item. */
+val completionSelectedBackground = ThemeKey(default = Color(0xFF3E4451))
 
 // ── Commands ──
 
@@ -219,16 +227,23 @@ private fun CompletionList(
 ) {
     val items = completionState.filtered.take(config.maxRenderedOptions)
     val result = completionState.result ?: return
+    val theme = LocalEditorTheme.current
 
     Column(
-        modifier = Modifier.background(Color.White).padding(2.dp)
+        modifier = Modifier.background(theme[completionBackground]).padding(2.dp)
     ) {
         LazyColumn {
             itemsIndexed(items) { index, item ->
                 val isSelected = index == completionState.selected
                 Row(
                     modifier = Modifier
-                        .background(if (isSelected) Color(0xFFE0E0FF) else Color.Transparent)
+                        .background(
+                            if (isSelected) {
+                                theme[completionSelectedBackground]
+                            } else {
+                                Color.Transparent
+                            }
+                        )
                         .clickable { applyCompletion(view, item.completion, result) }
                         .padding(horizontal = 4.dp, vertical = 2.dp)
                 ) {
@@ -375,12 +390,14 @@ fun autocompletion(config: CompletionConfig = CompletionConfig()): Extension {
     }
 
     return ExtensionList(
-        listOf(
-            completionConfig.of(config),
-            completionStateField,
-            plugin.asExtension(),
-            tooltipProvider,
-            keymap.of(completionKeymap)
-        )
+        buildList {
+            add(completionConfig.of(config))
+            add(completionStateField)
+            add(plugin.asExtension())
+            add(tooltipProvider)
+            if (config.defaultKeymap) {
+                add(keymap.of(completionKeymap))
+            }
+        }
     )
 }

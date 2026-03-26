@@ -502,7 +502,7 @@ CM6 allows extensive customization through CSS overrides and configuration objec
 KM has hardcoded values in many places where CM6 allows user control. These gaps
 prevent users from creating cohesive custom themes or replacing built-in UI components.
 
-### 33a. Add `ThemeKey<T>` extensible theme lookup system
+### 33a. [DONE] Add `ThemeKey<T>` extensible theme lookup system
 - **Effort:** < 1 day | **Source:** Gap Analysis
 - `EditorTheme` currently has ~25 named color properties. Adding per-module colors
   (lint severity, autocomplete, whitespace, special chars, indent guides) would balloon
@@ -538,7 +538,7 @@ prevent users from creating cohesive custom themes or replacing built-in UI comp
 - **Prerequisite for:** #34, #35, #36.
 - **Files:** `view/src/commonMain/.../EditorTheme.kt`
 
-### 33b. Expose `BoxScope` on `Panel.content` and add `panelModifier` to `search()`
+### 33b. [DONE] Expose `BoxScope` on `Panel.content` and add `panelModifier` to `search()`
 - **Effort:** 1–2 days | **Source:** Gap Analysis
 - **Panel API change:** `Panel.content` is currently `@Composable () -> Unit` but always
   renders inside a `Box` in `PanelLayout`. Change to `@Composable BoxScope.() -> Unit`
@@ -566,7 +566,7 @@ prevent users from creating cohesive custom themes or replacing built-in UI comp
 - **Files:** `view/src/commonMain/.../Panel.kt`, `search/src/commonMain/.../Search.kt`,
   `search/src/commonMain/.../SearchPanel.kt`, `search/src/commonMain/.../GotoLine.kt`
 
-### 34. Make autocomplete colors themeable via `ThemeKey`
+### 34. [DONE] Make autocomplete colors themeable via `ThemeKey`
 - **Effort:** < 1 day | **Source:** Gap Analysis | **Depends on:** #33a
 - **Critical:** Autocomplete list has `Color.White` background and `Color(0xFFE0E0FF)`
   selection — hardcoded, not from theme. Renders broken in dark themes.
@@ -578,7 +578,7 @@ prevent users from creating cohesive custom themes or replacing built-in UI comp
 - Read via `theme[completionBackground]` instead of `Color.White`.
 - **Files:** `autocomplete/src/commonMain/.../View.kt`
 
-### 35. Make lint severity colors themeable via `ThemeKey`
+### 35. [DONE] Make lint severity colors themeable via `ThemeKey`
 - **Effort:** < 1 day | **Source:** Gap Analysis | **Depends on:** #33a
 - Lint gutter markers and diagnostic panel use hardcoded Material Design colors
   (duplicated in `LintGutter.kt` and `LintPanel.kt`). Define `ThemeKey`s in the lint
@@ -592,7 +592,7 @@ prevent users from creating cohesive custom themes or replacing built-in UI comp
 - Both gutter and panel read from the same keys — eliminates duplication.
 - **Files:** `lint/src/commonMain/.../LintGutter.kt`, `lint/src/commonMain/.../LintPanel.kt`
 
-### 36. Move remaining hardcoded colors to `ThemeKey`s
+### 36. [DONE] Move remaining hardcoded colors to `ThemeKey`s
 - **Effort:** < 1 day | **Source:** Gap Analysis | **Depends on:** #33a
 - Whitespace highlighting: `Color(0x40808080)` space/tab marks, `Color(0x30FF6666)`
   trailing whitespace — define keys in the view module.
@@ -603,7 +603,7 @@ prevent users from creating cohesive custom themes or replacing built-in UI comp
 - **Files:** `view/src/commonMain/.../HighlightWhitespace.kt`,
   `view/src/commonMain/.../SpecialChars.kt`
 
-### 37. Add `EditorLayout` data class nested in `EditorTheme`
+### 37. [DONE] Add `EditorLayout` data class nested in `EditorTheme`
 - **Effort:** < 1 day | **Source:** Gap Analysis
 - Core view module has hardcoded layout values across several files. These are all in
   `:view` so they belong as named fields, but adding them directly to `EditorTheme`
@@ -631,7 +631,7 @@ prevent users from creating cohesive custom themes or replacing built-in UI comp
   `view/src/commonMain/.../KodeMirror.kt`, `view/src/commonMain/.../Panel.kt`,
   `view/src/commonMain/.../DropCursor.kt`
 
-### 38. Add `defaultKeymap` option to `CompletionConfig`
+### 38. [DONE] Add `defaultKeymap` option to `CompletionConfig`
 - **Effort:** < 1 hour | **Source:** Gap Analysis
 - CM6's `CompletionConfig` has `defaultKeymap: boolean` to disable the built-in
   Tab/Enter/Arrow keybindings. KM's `CompletionConfig` is missing this.
@@ -667,6 +667,6 @@ prevent users from creating cohesive custom themes or replacing built-in UI comp
 | 2 | 6 | — | 1 | — | Medium impact ergonomics |
 | 3 | 9 | — | — | 1 | Documentation gaps |
 | 4 | 6 | — | — | 1 | Polish and nice-to-have |
-| 5 | — | 6 | — | 1 | Configuration parity with CM6 |
+| 5 | 7 | — | — | 1 | Configuration parity with CM6 |
 | Carried | 3 | 0 | 4 | 2 | Carried over from round 1 |
-| **Total** | **32** | **7** | **5** | **4** | |
+| **Total** | **39** | **0** | **5** | **4** | |

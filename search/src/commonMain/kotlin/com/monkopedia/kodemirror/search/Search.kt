@@ -18,6 +18,8 @@
  */
 package com.monkopedia.kodemirror.search
 
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
@@ -44,7 +46,7 @@ import com.monkopedia.kodemirror.view.showPanels
  * This bundles the search state fields, panel plugin, keymap, and
  * goto-line support.
  */
-fun search(): Extension {
+fun search(panelModifier: (BoxScope.() -> Modifier)? = null): Extension {
     val searchPanelProvider = showPanels.compute(
         listOf(
             Slot.FieldSlot(searchPanelOpenField),
@@ -56,7 +58,11 @@ fun search(): Extension {
                 add(
                     Panel(top = false) {
                         val view = LocalEditorSession.current
-                        SearchPanel(view)
+                        SearchPanel(
+                            view,
+                            modifier = panelModifier?.invoke(this)
+                                ?: Modifier
+                        )
                     }
                 )
             }

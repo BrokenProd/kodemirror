@@ -31,11 +31,13 @@ default) for one below.
 ```kotlin
 data class Panel(
     val top: Boolean = false,
-    val content: @Composable () -> Unit
+    val content: @Composable BoxScope.() -> Unit
 )
 ```
 
-The `content` lambda is a `@Composable` function — unlike upstream
+The `content` lambda is a `@Composable BoxScope.() -> Unit` — it
+executes inside a `Box`, giving access to `align()`,
+`matchParentSize()`, and other `BoxScope` modifiers. Unlike upstream
 CodeMirror which uses `toDOM()`, you build your panel UI with standard
 Compose components.
 

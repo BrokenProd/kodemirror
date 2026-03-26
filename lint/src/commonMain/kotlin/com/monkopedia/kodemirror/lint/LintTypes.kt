@@ -18,8 +18,25 @@
  */
 package com.monkopedia.kodemirror.lint
 
+import androidx.compose.ui.graphics.Color
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.ThemeKey
+
+/** Theme color for hint-level diagnostics. */
+val lintHintColor = ThemeKey(default = Color(0xFF2196F3))
+
+/** Theme color for info-level diagnostics. */
+val lintInfoColor = ThemeKey(default = Color(0xFF4CAF50))
+
+/** Theme color for warning-level diagnostics. */
+val lintWarningColor = ThemeKey(default = Color(0xFFFF9800))
+
+/** Theme color for error-level diagnostics. */
+val lintErrorColor = ThemeKey(default = Color(0xFFF44336))
+
+/** Theme color for the diagnostic source label in the lint panel. */
+val lintSourceColor = ThemeKey(default = Color.Gray)
 
 /** Severity levels for diagnostics. */
 enum class Severity { HINT, INFO, WARNING, ERROR }

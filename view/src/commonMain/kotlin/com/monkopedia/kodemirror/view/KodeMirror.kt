@@ -179,9 +179,11 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
         val charWidthDp = with(density) {
             (contentStyle.fontSize.toPx() * 0.65f).toDp()
         }
-        val lineNumberWidth = charWidthDp * maxDigits + 8.dp
+        val lineNumberWidth = charWidthDp * maxDigits +
+            theme.layout.gutterStartPadding + theme.layout.gutterEndPadding
         val extraGutterWidth =
-            14.dp * configs.count { it.type != GutterType.LineNumbers && it.lineMarker != null }
+            theme.layout.customGutterWidth *
+                configs.count { it.type != GutterType.LineNumbers && it.lineMarker != null }
         lineNumberWidth + extraGutterWidth
     } else {
         0.dp
@@ -189,7 +191,10 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
 
     // Content height in px (top padding + items + bottom padding)
     val contentHeightPx = with(density) {
-        (4.dp + lineHeightDp * columnItems.size + 4.dp).toPx()
+        (
+            theme.layout.contentTopPadding + lineHeightDp * columnItems.size +
+                theme.layout.contentBottomPadding
+            ).toPx()
     }
 
     CompositionLocalProvider(
@@ -200,10 +205,10 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
         Column(modifier = modifier.fillMaxSize()) {
             for (panel in topPanels) {
                 Box(Modifier.fillMaxWidth().background(theme.panelBackground)) {
-                    panel.content()
+                    panel.content(this)
                 }
                 Box(
-                    Modifier.fillMaxWidth().height(1.dp)
+                    Modifier.fillMaxWidth().height(theme.layout.panelBorderWidth)
                         .background(theme.panelBorderColor)
                 )
             }
@@ -378,7 +383,8 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                 LazyColumn(
                     state = lazyState,
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        vertical = 4.dp
+                        top = theme.layout.contentTopPadding,
+                        bottom = theme.layout.contentBottomPadding
                     )
                 ) {
                     items(
@@ -503,11 +509,11 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
             }
             for (panel in bottomPanels) {
                 Box(
-                    Modifier.fillMaxWidth().height(1.dp)
+                    Modifier.fillMaxWidth().height(theme.layout.panelBorderWidth)
                         .background(theme.panelBorderColor)
                 )
                 Box(Modifier.fillMaxWidth().background(theme.panelBackground)) {
-                    panel.content()
+                    panel.content(this)
                 }
             }
         }
