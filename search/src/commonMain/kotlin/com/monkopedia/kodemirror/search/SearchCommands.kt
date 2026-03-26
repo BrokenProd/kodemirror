@@ -23,18 +23,21 @@ import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.SelectionSpec
+import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.endPos
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 
-/** Open the search panel. */
+/** Open the search panel. Lazily installs the search extension if needed. */
 val openSearchPanel: (EditorSession) -> Boolean = { view ->
-    view.dispatch(
-        TransactionSpec(
-            effects = listOf(toggleSearchPanel.of(true))
-        )
-    )
+    val hasSearch = view.state.field(searchPanelOpenField, require = false) != null
+    val effects = if (hasSearch) {
+        listOf(toggleSearchPanel.of(true))
+    } else {
+        listOf(StateEffect.appendConfig.of(search()), toggleSearchPanel.of(true))
+    }
+    view.dispatch(TransactionSpec(effects = effects))
     true
 }
 
