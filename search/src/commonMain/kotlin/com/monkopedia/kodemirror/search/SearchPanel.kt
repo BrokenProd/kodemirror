@@ -103,11 +103,23 @@ internal fun SearchPanel(view: EditorSession) {
                 },
                 modifier = Modifier.width(200.dp)
                     .background(theme.inputBackground)
-                    .border(1.dp, theme.inputBorderColor)
-                    .padding(2.dp),
+                    .border(1.dp, theme.inputBorderColor),
                 textStyle = panelTextStyle,
                 cursorBrush = SolidColor(theme.cursor),
-                singleLine = true
+                singleLine = true,
+                decorationBox = { innerTextField ->
+                    Box(modifier = Modifier.padding(2.dp)) {
+                        if (searchText.isEmpty()) {
+                            BasicText(
+                                view.phrase("Find"),
+                                style = panelTextStyle.copy(
+                                    color = theme.foreground.copy(alpha = 0.5f)
+                                )
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
             )
             BasicText(
                 "next",
@@ -179,11 +191,23 @@ internal fun SearchPanel(view: EditorSession) {
                 },
                 modifier = Modifier.width(200.dp)
                     .background(theme.inputBackground)
-                    .border(1.dp, theme.inputBorderColor)
-                    .padding(2.dp),
+                    .border(1.dp, theme.inputBorderColor),
                 textStyle = panelTextStyle,
                 cursorBrush = SolidColor(theme.cursor),
-                singleLine = true
+                singleLine = true,
+                decorationBox = { innerTextField ->
+                    Box(modifier = Modifier.padding(2.dp)) {
+                        if (replaceText.isEmpty()) {
+                            BasicText(
+                                view.phrase("Replace"),
+                                style = panelTextStyle.copy(
+                                    color = theme.foreground.copy(alpha = 0.5f)
+                                )
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
             )
             BasicText(
                 "replace",
