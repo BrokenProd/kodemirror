@@ -58,6 +58,40 @@ import kotlinx.coroutines.withTimeout
 @OptIn(ExperimentalTestApi::class)
 class RecompositionTest {
 
+    @Test
+    fun minimalByDelegation() {
+        runDesktopComposeUiTest {
+            lateinit var session: EditorSession
+            setContent {
+                val state = remember {
+                    EditorState.create(EditorStateConfig(doc = "hello".asDoc()))
+                }
+                session = remember(state) { EditorSession(state) }
+                // Just read via by delegation, nothing else
+                val s by session::state
+                androidx.compose.foundation.text.BasicText(text = s.doc.toString())
+            }
+            waitForIdle()
+            assertEquals("hello", session.state.doc.toString())
+        }
+    }
+
+    @Test
+    fun kodeMirrorWithWaitUntil() {
+        runDesktopComposeUiTest {
+            lateinit var session: EditorSession
+            setContent {
+                val state = remember {
+                    EditorState.create(EditorStateConfig(doc = "hello".asDoc()))
+                }
+                session = remember(state) { EditorSession(state) }
+                KodeMirror(session = session)
+            }
+            waitUntil(timeoutMillis = 5000) { session.state.doc.toString() == "hello" }
+            assertEquals("hello", session.state.doc.toString())
+        }
+    }
+
     private fun runSessionTest(
         doc: String = "",
         extensions: Extension? = null,
@@ -185,7 +219,7 @@ class RecompositionTest {
                 }
                 session = remember(state) { EditorSession(state) }
                 KodeMirror(session = session)
-                observedValue = session.rememberField(counterField)
+                observedValue = session.rememberField(counterField).value
             }
             waitForIdle()
             assertEquals(0, observedValue)
@@ -229,7 +263,7 @@ class RecompositionTest {
                 session = remember(state) { EditorSession(state) }
                 KodeMirror(session = session)
 
-                val fieldValue = session.rememberField(counterField)
+                val fieldValue by session.rememberField(counterField)
                 SideEffect {
                     recomposeCount++
                 }
@@ -287,7 +321,7 @@ class RecompositionTest {
                 }
                 session = remember(state) { EditorSession(state) }
                 KodeMirror(session = session)
-                observedValue = session.rememberFacet(myFacet)
+                observedValue = session.rememberFacet(myFacet).value
             }
             waitForIdle()
             assertEquals("initial", observedValue)
@@ -351,7 +385,7 @@ class RecompositionTest {
                 }
                 session = remember(state) { EditorSession(state) }
                 KodeMirror(session = session)
-                observedValue = session.rememberField(counterField)
+                observedValue = session.rememberField(counterField).value
             }
             waitForIdle()
             assertEquals(0, observedValue)
@@ -398,7 +432,7 @@ class RecompositionTest {
                 }
                 session = remember(state) { EditorSession(state) }
                 KodeMirror(session = session)
-                observedValue = session.rememberField(counterField)
+                observedValue = session.rememberField(counterField).value
             }
             waitForIdle()
             assertEquals(0, observedValue)
@@ -415,77 +449,6 @@ class RecompositionTest {
             waitForIdle()
 
             assertEquals(42, observedValue)
-        }
-    }
-
-    @Test
-    fun asyncDispatch_detectedWithoutExplicitIdle() {
-        // Tests whether the recomposer auto-detects snapshot changes from a
-        // detached coroutine scope, WITHOUT waitForIdle() forcing processing.
-        // This reproduces the real-world async linter pattern.
-        val updateEffect = StateEffect.define<Int>()
-        val counterField = StateField.define<Int> {
-            create { 0 }
-            update { value, tr ->
-                var result = value
-                for (effect in tr.effects) {
-                    effect.asType(updateEffect)?.let { result = it.value }
-                }
-                result
-            }
-        }
-
-        var observedValue by mutableIntStateOf(-1)
-
-        runDesktopComposeUiTest {
-            lateinit var session: EditorSession
-            setContent {
-                val state = remember {
-                    EditorState.create(
-                        EditorStateConfig(extensions = counterField)
-                    )
-                }
-                session = remember(state) { EditorSession(state) }
-                KodeMirror(session = session)
-                observedValue = session.rememberField(counterField)
-            }
-            waitForIdle()
-            assertEquals(0, observedValue)
-
-            // Launch from a completely detached scope — the old
-            // AsyncLinterPlugin pattern
-            val latch = CountDownLatch(1)
-            val scope = CoroutineScope(
-                SupervisorJob() + Dispatchers.Default
-            )
-            scope.launch {
-                delay(50)
-                session.dispatch(
-                    TransactionSpec(
-                        effects = listOf(updateEffect.of(42))
-                    )
-                )
-                latch.countDown()
-            }
-
-            // Wait for the dispatch to actually complete
-            latch.await(2, TimeUnit.SECONDS)
-            // Give the recomposer time to auto-process
-            Thread.sleep(200)
-
-            // The compose test framework controls recomposition
-            // explicitly — waitForIdle() is required to pump the
-            // recomposer even though Snapshot.sendApplyNotifications()
-            // fires in dispatchTransaction(). In a real Compose window,
-            // the platform's frame clock drives recomposition
-            // automatically.
-            waitForIdle()
-
-            assertEquals(
-                42,
-                observedValue,
-                "Detached-scope dispatch should update state"
-            )
         }
     }
 

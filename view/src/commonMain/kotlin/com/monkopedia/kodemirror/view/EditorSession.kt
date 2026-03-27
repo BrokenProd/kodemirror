@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.view
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
@@ -250,20 +251,24 @@ fun onSelectionAsync(callback: suspend CoroutineScope.(EditorSelection) -> Unit)
  *
  * This is more efficient than reading `session.state.field(field)` directly, which
  * triggers recomposition on every state change (keystroke, cursor move, etc.).
+ *
+ * Returns [State] so callers can use `by` delegation for fine-grained tracking.
  */
 @Composable
-fun <T> EditorSession.rememberField(field: StateField<T>): T =
-    remember(this) { derivedStateOf { state.field(field) } }.value
+fun <T> EditorSession.rememberField(field: StateField<T>): State<T> =
+    remember(this) { derivedStateOf { state.field(field) } }
 
 /**
  * Remember the current value of a [Facet], recomposing only when its value changes.
  *
  * This is more efficient than reading `session.state.facet(facet)` directly, which
  * triggers recomposition on every state change (keystroke, cursor move, etc.).
+ *
+ * Returns [State] so callers can use `by` delegation for fine-grained tracking.
  */
 @Composable
-fun <T> EditorSession.rememberFacet(facet: Facet<*, T>): T =
-    remember(this) { derivedStateOf { state.facet(facet) } }.value
+fun <T> EditorSession.rememberFacet(facet: Facet<*, T>): State<T> =
+    remember(this) { derivedStateOf { state.facet(facet) } }
 
 private class AsyncChangePlugin(
     session: EditorSession,

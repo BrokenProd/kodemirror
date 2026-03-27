@@ -22,10 +22,90 @@ import kotlin.math.floor
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 
 class EditorStateTest {
+
+    @Test
+    fun noopTransactionReusesOldState() {
+        val state = EditorState.create(EditorStateConfig(doc = "hello".asDoc()))
+        val tr = state.update(TransactionSpec())
+        assertSame(state, tr.state, "No-op transaction should reuse old state")
+    }
+
+    @Test
+    fun docChangeProducesNewState() {
+        val state = EditorState.create(EditorStateConfig(doc = "hello".asDoc()))
+        val tr = state.update(
+            TransactionSpec(
+                changes = ChangeSpec.Single(
+                    from = DocPos(5),
+                    insert = InsertContent.StringContent(" world")
+                )
+            )
+        )
+        assertNotSame(state, tr.state, "Doc change should produce new state")
+        assertEquals("hello world", tr.state.doc.toString())
+    }
+
+    @Test
+    fun selectionChangeProducesNewState() {
+        val state = EditorState.create(EditorStateConfig(doc = "hello".asDoc()))
+        val tr = state.update(
+            TransactionSpec(selection = SelectionSpec.CursorSpec(DocPos(3)))
+        )
+        assertNotSame(state, tr.state, "Selection change should produce new state")
+        assertEquals(DocPos(3), tr.state.selection.main.head)
+    }
+
+    @Test
+    fun fieldChangeProducesNewState() {
+        val field = StateField.define(
+            StateFieldSpec<Int>(
+                create = { 0 },
+                update = { v, _ -> v + 1 }
+            )
+        )
+        val state = EditorState.create(
+            EditorStateConfig(extensions = field)
+        )
+        val tr = state.update(TransactionSpec())
+        assertNotSame(state, tr.state, "Field change should produce new state")
+        assertEquals(1, tr.state.field(field))
+    }
+
+    @Test
+    fun noopWithFieldReusesState() {
+        // Field that returns same value on update (identity)
+        val field = StateField.define(
+            StateFieldSpec<Int>(
+                create = { 42 },
+                update = { v, _ -> v }
+            )
+        )
+        val state = EditorState.create(
+            EditorStateConfig(extensions = field)
+        )
+        val tr = state.update(TransactionSpec())
+        assertSame(state, tr.state, "Identity update should reuse old state")
+        assertEquals(42, tr.state.field(field))
+    }
+
+    @Test
+    fun effectOnlyTransactionReusesStateWhenNoFieldChanges() {
+        val eff = StateEffect.define<Int>()
+        val state = EditorState.create(EditorStateConfig(doc = "hello".asDoc()))
+        val tr = state.update(
+            TransactionSpec(effects = listOf(eff.of(99)))
+        )
+        assertSame(
+            state,
+            tr.state,
+            "Effect-only transaction with no slot changes should reuse state"
+        )
+    }
 
     @Test
     fun holdsDocAndSelectionProperties() {

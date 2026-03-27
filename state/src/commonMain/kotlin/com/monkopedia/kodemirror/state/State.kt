@@ -192,6 +192,7 @@ class EditorState private constructor(
         } else {
             tr.newSelection.asSingle()
         }
+        val isNormalUpdate = conf === config
         EditorState(
             conf,
             tr.newDoc,
@@ -200,6 +201,16 @@ class EditorState private constructor(
             InitMode.Update(tr),
             tr
         )
+        // If nothing actually changed (same doc, same selection, no slot
+        // reported Changed), reuse the old state object. This prevents
+        // unnecessary mutableStateOf updates that trigger recomposition
+        // in Compose when the state is observed via property delegation.
+        if (isNormalUpdate && !tr.docChanged && sel == selection) {
+            val newState = tr._state!!
+            if (newState.status.none { it.isChanged }) {
+                tr._state = this
+            }
+        }
     }
 
     /**

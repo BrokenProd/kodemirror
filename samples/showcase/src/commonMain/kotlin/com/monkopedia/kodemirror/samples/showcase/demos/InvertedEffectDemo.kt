@@ -24,6 +24,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
@@ -75,7 +76,7 @@ fun InvertedEffectDemo() {
         extensions = showcaseSetup + javascript().extension + counterExtension
     )
 
-    val displayCounter = session.rememberField(counterField)
+    val displayCounter by session.rememberField(counterField)
 
     DemoScaffold(
         title = "Inverted Effects",

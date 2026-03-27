@@ -26,6 +26,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -64,7 +65,8 @@ internal val lintPanelOpen: StateField<Boolean> = StateField.define(
 @Composable
 internal fun LintPanelContent(view: EditorSession) {
     val theme = LocalEditorTheme.current
-    val diagnostics = view.rememberField(lintState).diagnostics
+    val lintStateValue by view.rememberField(lintState)
+    val diagnostics = lintStateValue.diagnostics
     val textStyle = TextStyle(color = theme.foreground)
 
     Column(modifier = Modifier.padding(4.dp)) {
