@@ -88,7 +88,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     val impl = session as EditorSessionImpl
-    val state = session.state
+    val state by session::state
 
     val pluginHost = remember(session) {
         ViewPluginHost(session).also { it.syncToState(state, null) }
