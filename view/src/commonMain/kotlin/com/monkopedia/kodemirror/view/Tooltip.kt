@@ -66,7 +66,7 @@ val showTooltips: Facet<List<Tooltip>, List<Tooltip>> = Facet.define(
 @Composable
 fun TooltipLayer(session: EditorSession) {
     val impl = session as EditorSessionImpl
-    val state = session.state
+    val state by session::state
     val single = state.facet(showTooltip)
     val multi = state.facet(showTooltips)
     val all = buildList {
