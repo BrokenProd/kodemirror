@@ -17,14 +17,17 @@ package com.monkopedia.kodemirror.samples.showcase.demos
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.lang.javascript.javascript
 import com.monkopedia.kodemirror.lint.Diagnostic
 import com.monkopedia.kodemirror.lint.LintSource
 import com.monkopedia.kodemirror.lint.Severity
+import com.monkopedia.kodemirror.lint.diagnosticCount
 import com.monkopedia.kodemirror.lint.linter
 import com.monkopedia.kodemirror.samples.showcase.DemoScaffold
+import com.monkopedia.kodemirror.samples.showcase.showcaseSetup
 import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.view.KodeMirror
@@ -63,6 +66,7 @@ private val myLinter: LintSource = { session ->
             )
         }
     }
+    println("[LintDemo] linter returned ${diagnostics.size} diagnostics")
     diagnostics
 }
 
@@ -89,8 +93,24 @@ fun LintDemo() {
     ) {
         val session = rememberEditorSession(
             doc = lintDoc,
-            extensions = showcaseSetup + javascript().extension + linter(myLinter)
+            extensions = showcaseSetup + javascript().extension +
+                linter(myLinter)
         )
+
+        // Log every state change via snapshotFlow
+        LaunchedEffect(session) {
+            snapshotFlow {
+                val diagCount = diagnosticCount(session.state)
+                Pair(session.state.doc.length, diagCount)
+            }.collect { (docLen, diagCount) ->
+                println(
+                    "[LintDemo snapshotFlow] " +
+                        "docLen=$docLen " +
+                        "diagnostics=$diagCount"
+                )
+            }
+        }
+
         KodeMirror(
             session = session,
             modifier = Modifier.fillMaxSize()

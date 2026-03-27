@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.runDesktopComposeUiTest
 import com.monkopedia.kodemirror.state.ChangeSpec
@@ -48,9 +49,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 @OptIn(ExperimentalTestApi::class)
 class RecompositionTest {
@@ -483,6 +486,70 @@ class RecompositionTest {
                 observedValue,
                 "Detached-scope dispatch should update state"
             )
+        }
+    }
+
+    @Test
+    fun snapshotFlow_emitsOnAsyncDispatch() {
+        // Uses snapshotFlow to observe session.state directly.
+        // snapshotFlow emits whenever the snapshot state changes,
+        // independent of the compose recomposer's frame scheduling.
+        val updateEffect = StateEffect.define<Int>()
+        val counterField = StateField.define<Int> {
+            create { 0 }
+            update { value, tr ->
+                var result = value
+                for (effect in tr.effects) {
+                    effect.asType(updateEffect)?.let { result = it.value }
+                }
+                result
+            }
+        }
+
+        runDesktopComposeUiTest {
+            lateinit var session: EditorSession
+            setContent {
+                val state = remember {
+                    EditorState.create(
+                        EditorStateConfig(extensions = counterField)
+                    )
+                }
+                session = remember(state) { EditorSession(state) }
+                KodeMirror(session = session)
+            }
+            waitForIdle()
+
+            // Set up a snapshotFlow that watches session.state and
+            // extracts the counter field value
+            val stateFlow = snapshotFlow {
+                session.state.field(counterField)
+            }
+
+            // Dispatch from a detached scope (the async linter pattern)
+            val latch = CountDownLatch(1)
+            val scope = CoroutineScope(
+                SupervisorJob() + Dispatchers.Default
+            )
+            scope.launch {
+                delay(50)
+                session.dispatch(
+                    TransactionSpec(
+                        effects = listOf(updateEffect.of(42))
+                    )
+                )
+                latch.countDown()
+            }
+
+            // Wait for the dispatch to complete
+            latch.await(2, TimeUnit.SECONDS)
+
+            // Verify snapshotFlow sees the new value
+            val emitted = runBlocking {
+                withTimeout(2000) {
+                    stateFlow.first { it == 42 }
+                }
+            }
+            assertEquals(42, emitted)
         }
     }
 

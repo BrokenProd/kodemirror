@@ -21,7 +21,6 @@ package com.monkopedia.kodemirror.view
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.Snapshot
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.LineNumber
@@ -82,7 +81,6 @@ internal class EditorSessionImpl(
         pluginHost?.update(update)
         pluginHost?.syncToState(tr.state, oldState)
         onUpdate(tr)
-        Snapshot.sendApplyNotifications()
     }
 
     @Suppress("UNCHECKED_CAST")
