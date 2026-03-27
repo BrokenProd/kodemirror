@@ -239,12 +239,13 @@ internal class FacetProvider<Input>(
         }
 
         return object : DynamicSlot {
-            override fun create(state: EditorState): SlotStatus {
-                state.values[idx] = getter(state)
+            override fun create(scope: SlotInitScope): SlotStatus {
+                scope.ensureAll(depAddrs)
+                scope.state.values[idx] = getter(scope.state)
                 return SlotStatus.Changed
             }
 
-            override fun update(state: EditorState, tr: Transaction): SlotStatus {
+            override fun update(scope: SlotInitScope, tr: Transaction): SlotStatus {
                 if ((depDoc && tr.docChanged) ||
                     (
                         depSel && (
@@ -252,26 +253,27 @@ internal class FacetProvider<Input>(
                                 tr.selection != null
                             )
                         ) ||
-                    ensureAll(state, depAddrs)
+                    scope.ensureAll(depAddrs)
                 ) {
-                    val newVal = getter(state)
+                    val newVal = getter(scope.state)
                     if (multi) {
                         if (!compareArray(
                                 newVal as List<Input>,
-                                state.values[idx] as List<Input>,
+                                scope.state.values[idx]
+                                    as List<Input>,
                                 compare
                             )
                         ) {
-                            state.values[idx] = newVal
+                            scope.state.values[idx] = newVal
                             return SlotStatus.Changed
                         }
                     } else {
                         if (!compare(
                                 newVal as Input,
-                                state.values[idx] as Input
+                                scope.state.values[idx] as Input
                             )
                         ) {
-                            state.values[idx] = newVal
+                            scope.state.values[idx] = newVal
                             return SlotStatus.Changed
                         }
                     }
@@ -279,7 +281,7 @@ internal class FacetProvider<Input>(
                 return SlotStatus.None
             }
 
-            override fun reconfigure(state: EditorState, oldState: EditorState): SlotStatus {
+            override fun reconfigure(scope: SlotInitScope, oldState: EditorState): SlotStatus {
                 var newVal: Any?
                 val oldAddr = oldState.config.address[id]
                 if (oldAddr != null) {
@@ -288,18 +290,18 @@ internal class FacetProvider<Input>(
                             when (dep) {
                                 is Slot.FacetSlot ->
                                     oldState.facet(dep.reader) ===
-                                        state.facet(dep.reader)
+                                        scope.facet(dep.reader)
                                 is Slot.FieldSlot ->
                                     oldState.field(
                                         dep.stateField, false
                                     ) ==
-                                        state.field(
-                                            dep.stateField, false
+                                        scope.field(
+                                            dep.stateField
                                         )
                                 else -> true
                             }
                         } || run {
-                            newVal = getter(state)
+                            newVal = getter(scope.state)
                             if (multi) {
                                 compareArray(
                                     newVal as List<Input>,
@@ -314,13 +316,13 @@ internal class FacetProvider<Input>(
                             }
                         }
                     ) {
-                        state.values[idx] = oldVal
+                        scope.state.values[idx] = oldVal
                         return SlotStatus.None
                     }
-                    state.values[idx] =
-                        getter(state) // already computed
+                    scope.state.values[idx] =
+                        getter(scope.state) // already computed
                 } else {
-                    state.values[idx] = getter(state)
+                    scope.state.values[idx] = getter(scope.state)
                 }
                 return SlotStatus.Changed
             }
@@ -334,14 +336,6 @@ private fun <T> compareArray(a: List<T>, b: List<T>, compare: (T, T) -> Boolean)
         if (!compare(a[i], b[i])) return false
     }
     return true
-}
-
-private fun ensureAll(state: EditorState, addrs: List<Int>): Boolean {
-    var changed = false
-    for (addr in addrs) {
-        if (ensureAddr(state, addr).isChanged) changed = true
-    }
-    return changed
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -369,50 +363,47 @@ internal fun <Input, Output> dynamicFacetSlot(
     }
 
     return object : DynamicSlot {
-        override fun create(state: EditorState): SlotStatus {
+        override fun create(scope: SlotInitScope): SlotStatus {
             for (addr in providerAddrs) {
-                ensureAddr(state, addr)
+                scope.ensureAddr(addr)
             }
-            state.values[idx] = get(state)
+            scope.state.values[idx] = get(scope.state)
             return SlotStatus.Changed
         }
 
-        override fun update(state: EditorState, tr: Transaction): SlotStatus {
-            if (!ensureAll(state, dynamic)) {
+        override fun update(scope: SlotInitScope, tr: Transaction): SlotStatus {
+            if (!scope.ensureAll(dynamic)) {
                 return SlotStatus.None
             }
-            val value = get(state)
+            val value = get(scope.state)
             if (facet.compareFn(
                     value,
-                    state.values[idx] as Output
+                    scope.state.values[idx] as Output
                 )
             ) {
                 return SlotStatus.None
             }
-            state.values[idx] = value
+            scope.state.values[idx] = value
             return SlotStatus.Changed
         }
 
-        override fun reconfigure(state: EditorState, oldState: EditorState): SlotStatus {
-            val depChanged = ensureAll(
-                state,
-                providerAddrs
-            )
+        override fun reconfigure(scope: SlotInitScope, oldState: EditorState): SlotStatus {
+            val depChanged = scope.ensureAll(providerAddrs)
             val oldProviders =
                 oldState.config.facets[facet.id]
             val oldValue = oldState.facet(facet)
             if (oldProviders != null && !depChanged &&
                 sameArray(providers, oldProviders)
             ) {
-                state.values[idx] = oldValue
+                scope.state.values[idx] = oldValue
                 return SlotStatus.None
             }
-            val value = get(state)
+            val value = get(scope.state)
             if (facet.compareFn(value, oldValue)) {
-                state.values[idx] = oldValue
+                scope.state.values[idx] = oldValue
                 return SlotStatus.None
             }
-            state.values[idx] = value
+            scope.state.values[idx] = value
             return SlotStatus.Changed
         }
     }
@@ -469,24 +460,24 @@ class StateField<Value> private constructor(
     internal fun slot(addresses: Map<Int, Int>): DynamicSlot {
         val idx = addresses[id]!! shr 1
         return object : DynamicSlot {
-            override fun create(state: EditorState): SlotStatus {
-                state.values[idx] =
-                    this@StateField.create(state)
+            override fun create(scope: SlotInitScope): SlotStatus {
+                scope.state.values[idx] =
+                    this@StateField.create(scope.state)
                 return SlotStatus.Changed
             }
 
-            override fun update(state: EditorState, tr: Transaction): SlotStatus {
-                val oldVal = state.values[idx] as Value
+            override fun update(scope: SlotInitScope, tr: Transaction): SlotStatus {
+                val oldVal = scope.state.values[idx] as Value
                 val value = updateF(oldVal, tr)
                 if (compareF(oldVal, value)) {
                     return SlotStatus.None
                 }
-                state.values[idx] = value
+                scope.state.values[idx] = value
                 return SlotStatus.Changed
             }
 
-            override fun reconfigure(state: EditorState, oldState: EditorState): SlotStatus {
-                val init = state.facet(initField)
+            override fun reconfigure(scope: SlotInitScope, oldState: EditorState): SlotStatus {
+                val init = scope.facet(initField)
                 val oldInit = oldState.facet(initField)
                 val reInit = init.find {
                     it.field === this@StateField
@@ -496,17 +487,17 @@ class StateField<Value> private constructor(
                         it.field === this@StateField
                     }
                 ) {
-                    state.values[idx] =
-                        reInit.create(state) as Value
+                    scope.state.values[idx] =
+                        reInit.create(scope.state) as Value
                     return SlotStatus.Changed
                 }
                 if (oldState.config.address[id] != null) {
-                    state.values[idx] =
+                    scope.state.values[idx] =
                         oldState.field(this@StateField)
                     return SlotStatus.None
                 }
-                state.values[idx] =
-                    this@StateField.create(state)
+                scope.state.values[idx] =
+                    this@StateField.create(scope.state)
                 return SlotStatus.Changed
             }
         }
@@ -746,10 +737,10 @@ internal class CompartmentInstance(
     val inner: Extension
 ) : Extension
 
-interface DynamicSlot {
-    fun create(state: EditorState): SlotStatus
-    fun update(state: EditorState, tr: Transaction): SlotStatus
-    fun reconfigure(state: EditorState, oldState: EditorState): SlotStatus
+internal interface DynamicSlot {
+    fun create(scope: SlotInitScope): SlotStatus
+    fun update(scope: SlotInitScope, tr: Transaction): SlotStatus
+    fun reconfigure(scope: SlotInitScope, oldState: EditorState): SlotStatus
 }
 
 enum class SlotStatus(val value: Int) {
@@ -775,6 +766,93 @@ enum class SlotStatus(val value: Int) {
         fun computedOr(status: SlotStatus): SlotStatus = fromInt(
             Computed.value or status.value
         )
+    }
+}
+
+/**
+ * Describes the initialization mode for an [EditorState] being constructed.
+ * Passed to the constructor so that [SlotInitScope] can dispatch to the
+ * correct [DynamicSlot] method during slot resolution.
+ */
+internal sealed interface InitMode {
+    data object Create : InitMode
+    data class Update(val tr: Transaction) : InitMode
+    data class Reconfigure(val oldState: EditorState) : InitMode
+}
+
+/**
+ * Scope object that carries context during [EditorState] initialization.
+ *
+ * Dynamic slots may depend on other slots, requiring recursive resolution.
+ * This scope provides [ensureAddr], [ensureAll], [facet], and [field]
+ * methods that resolve dependencies using the correct [DynamicSlot] method
+ * (create / update / reconfigure) for the current initialization mode.
+ *
+ * After initialization completes, the scope is discarded — post-init access
+ * to facets and fields goes through [EditorState.facet] / [EditorState.field],
+ * which use a simplified [ensureAddr] that only asserts slots are computed.
+ */
+internal sealed class SlotInitScope(val state: EditorState) {
+    fun ensureAddr(addr: Int): SlotStatus {
+        if (addr and 1 != 0) return SlotStatus.Computed
+        val idx = addr shr 1
+        val status = state.status[idx]
+        if (status == SlotStatus.Computing) {
+            error(
+                "Cyclic dependency between fields " +
+                    "and/or facets"
+            )
+        }
+        if (status.isComputed) return status
+        state.status[idx] = SlotStatus.Computing
+        val changed = computeSlot(state.config.dynamicSlots[idx])
+        state.status[idx] = SlotStatus.computedOr(changed)
+        return SlotStatus.computedOr(changed)
+    }
+
+    fun ensureAll(addrs: List<Int>): Boolean {
+        var changed = false
+        for (addr in addrs) {
+            if (ensureAddr(addr).isChanged) changed = true
+        }
+        return changed
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun <Output> facet(reader: FacetReader<Output>): Output {
+        val addr = state.config.address[reader.id]
+            ?: return reader.default
+        ensureAddr(addr)
+        return getAddr(state, addr) as Output
+    }
+
+    fun <Output> facet(facet: Facet<*, Output>): Output = this.facet(facet.reader)
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T> field(field: StateField<T>): T? {
+        val addr = state.config.address[field.id] ?: return null
+        ensureAddr(addr)
+        return getAddr(state, addr) as T
+    }
+
+    protected abstract fun computeSlot(slot: DynamicSlot): SlotStatus
+
+    class Create(state: EditorState) : SlotInitScope(state) {
+        override fun computeSlot(slot: DynamicSlot) = slot.create(this)
+    }
+
+    class Update(
+        state: EditorState,
+        val tr: Transaction
+    ) : SlotInitScope(state) {
+        override fun computeSlot(slot: DynamicSlot) = slot.update(this, tr)
+    }
+
+    class Reconfigure(
+        state: EditorState,
+        val oldState: EditorState
+    ) : SlotInitScope(state) {
+        override fun computeSlot(slot: DynamicSlot) = slot.reconfigure(this, oldState)
     }
 }
 
@@ -988,24 +1066,20 @@ private fun flatten(
     return result.flatMap { it }
 }
 
+/**
+ * Post-initialization slot address check. All dynamic slots must have been
+ * computed during [EditorState] init via [SlotInitScope]. This function
+ * only verifies that the slot is already computed; it cannot compute new slots.
+ */
 fun ensureAddr(state: EditorState, addr: Int): SlotStatus {
     if (addr and 1 != 0) return SlotStatus.Computed
     val idx = addr shr 1
     val status = state.status[idx]
-    if (status == SlotStatus.Computing) {
-        error(
-            "Cyclic dependency between fields " +
-                "and/or facets"
-        )
-    }
     if (status.isComputed) return status
-    state.status[idx] = SlotStatus.Computing
-    val changed = state.computeSlot!!(
-        state,
-        state.config.dynamicSlots[idx]
+    error(
+        "Dynamic slot $idx was not computed " +
+            "during initialization"
     )
-    state.status[idx] = SlotStatus.computedOr(changed)
-    return SlotStatus.computedOr(changed)
 }
 
 fun getAddr(state: EditorState, addr: Int): Any? {

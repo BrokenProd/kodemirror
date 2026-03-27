@@ -55,24 +55,28 @@ class EditorState private constructor(
     /** The current selection. */
     val selection: EditorSelection,
     internal val values: Array<Any?>,
-    computeSlot: (
-        EditorState,
-        DynamicSlot
-    ) -> SlotStatus,
+    initMode: InitMode,
     tr: Transaction?
 ) {
     internal val status: Array<SlotStatus> =
         config.statusTemplate.toTypedArray()
-    internal var computeSlot:
-        ((EditorState, DynamicSlot) -> SlotStatus)? =
-        computeSlot
 
     init {
         if (tr != null) tr._state = this
-        for (i in config.dynamicSlots.indices) {
-            ensureAddr(this, i shl 1)
+        val scope = when (initMode) {
+            InitMode.Create ->
+                SlotInitScope.Create(this)
+            is InitMode.Update ->
+                SlotInitScope.Update(this, initMode.tr)
+            is InitMode.Reconfigure ->
+                SlotInitScope.Reconfigure(
+                    this,
+                    initMode.oldState
+                )
         }
-        this.computeSlot = null
+        for (i in config.dynamicSlots.indices) {
+            scope.ensureAddr(i shl 1)
+        }
     }
 
     /**
@@ -173,9 +177,7 @@ class EditorState private constructor(
                 doc,
                 selection,
                 Array(conf.dynamicSlots.size) { null },
-                { state, slot ->
-                    slot.reconfigure(state, this)
-                },
+                InitMode.Reconfigure(this),
                 null
             )
             startValues = intermediateState.values
@@ -195,7 +197,7 @@ class EditorState private constructor(
             tr.newDoc,
             sel,
             startValues,
-            { state, slot -> slot.update(state, tr) },
+            InitMode.Update(tr),
             tr
         )
     }
@@ -587,7 +589,7 @@ class EditorState private constructor(
                 Array(
                     configuration.dynamicSlots.size
                 ) { null },
-                { state, slot -> slot.create(state) },
+                InitMode.Create,
                 null
             )
         }
