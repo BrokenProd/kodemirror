@@ -36,9 +36,8 @@ import com.monkopedia.kodemirror.state.asInsert
 import com.monkopedia.kodemirror.state.endPos
 import com.monkopedia.kodemirror.state.transactionSpec
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
@@ -65,6 +64,9 @@ interface EditorSession {
 
     /** Get the document position for on-screen coordinates. Returns null when outside the editor. */
     fun posAtCoords(x: Float, y: Float): Int?
+
+    /** CoroutineScope tied to the composition lifecycle. */
+    val coroutineScope: CoroutineScope
 
     /** Whether the editor is in editable mode. */
     val editable: Boolean
@@ -231,7 +233,7 @@ fun onSelection(callback: (EditorSelection) -> Unit): Extension =
  * ```
  */
 fun onChangeAsync(callback: suspend CoroutineScope.(String) -> Unit): Extension = ViewPlugin.define(
-    create = { _ -> AsyncChangePlugin(callback) }
+    create = { session -> AsyncChangePlugin(session, callback) }
 ).asExtension()
 
 /**
@@ -240,7 +242,7 @@ fun onChangeAsync(callback: suspend CoroutineScope.(String) -> Unit): Extension 
  */
 fun onSelectionAsync(callback: suspend CoroutineScope.(EditorSelection) -> Unit): Extension =
     ViewPlugin.define(
-        create = { _ -> AsyncSelectionPlugin(callback) }
+        create = { session -> AsyncSelectionPlugin(session, callback) }
     ).asExtension()
 
 /**
@@ -264,9 +266,11 @@ fun <T> EditorSession.rememberFacet(facet: Facet<*, T>): T =
     remember(this) { derivedStateOf { state.facet(facet) } }.value
 
 private class AsyncChangePlugin(
+    session: EditorSession,
     private val callback: suspend CoroutineScope.(String) -> Unit
 ) : PluginValue {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val job = SupervisorJob(session.coroutineScope.coroutineContext[Job])
+    private val scope = CoroutineScope(session.coroutineScope.coroutineContext + job)
 
     override fun update(update: ViewUpdate) {
         if (update.docChanged) {
@@ -276,14 +280,16 @@ private class AsyncChangePlugin(
     }
 
     override fun destroy() {
-        scope.cancel()
+        job.cancel()
     }
 }
 
 private class AsyncSelectionPlugin(
+    session: EditorSession,
     private val callback: suspend CoroutineScope.(EditorSelection) -> Unit
 ) : PluginValue {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val job = SupervisorJob(session.coroutineScope.coroutineContext[Job])
+    private val scope = CoroutineScope(session.coroutineScope.coroutineContext + job)
 
     override fun update(update: ViewUpdate) {
         if (update.selectionSet) {
@@ -293,7 +299,7 @@ private class AsyncSelectionPlugin(
     }
 
     override fun destroy() {
-        scope.cancel()
+        job.cancel()
     }
 }
 

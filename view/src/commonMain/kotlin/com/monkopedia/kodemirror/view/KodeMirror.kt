@@ -43,6 +43,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -105,15 +106,19 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
         mutableMapOf<Int, TextLayoutResult>()
     }
 
+    val compositionScope = rememberCoroutineScope()
+
     // Wire up session internals
     DisposableEffect(session) {
         impl.pluginHost = pluginHost
         impl.lineLayoutCache = lineLayoutCache
+        impl.backingCoroutineScope = compositionScope
         onDispose {
             pluginHost.destroy()
             lineLayoutCache.clear()
             impl.pluginHost = null
             impl.lineLayoutCache = null
+            impl.backingCoroutineScope = null
         }
     }
 

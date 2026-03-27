@@ -39,10 +39,8 @@ import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.decorations
 import com.monkopedia.kodemirror.view.editorTheme
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -220,7 +218,8 @@ internal class AsyncLinterPlugin(
     private val source: SuspendLintSource,
     private val config: LintConfig
 ) : PluginValue {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val job = SupervisorJob(view.coroutineScope.coroutineContext[Job])
+    private val scope = CoroutineScope(view.coroutineScope.coroutineContext + job)
     private var lintJob: Job? = null
 
     init {
@@ -255,7 +254,7 @@ internal class AsyncLinterPlugin(
     }
 
     override fun destroy() {
-        scope.cancel()
+        job.cancel()
     }
 }
 

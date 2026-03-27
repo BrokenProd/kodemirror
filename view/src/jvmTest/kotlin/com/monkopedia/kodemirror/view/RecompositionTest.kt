@@ -42,6 +42,10 @@ import com.monkopedia.kodemirror.state.asInsert
 import com.monkopedia.kodemirror.state.define
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalTestApi::class)
 class RecompositionTest {
@@ -288,6 +292,121 @@ class RecompositionTest {
             waitForIdle()
 
             assertEquals("changed", observedValue)
+        }
+    }
+
+    @Test
+    fun dispatchFromBackgroundThread_triggersRecomposition() = runSessionTest(
+        doc = "hello"
+    ) { session ->
+        // Dispatch from Dispatchers.Default — same as AsyncLinterPlugin
+        runBlocking {
+            withContext(Dispatchers.Default) {
+                session.dispatch(
+                    TransactionSpec(
+                        changes = ChangeSpec.Single(
+                            from = DocPos(5),
+                            insert = " world".asInsert()
+                        )
+                    )
+                )
+            }
+        }
+        waitForIdle()
+
+        assertEquals("hello world", session.state.doc.toString())
+    }
+
+    @Test
+    fun stateEffectFromBackgroundThread_triggersRecomposition() {
+        val updateEffect = StateEffect.define<Int>()
+        val counterField = StateField.define<Int> {
+            create { 0 }
+            update { value, tr ->
+                var result = value
+                for (effect in tr.effects) {
+                    effect.asType(updateEffect)?.let { result = it.value }
+                }
+                result
+            }
+        }
+
+        var observedValue by mutableIntStateOf(-1)
+
+        runDesktopComposeUiTest {
+            lateinit var session: EditorSession
+            setContent {
+                val state = remember {
+                    EditorState.create(
+                        EditorStateConfig(extensions = counterField)
+                    )
+                }
+                session = remember(state) { EditorSession(state) }
+                KodeMirror(session = session)
+                observedValue = session.rememberField(counterField)
+            }
+            waitForIdle()
+            assertEquals(0, observedValue)
+
+            // Dispatch effect from background thread — like async linter does
+            runBlocking {
+                withContext(Dispatchers.Default) {
+                    session.dispatch(
+                        TransactionSpec(effects = listOf(updateEffect.of(42)))
+                    )
+                }
+            }
+            waitForIdle()
+
+            assertEquals(42, observedValue)
+        }
+    }
+
+    @Test
+    fun asyncLinterPattern_triggersRecomposition() {
+        // Mimics AsyncLinterPlugin: CoroutineScope(SupervisorJob() + Dispatchers.Default),
+        // delay, then dispatch effect.
+        val updateEffect = StateEffect.define<Int>()
+        val counterField = StateField.define<Int> {
+            create { 0 }
+            update { value, tr ->
+                var result = value
+                for (effect in tr.effects) {
+                    effect.asType(updateEffect)?.let { result = it.value }
+                }
+                result
+            }
+        }
+
+        var observedValue by mutableIntStateOf(-1)
+
+        runDesktopComposeUiTest {
+            lateinit var session: EditorSession
+            setContent {
+                val state = remember {
+                    EditorState.create(
+                        EditorStateConfig(extensions = counterField)
+                    )
+                }
+                session = remember(state) { EditorSession(state) }
+                KodeMirror(session = session)
+                observedValue = session.rememberField(counterField)
+            }
+            waitForIdle()
+            assertEquals(0, observedValue)
+
+            // Launch from session's composition-scoped scope, like AsyncLinterPlugin
+            session.coroutineScope.launch {
+                session.dispatch(
+                    TransactionSpec(effects = listOf(updateEffect.of(42)))
+                )
+            }
+
+            // waitForIdle() pumps the composition dispatcher, running the
+            // launched coroutine and processing the resulting recomposition.
+            waitForIdle()
+
+            assertEquals(42, observedValue)
         }
     }
 
