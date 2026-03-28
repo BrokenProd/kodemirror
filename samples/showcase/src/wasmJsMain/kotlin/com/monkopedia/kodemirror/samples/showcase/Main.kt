@@ -34,10 +34,10 @@ fun main() {
         val body = document.body ?: return@onFontsReady
         ComposeViewport(body) {
             MaterialTheme(colorScheme = darkColorScheme()) {
-                if (getTestParam() == "true") {
-                    TestEditorPage()
-                } else {
-                    ShowcaseApp()
+                when (getTestParam()) {
+                    "true" -> TestEditorPage()
+                    "vim" -> VimTestEditorPage()
+                    else -> ShowcaseApp()
                 }
             }
         }

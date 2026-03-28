@@ -30,6 +30,7 @@ kotlin {
             implementation(project(":lint"))
             implementation(project(":collab"))
             implementation(project(":merge"))
+            implementation(project(":vim"))
             implementation(project(":lezer-common"))
             implementation(project(":lezer-highlight"))
             implementation(project(":legacy-modes"))

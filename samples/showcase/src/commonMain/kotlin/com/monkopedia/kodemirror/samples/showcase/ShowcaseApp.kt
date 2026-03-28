@@ -49,6 +49,7 @@ import com.monkopedia.kodemirror.samples.showcase.demos.StylingDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.TabDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.TooltipDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.TranslateDemo
+import com.monkopedia.kodemirror.samples.showcase.demos.VimModeDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.ZebraDemo
 
 enum class DemoCategory(val title: String) {
@@ -97,6 +98,10 @@ val allDemos: List<DemoItem> = listOf(
         "keybindings", "Keybindings", "Keymap presets & reference",
         DemoCategory.CONFIGURATION
     ) { KeybindingsDemo() },
+    DemoItem(
+        "vim", "Vim Mode", "Modal editing with vim keybindings",
+        DemoCategory.CONFIGURATION
+    ) { VimModeDemo() },
     DemoItem(
         "change", "Document Changes", "Insert / replace / delete",
         DemoCategory.CONTENT
