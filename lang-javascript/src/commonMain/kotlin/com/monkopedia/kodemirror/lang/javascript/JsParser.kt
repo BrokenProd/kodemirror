@@ -215,7 +215,7 @@ private val specLessThan = mapOf(
     "<" to 193
 )
 
-val jsParser: LRParser = LRParser.deserialize(
+internal val jsParser: LRParser = LRParser.deserialize(
     ParserSpec(
         version = 14,
         states = "\$F|Q%TQlOOO%[QlOOO'_QpOOP(lO`OOO*zQ!0MxO'#CiO+RO#tO'#CjO+aO&jO'#CjO+oO#@ItO'#Da" +

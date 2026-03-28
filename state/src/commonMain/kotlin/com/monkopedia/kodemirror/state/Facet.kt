@@ -743,7 +743,7 @@ internal interface DynamicSlot {
     fun reconfigure(scope: SlotInitScope, oldState: EditorState): SlotStatus
 }
 
-enum class SlotStatus(val value: Int) {
+internal enum class SlotStatus(val value: Int) {
     None(0),
     Changed(1),
     Computed(2),
@@ -856,7 +856,7 @@ internal sealed class SlotInitScope(val state: EditorState) {
     }
 }
 
-class Configuration internal constructor(
+internal class Configuration constructor(
     internal val base: Extension,
     internal val compartments: Map<Compartment, Extension>,
     internal val dynamicSlots: List<DynamicSlot>,
@@ -1071,7 +1071,7 @@ private fun flatten(
  * computed during [EditorState] init via [SlotInitScope]. This function
  * only verifies that the slot is already computed; it cannot compute new slots.
  */
-fun ensureAddr(state: EditorState, addr: Int): SlotStatus {
+internal fun ensureAddr(state: EditorState, addr: Int): SlotStatus {
     if (addr and 1 != 0) return SlotStatus.Computed
     val idx = addr shr 1
     val status = state.status[idx]
@@ -1082,7 +1082,7 @@ fun ensureAddr(state: EditorState, addr: Int): SlotStatus {
     )
 }
 
-fun getAddr(state: EditorState, addr: Int): Any? {
+internal fun getAddr(state: EditorState, addr: Int): Any? {
     return if (addr and 1 != 0) {
         state.config.staticValues[addr shr 1]
     } else {

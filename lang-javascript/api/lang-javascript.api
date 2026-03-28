@@ -32,14 +32,6 @@ public final class com/monkopedia/kodemirror/lang/javascript/JsCompleteKt {
 	public static final fun scopeCompletionSource (Ljava/util/Map;)Lkotlin/jvm/functions/Function1;
 }
 
-public final class com/monkopedia/kodemirror/lang/javascript/JsHighlightKt {
-	public static final fun getJavascriptHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
-}
-
-public final class com/monkopedia/kodemirror/lang/javascript/JsParserKt {
-	public static final fun getJsParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
-}
-
 public final class com/monkopedia/kodemirror/lang/javascript/JsSnippetsKt {
 	public static final fun getSnippets ()Ljava/util/List;
 	public static final fun getTypescriptSnippets ()Ljava/util/List;

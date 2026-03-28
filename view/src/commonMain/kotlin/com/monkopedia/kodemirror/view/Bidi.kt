@@ -32,7 +32,7 @@ data class BidiSpan(val from: Int, val to: Int, val level: Int) {
 }
 
 /** An open bidi isolate. */
-data class Isolate(val from: Int, val to: Int, val direction: Direction)
+internal data class Isolate(val from: Int, val to: Int, val direction: Direction)
 
 // Bidi character types (simplified UAX#9 subset)
 private const val T_L = 0 // Left-to-right
@@ -150,7 +150,7 @@ private fun isNeutral(t: Int): Boolean = t == T_WS || t == T_S || t == T_ON || t
  * span at level 0; for text containing RTL characters the spans reflect the
  * resolved embedding levels.
  */
-fun computeOrder(
+internal fun computeOrder(
     line: String,
     direction: Direction,
     isolates: List<Isolate> = emptyList()

@@ -38,20 +38,6 @@ public final class com/monkopedia/kodemirror/lezer/common/ChangedRange {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class com/monkopedia/kodemirror/lezer/common/FlatBufferCursor : com/monkopedia/kodemirror/lezer/common/BufferCursor {
-	public fun <init> (Ljava/util/List;I)V
-	public fun fork ()Lcom/monkopedia/kodemirror/lezer/common/BufferCursor;
-	public final fun getBuffer ()Ljava/util/List;
-	public fun getEnd ()I
-	public fun getId ()I
-	public final fun getIndex ()I
-	public fun getPos ()I
-	public fun getSize ()I
-	public fun getStart ()I
-	public fun next ()V
-	public final fun setIndex (I)V
-}
-
 public abstract interface class com/monkopedia/kodemirror/lezer/common/Input {
 	public abstract fun chunk (I)Ljava/lang/String;
 	public abstract fun getLength ()I

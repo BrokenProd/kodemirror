@@ -30,7 +30,7 @@ import com.monkopedia.kodemirror.state.SpanIterator
 /**
  * Represents one item in the LazyColumn that renders the editor content.
  */
-sealed class ColumnItem {
+internal sealed class ColumnItem {
     /**
      * A line of document text, rendered as an [AnnotatedString].
      *
@@ -107,7 +107,7 @@ fun buildLineContent(
  * @param viewport      The currently visible portion of the document.
  * @param decorationSets All active decoration sets.
  */
-fun buildColumnItems(
+internal fun buildColumnItems(
     state: EditorState,
     viewport: Viewport,
     decorationSets: List<DecorationSet>

@@ -48,7 +48,7 @@ data class LineLayout(
  * The composable stores results here via [store]; the [EditorSession] uses
  * [coordsAtPos] and [posAtCoords] for coordinate queries.
  */
-class LineLayoutCache {
+internal class LineLayoutCache {
     private val cache = mutableMapOf<Int, LineLayout>()
 
     /** Store (or replace) the layout result for a line. */

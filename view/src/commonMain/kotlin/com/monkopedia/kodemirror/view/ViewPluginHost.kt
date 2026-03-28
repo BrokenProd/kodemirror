@@ -25,7 +25,7 @@ import com.monkopedia.kodemirror.state.EditorState
  *
  * Created once per session instance and kept alive across recompositions.
  */
-class ViewPluginHost(private val session: EditorSession) {
+internal class ViewPluginHost(private val session: EditorSession) {
     /**
      * Map from [ViewPlugin] identity to the live plugin value instance.
      */

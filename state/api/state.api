@@ -239,16 +239,6 @@ public final class com/monkopedia/kodemirror/state/ConfigKt {
 	public static synthetic fun combineConfig$default (Ljava/util/List;Ljava/util/Map;Ljava/util/Map;ILjava/lang/Object;)Ljava/util/Map;
 }
 
-public final class com/monkopedia/kodemirror/state/Configuration {
-	public static final field Companion Lcom/monkopedia/kodemirror/state/Configuration$Companion;
-	public final fun staticFacet (Lcom/monkopedia/kodemirror/state/Facet;)Ljava/lang/Object;
-}
-
-public final class com/monkopedia/kodemirror/state/Configuration$Companion {
-	public final fun resolve (Lcom/monkopedia/kodemirror/state/Extension;Ljava/util/Map;Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/state/Configuration;
-	public static synthetic fun resolve$default (Lcom/monkopedia/kodemirror/state/Configuration$Companion;Lcom/monkopedia/kodemirror/state/Extension;Ljava/util/Map;Lcom/monkopedia/kodemirror/state/EditorState;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Configuration;
-}
-
 public final class com/monkopedia/kodemirror/state/DocPos : java/lang/Comparable {
 	public static final field Companion Lcom/monkopedia/kodemirror/state/DocPos$Companion;
 	public static final synthetic fun box-impl (I)Lcom/monkopedia/kodemirror/state/DocPos;
@@ -560,9 +550,7 @@ public final class com/monkopedia/kodemirror/state/FacetEnabler$StaticExtension 
 public final class com/monkopedia/kodemirror/state/FacetKt {
 	public static final fun asSlot (Lcom/monkopedia/kodemirror/state/Facet;)Lcom/monkopedia/kodemirror/state/Slot;
 	public static final fun define (Lcom/monkopedia/kodemirror/state/StateField$Companion;Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/StateField;
-	public static final fun ensureAddr (Lcom/monkopedia/kodemirror/state/EditorState;I)Lcom/monkopedia/kodemirror/state/SlotStatus;
 	public static final fun extensionListOf ([Lcom/monkopedia/kodemirror/state/Extension;)Lcom/monkopedia/kodemirror/state/ExtensionList;
-	public static final fun getAddr (Lcom/monkopedia/kodemirror/state/EditorState;I)Ljava/lang/Object;
 	public static final fun plus (Lcom/monkopedia/kodemirror/state/Extension;Lcom/monkopedia/kodemirror/state/Extension;)Lcom/monkopedia/kodemirror/state/ExtensionList;
 }
 
@@ -998,26 +986,6 @@ public final class com/monkopedia/kodemirror/state/Slot$Selection : com/monkoped
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
-}
-
-public final class com/monkopedia/kodemirror/state/SlotStatus : java/lang/Enum {
-	public static final field Changed Lcom/monkopedia/kodemirror/state/SlotStatus;
-	public static final field Companion Lcom/monkopedia/kodemirror/state/SlotStatus$Companion;
-	public static final field Computed Lcom/monkopedia/kodemirror/state/SlotStatus;
-	public static final field ComputedChanged Lcom/monkopedia/kodemirror/state/SlotStatus;
-	public static final field Computing Lcom/monkopedia/kodemirror/state/SlotStatus;
-	public static final field None Lcom/monkopedia/kodemirror/state/SlotStatus;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public final fun getValue ()I
-	public final fun isChanged ()Z
-	public final fun isComputed ()Z
-	public static fun valueOf (Ljava/lang/String;)Lcom/monkopedia/kodemirror/state/SlotStatus;
-	public static fun values ()[Lcom/monkopedia/kodemirror/state/SlotStatus;
-}
-
-public final class com/monkopedia/kodemirror/state/SlotStatus$Companion {
-	public final fun computedOr (Lcom/monkopedia/kodemirror/state/SlotStatus;)Lcom/monkopedia/kodemirror/state/SlotStatus;
-	public final fun fromInt (I)Lcom/monkopedia/kodemirror/state/SlotStatus;
 }
 
 public abstract interface class com/monkopedia/kodemirror/state/SpanIterator {

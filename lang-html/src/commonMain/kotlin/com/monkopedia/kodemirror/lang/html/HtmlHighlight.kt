@@ -21,7 +21,7 @@ package com.monkopedia.kodemirror.lang.html
 import com.monkopedia.kodemirror.lezer.highlight.Tags as t
 import com.monkopedia.kodemirror.lezer.highlight.styleTagsList
 
-val htmlHighlighting = styleTagsList(
+internal val htmlHighlighting = styleTagsList(
     mapOf(
         "Text RawText IncompleteTag IncompleteCloseTag" to listOf(t.content),
         "StartTag StartCloseTag SelfClosingEndTag EndTag" to listOf(t.angleBracket),

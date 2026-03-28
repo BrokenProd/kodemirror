@@ -45,14 +45,6 @@ public final class com/monkopedia/kodemirror/language/CommentTokens$BlockComment
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class com/monkopedia/kodemirror/language/DocInput : com/monkopedia/kodemirror/lezer/common/Input {
-	public fun <init> (Lcom/monkopedia/kodemirror/state/Text;)V
-	public fun chunk (I)Ljava/lang/String;
-	public fun getLength ()I
-	public fun getLineChunks ()Z
-	public fun read (II)Ljava/lang/String;
-}
-
 public final class com/monkopedia/kodemirror/language/FoldKt {
 	public static final fun codeFolding ()Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun foldGutter ()Lcom/monkopedia/kodemirror/state/Extension;

@@ -159,7 +159,7 @@ class LRLanguage(
  * An [Input] implementation that reads directly from the [Text] rope,
  * avoiding a full `toString()` copy of the document for parsing.
  */
-class DocInput(private val doc: Text) : Input {
+internal class DocInput(private val doc: Text) : Input {
     override val length: Int get() = doc.length
 
     override fun chunk(pos: Int): String {

@@ -26,8 +26,7 @@ import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performTextInput
 import com.monkopedia.kodemirror.basicsetup.basicSetup
 import com.monkopedia.kodemirror.commands.standardKeymap
-import com.monkopedia.kodemirror.lang.javascript.jsParser
-import com.monkopedia.kodemirror.language.Language
+import com.monkopedia.kodemirror.lang.javascript.javascriptLanguage
 import com.monkopedia.kodemirror.language.LanguageSupport
 import com.monkopedia.kodemirror.language.StreamLanguage
 import com.monkopedia.kodemirror.language.StreamParser
@@ -101,7 +100,7 @@ class HighlightingTest {
     private fun buildExtensions(tracker: ViewPlugin<HighlightTracker>) = ExtensionList(
         listOf(
             keymapOf(standardKeymap),
-            Language(jsParser, "javascript").extension,
+            javascriptLanguage.extension,
             syntaxHighlighting(defaultHighlightStyle),
             tracker.asExtension()
         )

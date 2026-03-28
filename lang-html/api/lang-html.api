@@ -23,18 +23,10 @@ public final class com/monkopedia/kodemirror/lang/html/HtmlCompletionConfig {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class com/monkopedia/kodemirror/lang/html/HtmlHighlightKt {
-	public static final fun getHtmlHighlighting ()Lcom/monkopedia/kodemirror/lezer/common/NodePropSource;
-}
-
 public final class com/monkopedia/kodemirror/lang/html/HtmlKt {
 	public static final fun getHtmlLanguage ()Lcom/monkopedia/kodemirror/language/LRLanguage;
 	public static final fun html (Lcom/monkopedia/kodemirror/lang/html/HtmlCompletionConfig;Z)Lcom/monkopedia/kodemirror/language/LanguageSupport;
 	public static synthetic fun html$default (Lcom/monkopedia/kodemirror/lang/html/HtmlCompletionConfig;ZILjava/lang/Object;)Lcom/monkopedia/kodemirror/language/LanguageSupport;
-}
-
-public final class com/monkopedia/kodemirror/lang/html/HtmlParserKt {
-	public static final fun getHtmlParser ()Lcom/monkopedia/kodemirror/lezer/lr/LRParser;
 }
 
 public final class com/monkopedia/kodemirror/lang/html/HtmlSchema {

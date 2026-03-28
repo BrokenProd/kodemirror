@@ -54,7 +54,7 @@ interface BufferCursor {
 /**
  * A [BufferCursor] that reads from a flat [IntArray].
  */
-class FlatBufferCursor(val buffer: List<Int>, var index: Int) : BufferCursor {
+internal class FlatBufferCursor(val buffer: List<Int>, var index: Int) : BufferCursor {
     override val id: Int get() = buffer[index - 4]
     override val start: Int get() = buffer[index - 3]
     override val end: Int get() = buffer[index - 2]
