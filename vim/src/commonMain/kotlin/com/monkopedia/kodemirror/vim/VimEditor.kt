@@ -84,7 +84,7 @@ internal class EventHandlers {
 
 private val wordCharRegex = Regex("[\\w\\p{L}\\p{N}_]")
 
-fun isWordChar(ch: String): Boolean = wordCharRegex.containsMatchIn(ch)
+internal fun isWordChar(ch: String): Boolean = wordCharRegex.containsMatchIn(ch)
 
 // ---------------------------------------------------------------------------
 // Operation tracking
@@ -126,7 +126,7 @@ private val BRACKET_MATCHING = mapOf(
 // Search cursor wrapper
 // ---------------------------------------------------------------------------
 
-class VimSearchCursor(
+internal class VimSearchCursor(
     private val cm: VimEditor,
     query: Regex,
     pos: LinePos
@@ -285,13 +285,13 @@ class VimEditor(val session: EditorSession) {
     var openNotificationFn: ((text: String, options: Map<String, Any?>) -> (() -> Unit))? = null
 }
 
-var isMac: Boolean = false
+internal var isMac: Boolean = false
 
-data class BracketMatch(val to: LinePos?)
-data class ScanResult(val pos: LinePos, val ch: String)
-data class BookmarkOptions(val insertLeft: Boolean = false)
-data class LineHandleImpl(val row: Int, val index: DocPos)
-data class HardWrapOptions(
+internal data class BracketMatch(val to: LinePos?)
+internal data class ScanResult(val pos: LinePos, val ch: String)
+internal data class BookmarkOptions(val insertLeft: Boolean = false)
+internal data class LineHandleImpl(val row: Int, val index: DocPos)
+internal data class HardWrapOptions(
     val from: Int,
     val to: Int,
     val column: Int? = null,
@@ -302,11 +302,11 @@ data class HardWrapOptions(
 // Extension functions (extracted from VimEditor methods)
 // ---------------------------------------------------------------------------
 
-fun VimEditor.on(type: String, f: (Array<out Any?>) -> Unit) = events.on(type, f)
-fun VimEditor.off(type: String, f: (Array<out Any?>) -> Unit) = events.off(type, f)
-fun VimEditor.signal(type: String, vararg args: Any?) = events.signal(type, *args)
+internal fun VimEditor.on(type: String, f: (Array<out Any?>) -> Unit) = events.on(type, f)
+internal fun VimEditor.off(type: String, f: (Array<out Any?>) -> Unit) = events.off(type, f)
+internal fun VimEditor.signal(type: String, vararg args: Any?) = events.signal(type, *args)
 
-fun VimEditor.findMatchingBracket(pos: LinePos): BracketMatch {
+internal fun VimEditor.findMatchingBracket(pos: LinePos): BracketMatch {
     val state = session.state
     val offset = indexFromPos(state.doc, pos)
     var m = matchBrackets(state, offset + 1, -1)
@@ -320,7 +320,7 @@ fun VimEditor.findMatchingBracket(pos: LinePos): BracketMatch {
     return BracketMatch(null)
 }
 
-fun VimEditor.scanForBracket(
+internal fun VimEditor.scanForBracket(
     where: LinePos,
     dir: Int,
     @Suppress("UNUSED_PARAMETER") style: Any? = null,
@@ -371,7 +371,7 @@ fun VimEditor.scanForBracket(
     return null
 }
 
-fun VimEditor.addOverlay(overlay: SearchOverlay): SearchQuery? {
+internal fun VimEditor.addOverlay(overlay: SearchOverlay): SearchQuery? {
     val query = overlay.query
     val cm6Query = SearchQuery(
         regexp = true,
@@ -388,22 +388,22 @@ fun VimEditor.addOverlay(overlay: SearchOverlay): SearchQuery? {
     return null
 }
 
-fun VimEditor.removeOverlay(@Suppress("UNUSED_PARAMETER") overlay: Any? = null) {
+internal fun VimEditor.removeOverlay(@Suppress("UNUSED_PARAMETER") overlay: Any? = null) {
     val q = cm6Query ?: return
     session.dispatch(
         TransactionSpec(effects = listOf(setSearchQuery.of(q)))
     )
 }
 
-fun VimEditor.getSearchCursor(query: Regex, pos: LinePos): VimSearchCursor =
+internal fun VimEditor.getSearchCursor(query: Regex, pos: LinePos): VimSearchCursor =
     VimSearchCursor(this, query, pos)
 
-fun VimEditor.getLineHandle(row: Int): LineHandleImpl {
+internal fun VimEditor.getLineHandle(row: Int): LineHandleImpl {
     if (lineHandleChanges == null) lineHandleChanges = mutableListOf()
     return LineHandleImpl(row, indexFromPos(LinePos(row, 0)))
 }
 
-fun VimEditor.getLineNumber(handle: LineHandleImpl): Int? {
+internal fun VimEditor.getLineNumber(handle: LineHandleImpl): Int? {
     val updates = lineHandleChanges ?: return null
     var offset: DocPos? = handle.index
     for (update in updates) {
@@ -414,11 +414,11 @@ fun VimEditor.getLineNumber(handle: LineHandleImpl): Int? {
     return if (pos.ch == 0) pos.line else null
 }
 
-fun VimEditor.releaseLineHandles() {
+internal fun VimEditor.releaseLineHandles() {
     lineHandleChanges = null
 }
 
-fun VimEditor.hardWrap(options: HardWrapOptions): Int {
+internal fun VimEditor.hardWrap(options: HardWrapOptions): Int {
     val max = options.column ?: (getOption("textwidth") as? Int) ?: 80
     val allowMerge = options.allowMerge
 
@@ -509,7 +509,7 @@ private fun findSpace(line: String, max: Int, min: Int): SpaceResult? {
     return null
 }
 
-fun VimEditor.onChange(update: ViewUpdate) {
+internal fun VimEditor.onChange(update: ViewUpdate) {
     lineHandleChanges?.add(update)
     for ((_, m) in marks) {
         m.update(update.changes)
@@ -543,7 +543,7 @@ fun VimEditor.onChange(update: ViewUpdate) {
     }
 }
 
-fun VimEditor.onSelectionChange() {
+internal fun VimEditor.onSelectionChange() {
     val op = curOp ?: Operation().also { curOp = it }
     if (op.cursorActivityHandlers == null) {
         op.cursorActivityHandlers = events.getHandlers("cursorActivity")
@@ -567,7 +567,7 @@ internal fun VimEditor.onBeforeEndOperation() {
     }
 }
 
-fun VimEditor.openDialog(
+internal fun VimEditor.openDialog(
     template: String,
     callback: ((String) -> Unit)?,
     options: Map<String, Any?> = emptyMap()
@@ -575,31 +575,31 @@ fun VimEditor.openDialog(
     return openDialogFn?.invoke(template, callback ?: {}, options) ?: {}
 }
 
-fun VimEditor.openNotification(
+internal fun VimEditor.openNotification(
     template: String,
     options: Map<String, Any?> = emptyMap()
 ): () -> Unit {
     return openNotificationFn?.invoke(template, options) ?: {}
 }
 
-fun VimEditor.firstLine(): Int = 0
-fun VimEditor.lastLine(): Int = session.state.doc.lines - 1
-fun VimEditor.lineCount(): Int = session.state.doc.lines
-fun VimEditor.defaultTextHeight(): Float = 20f
+internal fun VimEditor.firstLine(): Int = 0
+internal fun VimEditor.lastLine(): Int = session.state.doc.lines - 1
+internal fun VimEditor.lineCount(): Int = session.state.doc.lines
+internal fun VimEditor.defaultTextHeight(): Float = 20f
 
-fun VimEditor.focus() {
+internal fun VimEditor.focus() {
     // In Compose, focus is managed differently. This is a no-op for now.
 }
 
-fun VimEditor.getLine(row: Int): String {
+internal fun VimEditor.getLine(row: Int): String {
     val doc = session.state.doc
     if (row < 0 || row >= doc.lines) return ""
     return doc.line(LineNumber(row + 1)).text
 }
 
-fun VimEditor.getValue(): String = session.state.doc.toString()
+internal fun VimEditor.getValue(): String = session.state.doc.toString()
 
-fun VimEditor.getRange(s: LinePos, e: LinePos): String {
+internal fun VimEditor.getRange(s: LinePos, e: LinePos): String {
     val doc = session.state.doc
     val from = indexFromPos(doc, s)
     val to = indexFromPos(doc, e)
@@ -608,7 +608,7 @@ fun VimEditor.getRange(s: LinePos, e: LinePos): String {
     return session.state.sliceDoc(lo, hi)
 }
 
-fun VimEditor.clipPos(p: LinePos): LinePos {
+internal fun VimEditor.clipPos(p: LinePos): LinePos {
     val doc = session.state.doc
     var ch = p.ch
     var lineNumber = p.line + 1
@@ -625,7 +625,7 @@ fun VimEditor.clipPos(p: LinePos): LinePos {
     return LinePos(lineNumber - 1, ch)
 }
 
-fun VimEditor.getCursor(p: String? = null): LinePos {
+internal fun VimEditor.getCursor(p: String? = null): LinePos {
     val sel = session.state.selection.main
     val offset = when (p) {
         "head", null -> sel.head
@@ -637,7 +637,7 @@ fun VimEditor.getCursor(p: String? = null): LinePos {
     return posFromIndex(session.state.doc, offset)
 }
 
-fun VimEditor.listSelections(): List<LinePosRange> {
+internal fun VimEditor.listSelections(): List<LinePosRange> {
     val doc = session.state.doc
     return session.state.selection.ranges.map { r ->
         LinePosRange(
@@ -647,24 +647,26 @@ fun VimEditor.listSelections(): List<LinePosRange> {
     }
 }
 
-fun VimEditor.getSelection(): String = getSelections().joinToString("\n")
+internal fun VimEditor.getSelection(): String = getSelections().joinToString("\n")
 
-fun VimEditor.getSelections(): List<String> {
+internal fun VimEditor.getSelections(): List<String> {
     return session.state.selection.ranges.map { r ->
         session.state.sliceDoc(r.from, r.to)
     }
 }
 
-fun VimEditor.somethingSelected(): Boolean = session.state.selection.ranges.any { !it.empty }
+internal fun VimEditor.somethingSelected(): Boolean = session.state.selection.ranges.any {
+    !it.empty
+}
 
-fun VimEditor.getLastEditEnd(): LinePos = posFromIndex(lastChangeEndOffset)
+internal fun VimEditor.getLastEditEnd(): LinePos = posFromIndex(lastChangeEndOffset)
 
 internal fun VimEditor.dispatchChange(spec: TransactionSpec) {
     if (session.state.readOnly) return
     session.dispatch(spec)
 }
 
-fun VimEditor.replaceRange(text: String, s: LinePos, e: LinePos? = null) {
+internal fun VimEditor.replaceRange(text: String, s: LinePos, e: LinePos? = null) {
     val end = e ?: s
     val doc = session.state.doc
     val from = indexFromPos(doc, s)
@@ -676,11 +678,11 @@ fun VimEditor.replaceRange(text: String, s: LinePos, e: LinePos? = null) {
     )
 }
 
-fun VimEditor.replaceSelection(text: String) {
+internal fun VimEditor.replaceSelection(text: String) {
     dispatchChange(session.state.replaceSelection(text))
 }
 
-fun VimEditor.replaceSelections(replacements: List<String>) {
+internal fun VimEditor.replaceSelections(replacements: List<String>) {
     val ranges = session.state.selection.ranges
     val changes = ranges.mapIndexed { i, r ->
         ChangeSpec.Single(r.from, r.to, (replacements.getOrElse(i) { "" }).asInsert())
@@ -690,7 +692,7 @@ fun VimEditor.replaceSelections(replacements: List<String>) {
     )
 }
 
-fun VimEditor.setCursor(line: Int, ch: Int = 0) {
+internal fun VimEditor.setCursor(line: Int, ch: Int = 0) {
     val offset = indexFromPos(session.state.doc, LinePos(line, ch))
     session.dispatch(
         TransactionSpec(
@@ -703,9 +705,9 @@ fun VimEditor.setCursor(line: Int, ch: Int = 0) {
     }
 }
 
-fun VimEditor.setCursor(pos: LinePos) = setCursor(pos.line, pos.ch)
+internal fun VimEditor.setCursor(pos: LinePos) = setCursor(pos.line, pos.ch)
 
-fun VimEditor.setSelections(selections: List<LinePosRange>, primIndex: Int? = null) {
+internal fun VimEditor.setSelections(selections: List<LinePosRange>, primIndex: Int? = null) {
     val doc = session.state.doc
     val ranges = selections.map { x ->
         val head = indexFromPos(doc, x.head)
@@ -725,14 +727,18 @@ fun VimEditor.setSelections(selections: List<LinePosRange>, primIndex: Int? = nu
     )
 }
 
-fun VimEditor.setSelection(anchor: LinePos, head: LinePos, options: Map<String, Any?>? = null) {
+internal fun VimEditor.setSelection(
+    anchor: LinePos,
+    head: LinePos,
+    options: Map<String, Any?>? = null
+) {
     setSelections(listOf(LinePosRange(anchor, head)), 0)
     if (options?.get("origin") == "*mouse") {
         onBeforeEndOperation()
     }
 }
 
-fun VimEditor.scrollIntoView(
+internal fun VimEditor.scrollIntoView(
     pos: LinePos? = null,
     @Suppress("UNUSED_PARAMETER") margin: Int? = null
 ) {
@@ -749,7 +755,7 @@ fun VimEditor.scrollIntoView(
     }
 }
 
-fun VimEditor.overWriteSelection(text: String) {
+internal fun VimEditor.overWriteSelection(text: String) {
     val doc = session.state.doc
     val sel = session.state.selection
     val ranges = sel.ranges.map { x ->
@@ -774,7 +780,7 @@ fun VimEditor.overWriteSelection(text: String) {
     replaceSelection(text)
 }
 
-fun <T> VimEditor.operation(fn: () -> T): T {
+internal fun <T> VimEditor.operation(fn: () -> T): T {
     if (curOp == null) {
         curOp = Operation()
     }
@@ -791,14 +797,14 @@ fun <T> VimEditor.operation(fn: () -> T): T {
     }
 }
 
-fun VimEditor.setOption(name: String, value: Any?) {
+internal fun VimEditor.setOption(name: String, value: Any?) {
     when (name) {
         "keyMap" -> vim?.keyMap = value as? String
         "textwidth" -> vim?.textwidth = value as? Int
     }
 }
 
-fun VimEditor.getOption(name: String): Any? = when (name) {
+internal fun VimEditor.getOption(name: String): Any? = when (name) {
     "firstLineNumber" -> 1
     "tabSize" -> session.state.tabSize
     "readOnly" -> session.state.readOnly
@@ -809,11 +815,11 @@ fun VimEditor.getOption(name: String): Any? = when (name) {
     else -> null
 }
 
-fun VimEditor.toggleOverwrite(on: Boolean) {
+internal fun VimEditor.toggleOverwrite(on: Boolean) {
     vim!!.overwrite = on
 }
 
-fun VimEditor.execCommand(name: String) {
+internal fun VimEditor.execCommand(name: String) {
     when (name) {
         "cursorCharLeft" -> cursorCharLeft(session)
         "redo" -> runHistoryCommand(false)
@@ -845,14 +851,14 @@ private fun VimEditor.runHistoryCommand(revert: Boolean) {
     }
 }
 
-fun VimEditor.indentLine(line: Int, more: Boolean = false) {
+internal fun VimEditor.indentLine(line: Int, more: Boolean = false) {
     if (more) indentMore(session) else indentLess(session)
 }
 
-fun VimEditor.indentMore() = indentMore(session)
-fun VimEditor.indentLess() = indentLess(session)
+internal fun VimEditor.indentMore() = indentMore(session)
+internal fun VimEditor.indentLess() = indentLess(session)
 
-fun VimEditor.setBookmark(cursor: LinePos, options: BookmarkOptions? = null): Marker {
+internal fun VimEditor.setBookmark(cursor: LinePos, options: BookmarkOptions? = null): Marker {
     val assoc = if (options?.insertLeft == true) 1 else -1
     val offset = indexFromPos(cursor)
     val bm = BookmarkMarker(this, offset, assoc)
@@ -861,7 +867,7 @@ fun VimEditor.setBookmark(cursor: LinePos, options: BookmarkOptions? = null): Ma
     return bm
 }
 
-fun VimEditor.getTokenTypeAt(pos: LinePos): String {
+internal fun VimEditor.getTokenTypeAt(pos: LinePos): String {
     val offset = indexFromPos(pos)
     val tree = ensureSyntaxTree(session.state, offset.value)
     val node = tree?.resolve(offset.value)
@@ -877,7 +883,7 @@ fun VimEditor.getTokenTypeAt(pos: LinePos): String {
 // BookmarkMarker: tracks a position through document changes
 // ---------------------------------------------------------------------------
 
-class BookmarkMarker(
+internal class BookmarkMarker(
     private val cm: VimEditor,
     private var offset: DocPos?,
     private val assoc: Int
