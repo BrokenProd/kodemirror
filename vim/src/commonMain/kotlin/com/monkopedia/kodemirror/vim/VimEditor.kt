@@ -127,7 +127,7 @@ private val BRACKET_MATCHING = mapOf(
 // ---------------------------------------------------------------------------
 
 class VimSearchCursor(
-    private val cm: CodeMirrorAdapter,
+    private val cm: VimEditor,
     query: Regex,
     pos: LinePos
 ) {
@@ -255,10 +255,10 @@ class VimSearchCursor(
 }
 
 // ---------------------------------------------------------------------------
-// CodeMirrorAdapter — the CM5-compatible wrapper around EditorSession
+// VimEditor — the CM5-compatible wrapper around EditorSession
 // ---------------------------------------------------------------------------
 
-class CodeMirrorAdapter(val session: EditorSession) {
+class VimEditor(val session: EditorSession) {
 
     internal val events = EventHandlers()
     internal var curOp: Operation? = null
@@ -299,14 +299,14 @@ data class HardWrapOptions(
 )
 
 // ---------------------------------------------------------------------------
-// Extension functions (extracted from CodeMirrorAdapter methods)
+// Extension functions (extracted from VimEditor methods)
 // ---------------------------------------------------------------------------
 
-fun CodeMirrorAdapter.on(type: String, f: (Array<out Any?>) -> Unit) = events.on(type, f)
-fun CodeMirrorAdapter.off(type: String, f: (Array<out Any?>) -> Unit) = events.off(type, f)
-fun CodeMirrorAdapter.signal(type: String, vararg args: Any?) = events.signal(type, *args)
+fun VimEditor.on(type: String, f: (Array<out Any?>) -> Unit) = events.on(type, f)
+fun VimEditor.off(type: String, f: (Array<out Any?>) -> Unit) = events.off(type, f)
+fun VimEditor.signal(type: String, vararg args: Any?) = events.signal(type, *args)
 
-fun CodeMirrorAdapter.findMatchingBracket(pos: LinePos): BracketMatch {
+fun VimEditor.findMatchingBracket(pos: LinePos): BracketMatch {
     val state = session.state
     val offset = indexFromPos(state.doc, pos)
     var m = matchBrackets(state, offset + 1, -1)
@@ -320,7 +320,7 @@ fun CodeMirrorAdapter.findMatchingBracket(pos: LinePos): BracketMatch {
     return BracketMatch(null)
 }
 
-fun CodeMirrorAdapter.scanForBracket(
+fun VimEditor.scanForBracket(
     where: LinePos,
     dir: Int,
     @Suppress("UNUSED_PARAMETER") style: Any? = null,
@@ -371,7 +371,7 @@ fun CodeMirrorAdapter.scanForBracket(
     return null
 }
 
-fun CodeMirrorAdapter.addOverlay(overlay: SearchOverlay): SearchQuery? {
+fun VimEditor.addOverlay(overlay: SearchOverlay): SearchQuery? {
     val query = overlay.query
     val cm6Query = SearchQuery(
         regexp = true,
@@ -388,22 +388,22 @@ fun CodeMirrorAdapter.addOverlay(overlay: SearchOverlay): SearchQuery? {
     return null
 }
 
-fun CodeMirrorAdapter.removeOverlay(@Suppress("UNUSED_PARAMETER") overlay: Any? = null) {
+fun VimEditor.removeOverlay(@Suppress("UNUSED_PARAMETER") overlay: Any? = null) {
     val q = cm6Query ?: return
     session.dispatch(
         TransactionSpec(effects = listOf(setSearchQuery.of(q)))
     )
 }
 
-fun CodeMirrorAdapter.getSearchCursor(query: Regex, pos: LinePos): VimSearchCursor =
+fun VimEditor.getSearchCursor(query: Regex, pos: LinePos): VimSearchCursor =
     VimSearchCursor(this, query, pos)
 
-fun CodeMirrorAdapter.getLineHandle(row: Int): LineHandleImpl {
+fun VimEditor.getLineHandle(row: Int): LineHandleImpl {
     if (lineHandleChanges == null) lineHandleChanges = mutableListOf()
     return LineHandleImpl(row, indexFromPos(LinePos(row, 0)))
 }
 
-fun CodeMirrorAdapter.getLineNumber(handle: LineHandleImpl): Int? {
+fun VimEditor.getLineNumber(handle: LineHandleImpl): Int? {
     val updates = lineHandleChanges ?: return null
     var offset: DocPos? = handle.index
     for (update in updates) {
@@ -414,11 +414,11 @@ fun CodeMirrorAdapter.getLineNumber(handle: LineHandleImpl): Int? {
     return if (pos.ch == 0) pos.line else null
 }
 
-fun CodeMirrorAdapter.releaseLineHandles() {
+fun VimEditor.releaseLineHandles() {
     lineHandleChanges = null
 }
 
-fun CodeMirrorAdapter.hardWrap(options: HardWrapOptions): Int {
+fun VimEditor.hardWrap(options: HardWrapOptions): Int {
     val max = options.column ?: (getOption("textwidth") as? Int) ?: 80
     val allowMerge = options.allowMerge
 
@@ -509,7 +509,7 @@ private fun findSpace(line: String, max: Int, min: Int): SpaceResult? {
     return null
 }
 
-fun CodeMirrorAdapter.onChange(update: ViewUpdate) {
+fun VimEditor.onChange(update: ViewUpdate) {
     lineHandleChanges?.add(update)
     for ((_, m) in marks) {
         m.update(update.changes)
@@ -543,7 +543,7 @@ fun CodeMirrorAdapter.onChange(update: ViewUpdate) {
     }
 }
 
-fun CodeMirrorAdapter.onSelectionChange() {
+fun VimEditor.onSelectionChange() {
     val op = curOp ?: Operation().also { curOp = it }
     if (op.cursorActivityHandlers == null) {
         op.cursorActivityHandlers = events.getHandlers("cursorActivity")
@@ -551,7 +551,7 @@ fun CodeMirrorAdapter.onSelectionChange() {
     op.cursorActivity = true
 }
 
-internal fun CodeMirrorAdapter.onBeforeEndOperation() {
+internal fun VimEditor.onBeforeEndOperation() {
     val op = curOp ?: return
     var scrollIntoView = false
     if (op.change != null) {
@@ -567,7 +567,7 @@ internal fun CodeMirrorAdapter.onBeforeEndOperation() {
     }
 }
 
-fun CodeMirrorAdapter.openDialog(
+fun VimEditor.openDialog(
     template: String,
     callback: ((String) -> Unit)?,
     options: Map<String, Any?> = emptyMap()
@@ -575,31 +575,31 @@ fun CodeMirrorAdapter.openDialog(
     return openDialogFn?.invoke(template, callback ?: {}, options) ?: {}
 }
 
-fun CodeMirrorAdapter.openNotification(
+fun VimEditor.openNotification(
     template: String,
     options: Map<String, Any?> = emptyMap()
 ): () -> Unit {
     return openNotificationFn?.invoke(template, options) ?: {}
 }
 
-fun CodeMirrorAdapter.firstLine(): Int = 0
-fun CodeMirrorAdapter.lastLine(): Int = session.state.doc.lines - 1
-fun CodeMirrorAdapter.lineCount(): Int = session.state.doc.lines
-fun CodeMirrorAdapter.defaultTextHeight(): Float = 20f
+fun VimEditor.firstLine(): Int = 0
+fun VimEditor.lastLine(): Int = session.state.doc.lines - 1
+fun VimEditor.lineCount(): Int = session.state.doc.lines
+fun VimEditor.defaultTextHeight(): Float = 20f
 
-fun CodeMirrorAdapter.focus() {
+fun VimEditor.focus() {
     // In Compose, focus is managed differently. This is a no-op for now.
 }
 
-fun CodeMirrorAdapter.getLine(row: Int): String {
+fun VimEditor.getLine(row: Int): String {
     val doc = session.state.doc
     if (row < 0 || row >= doc.lines) return ""
     return doc.line(LineNumber(row + 1)).text
 }
 
-fun CodeMirrorAdapter.getValue(): String = session.state.doc.toString()
+fun VimEditor.getValue(): String = session.state.doc.toString()
 
-fun CodeMirrorAdapter.getRange(s: LinePos, e: LinePos): String {
+fun VimEditor.getRange(s: LinePos, e: LinePos): String {
     val doc = session.state.doc
     val from = indexFromPos(doc, s)
     val to = indexFromPos(doc, e)
@@ -608,7 +608,7 @@ fun CodeMirrorAdapter.getRange(s: LinePos, e: LinePos): String {
     return session.state.sliceDoc(lo, hi)
 }
 
-fun CodeMirrorAdapter.clipPos(p: LinePos): LinePos {
+fun VimEditor.clipPos(p: LinePos): LinePos {
     val doc = session.state.doc
     var ch = p.ch
     var lineNumber = p.line + 1
@@ -625,7 +625,7 @@ fun CodeMirrorAdapter.clipPos(p: LinePos): LinePos {
     return LinePos(lineNumber - 1, ch)
 }
 
-fun CodeMirrorAdapter.getCursor(p: String? = null): LinePos {
+fun VimEditor.getCursor(p: String? = null): LinePos {
     val sel = session.state.selection.main
     val offset = when (p) {
         "head", null -> sel.head
@@ -637,7 +637,7 @@ fun CodeMirrorAdapter.getCursor(p: String? = null): LinePos {
     return posFromIndex(session.state.doc, offset)
 }
 
-fun CodeMirrorAdapter.listSelections(): List<LinePosRange> {
+fun VimEditor.listSelections(): List<LinePosRange> {
     val doc = session.state.doc
     return session.state.selection.ranges.map { r ->
         LinePosRange(
@@ -647,25 +647,24 @@ fun CodeMirrorAdapter.listSelections(): List<LinePosRange> {
     }
 }
 
-fun CodeMirrorAdapter.getSelection(): String = getSelections().joinToString("\n")
+fun VimEditor.getSelection(): String = getSelections().joinToString("\n")
 
-fun CodeMirrorAdapter.getSelections(): List<String> {
+fun VimEditor.getSelections(): List<String> {
     return session.state.selection.ranges.map { r ->
         session.state.sliceDoc(r.from, r.to)
     }
 }
 
-fun CodeMirrorAdapter.somethingSelected(): Boolean =
-    session.state.selection.ranges.any { !it.empty }
+fun VimEditor.somethingSelected(): Boolean = session.state.selection.ranges.any { !it.empty }
 
-fun CodeMirrorAdapter.getLastEditEnd(): LinePos = posFromIndex(lastChangeEndOffset)
+fun VimEditor.getLastEditEnd(): LinePos = posFromIndex(lastChangeEndOffset)
 
-internal fun CodeMirrorAdapter.dispatchChange(spec: TransactionSpec) {
+internal fun VimEditor.dispatchChange(spec: TransactionSpec) {
     if (session.state.readOnly) return
     session.dispatch(spec)
 }
 
-fun CodeMirrorAdapter.replaceRange(text: String, s: LinePos, e: LinePos? = null) {
+fun VimEditor.replaceRange(text: String, s: LinePos, e: LinePos? = null) {
     val end = e ?: s
     val doc = session.state.doc
     val from = indexFromPos(doc, s)
@@ -677,11 +676,11 @@ fun CodeMirrorAdapter.replaceRange(text: String, s: LinePos, e: LinePos? = null)
     )
 }
 
-fun CodeMirrorAdapter.replaceSelection(text: String) {
+fun VimEditor.replaceSelection(text: String) {
     dispatchChange(session.state.replaceSelection(text))
 }
 
-fun CodeMirrorAdapter.replaceSelections(replacements: List<String>) {
+fun VimEditor.replaceSelections(replacements: List<String>) {
     val ranges = session.state.selection.ranges
     val changes = ranges.mapIndexed { i, r ->
         ChangeSpec.Single(r.from, r.to, (replacements.getOrElse(i) { "" }).asInsert())
@@ -691,7 +690,7 @@ fun CodeMirrorAdapter.replaceSelections(replacements: List<String>) {
     )
 }
 
-fun CodeMirrorAdapter.setCursor(line: Int, ch: Int = 0) {
+fun VimEditor.setCursor(line: Int, ch: Int = 0) {
     val offset = indexFromPos(session.state.doc, LinePos(line, ch))
     session.dispatch(
         TransactionSpec(
@@ -704,9 +703,9 @@ fun CodeMirrorAdapter.setCursor(line: Int, ch: Int = 0) {
     }
 }
 
-fun CodeMirrorAdapter.setCursor(pos: LinePos) = setCursor(pos.line, pos.ch)
+fun VimEditor.setCursor(pos: LinePos) = setCursor(pos.line, pos.ch)
 
-fun CodeMirrorAdapter.setSelections(selections: List<LinePosRange>, primIndex: Int? = null) {
+fun VimEditor.setSelections(selections: List<LinePosRange>, primIndex: Int? = null) {
     val doc = session.state.doc
     val ranges = selections.map { x ->
         val head = indexFromPos(doc, x.head)
@@ -726,18 +725,14 @@ fun CodeMirrorAdapter.setSelections(selections: List<LinePosRange>, primIndex: I
     )
 }
 
-fun CodeMirrorAdapter.setSelection(
-    anchor: LinePos,
-    head: LinePos,
-    options: Map<String, Any?>? = null
-) {
+fun VimEditor.setSelection(anchor: LinePos, head: LinePos, options: Map<String, Any?>? = null) {
     setSelections(listOf(LinePosRange(anchor, head)), 0)
     if (options?.get("origin") == "*mouse") {
         onBeforeEndOperation()
     }
 }
 
-fun CodeMirrorAdapter.scrollIntoView(
+fun VimEditor.scrollIntoView(
     pos: LinePos? = null,
     @Suppress("UNUSED_PARAMETER") margin: Int? = null
 ) {
@@ -754,7 +749,7 @@ fun CodeMirrorAdapter.scrollIntoView(
     }
 }
 
-fun CodeMirrorAdapter.overWriteSelection(text: String) {
+fun VimEditor.overWriteSelection(text: String) {
     val doc = session.state.doc
     val sel = session.state.selection
     val ranges = sel.ranges.map { x ->
@@ -779,7 +774,7 @@ fun CodeMirrorAdapter.overWriteSelection(text: String) {
     replaceSelection(text)
 }
 
-fun <T> CodeMirrorAdapter.operation(fn: () -> T): T {
+fun <T> VimEditor.operation(fn: () -> T): T {
     if (curOp == null) {
         curOp = Operation()
     }
@@ -796,14 +791,14 @@ fun <T> CodeMirrorAdapter.operation(fn: () -> T): T {
     }
 }
 
-fun CodeMirrorAdapter.setOption(name: String, value: Any?) {
+fun VimEditor.setOption(name: String, value: Any?) {
     when (name) {
         "keyMap" -> vim?.keyMap = value as? String
         "textwidth" -> vim?.textwidth = value as? Int
     }
 }
 
-fun CodeMirrorAdapter.getOption(name: String): Any? = when (name) {
+fun VimEditor.getOption(name: String): Any? = when (name) {
     "firstLineNumber" -> 1
     "tabSize" -> session.state.tabSize
     "readOnly" -> session.state.readOnly
@@ -814,11 +809,11 @@ fun CodeMirrorAdapter.getOption(name: String): Any? = when (name) {
     else -> null
 }
 
-fun CodeMirrorAdapter.toggleOverwrite(on: Boolean) {
+fun VimEditor.toggleOverwrite(on: Boolean) {
     vim!!.overwrite = on
 }
 
-fun CodeMirrorAdapter.execCommand(name: String) {
+fun VimEditor.execCommand(name: String) {
     when (name) {
         "cursorCharLeft" -> cursorCharLeft(session)
         "redo" -> runHistoryCommand(false)
@@ -837,7 +832,7 @@ fun CodeMirrorAdapter.execCommand(name: String) {
     }
 }
 
-private fun CodeMirrorAdapter.runHistoryCommand(revert: Boolean) {
+private fun VimEditor.runHistoryCommand(revert: Boolean) {
     if (curOp != null) {
         curOp!!.changeStart = null
     }
@@ -850,14 +845,14 @@ private fun CodeMirrorAdapter.runHistoryCommand(revert: Boolean) {
     }
 }
 
-fun CodeMirrorAdapter.indentLine(line: Int, more: Boolean = false) {
+fun VimEditor.indentLine(line: Int, more: Boolean = false) {
     if (more) indentMore(session) else indentLess(session)
 }
 
-fun CodeMirrorAdapter.indentMore() = indentMore(session)
-fun CodeMirrorAdapter.indentLess() = indentLess(session)
+fun VimEditor.indentMore() = indentMore(session)
+fun VimEditor.indentLess() = indentLess(session)
 
-fun CodeMirrorAdapter.setBookmark(cursor: LinePos, options: BookmarkOptions? = null): Marker {
+fun VimEditor.setBookmark(cursor: LinePos, options: BookmarkOptions? = null): Marker {
     val assoc = if (options?.insertLeft == true) 1 else -1
     val offset = indexFromPos(cursor)
     val bm = BookmarkMarker(this, offset, assoc)
@@ -866,7 +861,7 @@ fun CodeMirrorAdapter.setBookmark(cursor: LinePos, options: BookmarkOptions? = n
     return bm
 }
 
-fun CodeMirrorAdapter.getTokenTypeAt(pos: LinePos): String {
+fun VimEditor.getTokenTypeAt(pos: LinePos): String {
     val offset = indexFromPos(pos)
     val tree = ensureSyntaxTree(session.state, offset.value)
     val node = tree?.resolve(offset.value)
@@ -883,7 +878,7 @@ fun CodeMirrorAdapter.getTokenTypeAt(pos: LinePos): String {
 // ---------------------------------------------------------------------------
 
 class BookmarkMarker(
-    private val cm: CodeMirrorAdapter,
+    private val cm: VimEditor,
     private var offset: DocPos?,
     private val assoc: Int
 ) : Marker {

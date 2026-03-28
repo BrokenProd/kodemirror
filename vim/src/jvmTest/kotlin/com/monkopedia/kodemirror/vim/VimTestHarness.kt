@@ -52,7 +52,7 @@ val DEFAULT_CODE = buildString {
  * Helper class providing vim test utilities, mirroring the upstream `helpers` object.
  */
 class VimHelpers(
-    val cm: CodeMirrorAdapter,
+    val cm: VimEditor,
     val vim: VimState
 ) {
     /**
@@ -123,7 +123,7 @@ private fun vimKeyToKeyName(key: String): String {
  * When in insert mode and the key is a printable character that vim doesn't handle,
  * insert it into the document (simulating what EditorView would do).
  */
-internal fun typeKey(cm: CodeMirrorAdapter, key: String) {
+internal fun typeKey(cm: VimEditor, key: String) {
     val handled = Vim.handleKey(cm, key, "user")
     if (!handled) {
         val vim = cm.vim
@@ -171,7 +171,7 @@ fun testVim(value: String = DEFAULT_CODE, cursor: LinePos? = null, fn: (VimHelpe
         )
     )
     val session = EditorSession(state)
-    val cm = CodeMirrorAdapter(session)
+    val cm = VimEditor(session)
 
     // Initialize vim mode
     val vim = Vim.maybeInitVimState_(cm)

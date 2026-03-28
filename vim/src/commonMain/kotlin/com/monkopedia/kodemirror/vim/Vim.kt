@@ -84,11 +84,11 @@ object Vim : VimApiInterface {
     internal fun getVimGlobalState_(): VimGlobalState = vimGlobalState
 
     @Suppress("ktlint:standard:function-naming")
-    fun maybeInitVimState_(cm: CodeMirrorAdapter): VimState {
+    fun maybeInitVimState_(cm: VimEditor): VimState {
         return maybeInitVimState(cm)
     }
 
-    override fun handleKey(cm: CodeMirrorAdapter, key: String, origin: String): Boolean {
+    override fun handleKey(cm: VimEditor, key: String, origin: String): Boolean {
         // When a virtual prompt is active (test/headless mode), route key input there.
         if (virtualPrompt != null) {
             sendKeyToPrompt(key)
@@ -101,11 +101,11 @@ object Vim : VimApiInterface {
         return false
     }
 
-    fun handleEx(cm: CodeMirrorAdapter, input: String) {
+    fun handleEx(cm: VimEditor, input: String) {
         exCommandDispatcher.processCommand(cm, input)
     }
 
-    fun multiSelectHandleKey(cm: CodeMirrorAdapter, key: String, origin: String): Boolean {
+    fun multiSelectHandleKey(cm: VimEditor, key: String, origin: String): Boolean {
         val vim = maybeInitVimState(cm)
         val visualBlock = vim.visualBlock || (vim.wasInVisualBlock == true)
 
@@ -118,17 +118,13 @@ object Vim : VimApiInterface {
     fun setOption(
         name: String,
         value: Any?,
-        cm: CodeMirrorAdapter? = null,
+        cm: VimEditor? = null,
         cfg: Map<String, String>? = null
     ) {
         com.monkopedia.kodemirror.vim.setOption(name, value, cm, cfg)
     }
 
-    fun getOption(
-        name: String,
-        cm: CodeMirrorAdapter? = null,
-        cfg: Map<String, String>? = null
-    ): Any? {
+    fun getOption(name: String, cm: VimEditor? = null, cfg: Map<String, String>? = null): Any? {
         return com.monkopedia.kodemirror.vim.getOption(name, cm, cfg)
     }
 
@@ -137,7 +133,7 @@ object Vim : VimApiInterface {
         defaultValue: Any?,
         type: String? = null,
         aliases: List<String>? = null,
-        callback: ((Any?, CodeMirrorAdapter?) -> Any?)? = null
+        callback: ((Any?, VimEditor?) -> Any?)? = null
     ) {
         com.monkopedia.kodemirror.vim.defineOption(name, defaultValue, type, aliases, callback)
     }
@@ -238,26 +234,26 @@ object Vim : VimApiInterface {
         }
     }
 
-    fun enterVimMode(cm: CodeMirrorAdapter) {
+    fun enterVimMode(cm: VimEditor) {
         cm.signal("vim-mode-change", mapOf("mode" to "normal"))
         maybeInitVimState(cm)
     }
 
-    fun leaveVimMode(cm: CodeMirrorAdapter) {
+    fun leaveVimMode(cm: VimEditor) {
         cm.vim = null
     }
 
-    fun exitVisualMode(cm: CodeMirrorAdapter, moveHead: Boolean = true) {
+    fun exitVisualMode(cm: VimEditor, moveHead: Boolean = true) {
         com.monkopedia.kodemirror.vim.exitVisualMode(cm, moveHead)
     }
 
-    fun exitInsertMode(cm: CodeMirrorAdapter, keepCursor: Boolean = false) {
+    fun exitInsertMode(cm: VimEditor, keepCursor: Boolean = false) {
         com.monkopedia.kodemirror.vim.exitInsertMode(cm, keepCursor)
     }
 
     // -- Key finding / dispatch -----------------------------------------------
 
-    fun findKey(cm: CodeMirrorAdapter, key: String, origin: String? = null): (() -> Boolean)? {
+    fun findKey(cm: VimEditor, key: String, origin: String? = null): (() -> Boolean)? {
         val vim = maybeInitVimState(cm)
 
         fun handleMacroRecording(): Boolean {
@@ -513,11 +509,11 @@ object Vim : VimApiInterface {
 // State init
 // ---------------------------------------------------------------------------
 
-internal fun maybeInitVimState(cm: CodeMirrorAdapter): VimState {
+internal fun maybeInitVimState(cm: VimEditor): VimState {
     return cm.vim ?: VimState().also { cm.vim = it }
 }
 
-internal fun getVimState(cm: CodeMirrorAdapter): VimState? {
+internal fun getVimState(cm: VimEditor): VimState? {
     return cm.vim
 }
 
@@ -559,7 +555,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
         return MatchResult(type = "full", command = bestMatch)
     }
 
-    override fun processCommand(cm: CodeMirrorAdapter, vim: VimState, command: VimKeyCommand) {
+    override fun processCommand(cm: VimEditor, vim: VimState, command: VimKeyCommand) {
         vim.inputState.repeatOverride = command.repeatOverride
         when (command) {
             is MotionCommand -> processMotion(cm, vim, command)
@@ -573,7 +569,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
         }
     }
 
-    fun processMotion(cm: CodeMirrorAdapter, vim: VimState, command: VimKeyCommand) {
+    fun processMotion(cm: VimEditor, vim: VimState, command: VimKeyCommand) {
         val motionName = when (command) {
             is MotionCommand -> command.motion
             is OperatorMotionCommand -> command.motion
@@ -589,7 +585,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
         evalInput(cm, vim)
     }
 
-    fun processOperator(cm: CodeMirrorAdapter, vim: VimState, command: VimKeyCommand) {
+    fun processOperator(cm: VimEditor, vim: VimState, command: VimKeyCommand) {
         val inputState = vim.inputState
         val operatorName = when (command) {
             is OperatorCommand -> command.operator
@@ -626,11 +622,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
         }
     }
 
-    fun processOperatorMotion(
-        cm: CodeMirrorAdapter,
-        vim: VimState,
-        command: OperatorMotionCommand
-    ) {
+    fun processOperatorMotion(cm: VimEditor, vim: VimState, command: OperatorMotionCommand) {
         val visualMode = vim.visualMode
         val operatorMotionArgs = command.operatorMotionArgs
         if (operatorMotionArgs != null && visualMode && operatorMotionArgs.visualLine == true) {
@@ -642,7 +634,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
         }
     }
 
-    override fun processAction(cm: CodeMirrorAdapter, vim: VimState, command: ActionCommand) {
+    override fun processAction(cm: VimEditor, vim: VimState, command: ActionCommand) {
         val inputState = vim.inputState
         val repeat = inputState.getRepeat()
         val repeatIsExplicit = repeat != 0
@@ -689,7 +681,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
         }
     }
 
-    fun processSearch(cm: CodeMirrorAdapter, vim: VimState, command: SearchCommand) {
+    fun processSearch(cm: VimEditor, vim: VimState, command: SearchCommand) {
         val forward = command.searchArgs.forward == true
         val wholeWordOnly = command.searchArgs.wholeWordOnly == true
         getSearchState(cm).setReversed(!forward)
@@ -750,7 +742,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
     }
 
     private fun handleSearchQuery(
-        cm: CodeMirrorAdapter,
+        cm: VimEditor,
         vim: VimState,
         command: SearchCommand,
         query: String,
@@ -778,7 +770,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
         )
     }
 
-    fun processEx(cm: CodeMirrorAdapter, vim: VimState, command: VimKeyCommand) {
+    fun processEx(cm: VimEditor, vim: VimState, command: VimKeyCommand) {
         if (command is KeyToExCommand) {
             exCommandDispatcher.processCommand(cm, command.exArgs.input)
         } else {
@@ -802,7 +794,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
         }
     }
 
-    override fun evalInput(cm: CodeMirrorAdapter, vim: VimState) {
+    override fun evalInput(cm: VimEditor, vim: VimState) {
         val inputState = vim.inputState
         val motion = inputState.motion
         val motionArgs = inputState.motionArgs ?: MotionArgs()
@@ -1114,7 +1106,7 @@ internal fun sendKeyToPrompt(key: String) {
     }
 }
 
-internal fun doKeyToKey(cm: CodeMirrorAdapter, keys: String, fromKey: VimKeyCommand? = null) {
+internal fun doKeyToKey(cm: VimEditor, keys: String, fromKey: VimKeyCommand? = null) {
     val noremapBefore = noremap
     if (fromKey != null) {
         if (keyToKeyStack.contains(fromKey)) return

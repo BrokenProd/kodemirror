@@ -433,7 +433,7 @@ data class ExCommandDefinition(
 data class VimOption(
     val type: String? = null,
     var defaultValue: Any? = null,
-    var callback: ((Any?, CodeMirrorAdapter?) -> Any?)? = null,
+    var callback: ((Any?, VimEditor?) -> Any?)? = null,
     var value: Any? = null
 )
 
@@ -461,7 +461,7 @@ data class VimKeyEvent(
 // ---------------------------------------------------------------------------
 
 typealias MotionFn = (
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     head: LinePos,
     motionArgs: MotionArgs,
     vim: VimState,
@@ -469,7 +469,7 @@ typealias MotionFn = (
 ) -> MotionResult?
 
 typealias OperatorFn = (
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     args: OperatorArgs,
     ranges: List<LinePosRange>,
     oldAnchor: LinePos,
@@ -477,13 +477,13 @@ typealias OperatorFn = (
 ) -> LinePos?
 
 typealias ActionFn = (
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     actionArgs: ActionArgs,
     vim: VimState
 ) -> Unit
 
 typealias ExFn = (
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     params: ExParams
 ) -> Unit
 

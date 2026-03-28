@@ -62,10 +62,10 @@ fun vim(status: Boolean = false): Extension {
 }
 
 /**
- * Get the [CodeMirrorAdapter] associated with an [EditorSession], or null
+ * Get the [VimEditor] associated with an [EditorSession], or null
  * if vim mode is not active.
  */
-fun getCM(view: EditorSession): CodeMirrorAdapter? {
+fun getCM(view: EditorSession): VimEditor? {
     return view.plugin(vimPlugin)?.cm
 }
 
@@ -124,7 +124,7 @@ internal val vimPlugin: ViewPlugin<VimPluginValue> = ViewPlugin.define(
 )
 
 internal class VimPluginValue(private val session: EditorSession) : PluginValue {
-    val cm: CodeMirrorAdapter = CodeMirrorAdapter(session)
+    val cm: VimEditor = VimEditor(session)
     private val vimState: VimState
     var decorations: DecorationSet = RangeSet.empty()
         private set

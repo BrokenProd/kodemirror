@@ -24,7 +24,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * All vim action functions. Each action takes a CodeMirrorAdapter, ActionArgs,
+ * All vim action functions. Each action takes a VimEditor, ActionArgs,
  * and VimState, and performs a side-effecting operation.
  */
 internal val actions: MutableMap<String, ActionFn> = mutableMapOf(

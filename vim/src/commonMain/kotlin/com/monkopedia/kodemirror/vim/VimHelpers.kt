@@ -57,7 +57,7 @@ internal fun defineOption(
     defaultValue: Any?,
     type: String? = null,
     aliases: List<String>? = null,
-    callback: ((Any?, CodeMirrorAdapter?) -> Any?)? = null
+    callback: ((Any?, VimEditor?) -> Any?)? = null
 ) {
     if (defaultValue == null && callback == null) {
         error("defaultValue is required unless callback is provided")
@@ -80,7 +80,7 @@ internal fun defineOption(
 internal fun setOption(
     name: String,
     value: Any?,
-    cm: CodeMirrorAdapter? = null,
+    cm: VimEditor? = null,
     cfg: Map<String, String>? = null
 ): Any? {
     val option = vimOptions[name] ?: return Error("Unknown option: $name")
@@ -118,7 +118,7 @@ internal fun setOption(
 
 internal fun getOption(
     name: String,
-    cm: CodeMirrorAdapter? = null,
+    cm: VimEditor? = null,
     cfg: Map<String, String>? = null
 ): Any? {
     val option = vimOptions[name] ?: return Error("Unknown option: $name")
@@ -147,8 +147,7 @@ internal fun getOption(
 // Simple utility functions
 // ---------------------------------------------------------------------------
 
-internal fun isLine(cm: CodeMirrorAdapter, line: Int): Boolean =
-    line in cm.firstLine()..cm.lastLine()
+internal fun isLine(cm: VimEditor, line: Int): Boolean = line in cm.firstLine()..cm.lastLine()
 
 internal fun isLowerCase(k: String): Boolean = Regex("^[a-z]$").matches(k)
 
@@ -164,7 +163,7 @@ internal fun isEndOfSentenceSymbol(k: String): Boolean = ".?!".contains(k)
 
 internal fun <T> inArray(value: T, arr: List<T>): Boolean = value in arr
 
-internal fun lineLength(cm: CodeMirrorAdapter, lineNum: Int): Int = cm.getLine(lineNum).length
+internal fun lineLength(cm: VimEditor, lineNum: Int): Int = cm.getLine(lineNum).length
 
 internal fun trim(s: String): String = s.trim()
 
@@ -185,11 +184,7 @@ internal fun offsetCursor(cur: LinePos, offsetLine: Int, offsetCh: Int): LinePos
     return LinePos(cur.line + offsetLine, newCh.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt())
 }
 
-internal fun repeatFn(
-    cm: CodeMirrorAdapter,
-    fn: (CodeMirrorAdapter) -> Unit,
-    repeat: Int
-): () -> Unit = {
+internal fun repeatFn(cm: VimEditor, fn: (VimEditor) -> Unit, repeat: Int): () -> Unit = {
     for (i in 0 until repeat) {
         fn(cm)
     }
@@ -204,11 +199,7 @@ internal fun repeatFn(
  * and is not inside surrogate pair.
  * If in insert/visual mode, allow cur.ch == lineLength.
  */
-internal fun clipCursorToContent(
-    cm: CodeMirrorAdapter,
-    cur: LinePos,
-    oldCur: LinePos? = null
-): LinePos {
+internal fun clipCursorToContent(cm: VimEditor, cur: LinePos, oldCur: LinePos? = null): LinePos {
     val vim = cm.vim
     val includeLineBreak = vim != null && (vim.insertMode || vim.visualMode)
     val line = min(max(cm.firstLine(), cur.line), cm.lastLine())
@@ -232,7 +223,7 @@ internal fun clipCursorToContent(
  * on the same line and close together.
  */
 internal fun updateSelectionForSurrogateCharacters(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     curStart: LinePos,
     curEnd: LinePos
 ): SurrogateResult {
@@ -332,7 +323,7 @@ internal fun lastChar(keys: String): String {
 // Extend line to column (for block paste)
 // ---------------------------------------------------------------------------
 
-internal fun extendLineToColumn(cm: CodeMirrorAdapter, lineNum: Int, column: Int) {
+internal fun extendLineToColumn(cm: VimEditor, lineNum: Int, column: Int) {
     val endCh = lineLength(cm, lineNum)
     val spaces = " ".repeat(column - endCh + 1)
     cm.setCursor(LinePos(lineNum, endCh))
@@ -343,7 +334,7 @@ internal fun extendLineToColumn(cm: CodeMirrorAdapter, lineNum: Int, column: Int
 // Select block
 // ---------------------------------------------------------------------------
 
-internal fun selectBlock(cm: CodeMirrorAdapter, selectionEnd: LinePos): LinePos {
+internal fun selectBlock(cm: VimEditor, selectionEnd: LinePos): LinePos {
     val ranges = cm.listSelections()
     val head = cm.clipPos(selectionEnd)
     val isClipped = !cursorEqual(selectionEnd, head)
@@ -387,7 +378,7 @@ internal fun selectBlock(cm: CodeMirrorAdapter, selectionEnd: LinePos): LinePos 
 // Select for insert
 // ---------------------------------------------------------------------------
 
-internal fun selectForInsert(cm: CodeMirrorAdapter, head: LinePos, height: Int) {
+internal fun selectForInsert(cm: VimEditor, head: LinePos, height: Int) {
     val sel = mutableListOf<LinePosRange>()
     for (i in 0 until height) {
         val lineHead = offsetCursor(head, i, 0)
@@ -414,7 +405,7 @@ internal fun getIndex(ranges: List<LinePosRange>, cursor: LinePos, end: String? 
 // ---------------------------------------------------------------------------
 
 internal fun getSelectedAreaRange(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     @Suppress("UNUSED_PARAMETER") vim: VimState
 ): Pair<LinePos, LinePos> {
     val selections = cm.listSelections()
@@ -433,7 +424,7 @@ internal fun getSelectedAreaRange(
 // updateLastSelection
 // ---------------------------------------------------------------------------
 
-internal fun updateLastSelection(cm: CodeMirrorAdapter, vim: VimState) {
+internal fun updateLastSelection(cm: VimEditor, vim: VimState) {
     var anchor = vim.sel.anchor
     var head = vim.sel.head
     // To accommodate the effect of lastPastedText in the last selection
@@ -458,7 +449,7 @@ internal fun updateLastSelection(cm: CodeMirrorAdapter, vim: VimState) {
 // ---------------------------------------------------------------------------
 
 internal fun expandSelection(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     start: LinePos,
     end: LinePos,
     move: Boolean = false
@@ -492,11 +483,7 @@ internal fun expandSelection(
 // updateCmSelection
 // ---------------------------------------------------------------------------
 
-internal fun updateCmSelection(
-    cm: CodeMirrorAdapter,
-    sel: LinePosRange? = null,
-    mode: String? = null
-) {
+internal fun updateCmSelection(cm: VimEditor, sel: LinePosRange? = null, mode: String? = null) {
     val vim = cm.vim!!
     val actualSel = sel ?: vim.sel
     val actualMode = mode ?: when {
@@ -509,7 +496,7 @@ internal fun updateCmSelection(
 }
 
 internal fun makeCmSelection(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     sel: LinePosRange,
     mode: String,
     exclusive: Boolean = false
@@ -569,7 +556,7 @@ internal fun makeCmSelection(
 // getHead
 // ---------------------------------------------------------------------------
 
-internal fun getHead(cm: CodeMirrorAdapter): LinePos {
+internal fun getHead(cm: VimEditor): LinePos {
     var cur = cm.getCursor("head")
     if (cm.getSelection().length == 1) {
         cur = cursorMin(cur, cm.getCursor("anchor"))
@@ -581,7 +568,7 @@ internal fun getHead(cm: CodeMirrorAdapter): LinePos {
 // exitVisualMode
 // ---------------------------------------------------------------------------
 
-internal fun exitVisualMode(cm: CodeMirrorAdapter, moveHead: Boolean = true) {
+internal fun exitVisualMode(cm: VimEditor, moveHead: Boolean = true) {
     val vim = cm.vim!!
     if (moveHead) {
         cm.setCursor(clipCursorToContent(cm, vim.sel.head))
@@ -599,7 +586,7 @@ internal fun exitVisualMode(cm: CodeMirrorAdapter, moveHead: Boolean = true) {
 // clipToLine
 // ---------------------------------------------------------------------------
 
-internal fun clipToLine(cm: CodeMirrorAdapter, curStart: LinePos, curEnd: LinePos): LinePos {
+internal fun clipToLine(cm: VimEditor, curStart: LinePos, curEnd: LinePos): LinePos {
     val selection = cm.getRange(curStart, curEnd)
     var endLine = curEnd.line
     var endCh = curEnd.ch
@@ -627,7 +614,7 @@ internal fun clipToLine(cm: CodeMirrorAdapter, curStart: LinePos, curEnd: LinePo
 // ---------------------------------------------------------------------------
 
 internal fun expandSelectionToLine(
-    @Suppress("UNUSED_PARAMETER") cm: CodeMirrorAdapter,
+    @Suppress("UNUSED_PARAMETER") cm: VimEditor,
     curStart: LinePos,
     curEnd: LinePos
 ): Pair<LinePos, LinePos> {
@@ -651,7 +638,7 @@ internal fun findFirstNonWhiteSpaceCharacter(text: String?): Int {
 internal data class WordBounds(val start: LinePos, val end: LinePos)
 
 internal fun expandWordUnderCursor(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     inclusive: Boolean = false,
     innerWord: Boolean = false,
     bigWord: Boolean = false,
@@ -729,7 +716,7 @@ internal fun expandWordUnderCursor(
 // ---------------------------------------------------------------------------
 
 internal fun expandTagUnderCursor(
-    @Suppress("UNUSED_PARAMETER") cm: CodeMirrorAdapter,
+    @Suppress("UNUSED_PARAMETER") cm: VimEditor,
     head: LinePos,
     @Suppress("UNUSED_PARAMETER") inclusive: Boolean = false
 ): WordBounds {
@@ -741,7 +728,7 @@ internal fun expandTagUnderCursor(
 // recordJumpPosition
 // ---------------------------------------------------------------------------
 
-internal fun recordJumpPosition(cm: CodeMirrorAdapter, oldCur: LinePos, newCur: LinePos) {
+internal fun recordJumpPosition(cm: VimEditor, oldCur: LinePos, newCur: LinePos) {
     if (!cursorEqual(oldCur, newCur)) {
         vimGlobalState.jumpList.add(cm, oldCur, newCur)
     }
@@ -844,12 +831,7 @@ internal val findSymbolModes: Map<String, FindSymbolMode> = mapOf(
     }
 )
 
-internal fun findSymbol(
-    cm: CodeMirrorAdapter,
-    repeat: Int,
-    forward: Boolean?,
-    symb: String
-): LinePos {
+internal fun findSymbol(cm: VimEditor, repeat: Int, forward: Boolean?, symb: String): LinePos {
     val cur = copyCursor(cm.getCursor())
     val increment = if (forward == true) 1 else -1
     val endLine = if (forward == true) cm.lineCount() else -1
@@ -918,7 +900,7 @@ internal fun findSymbol(
 internal data class FindWordResult(val from: Int, val to: Int, val line: Int)
 
 internal fun findWord(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     cur: LinePos,
     forward: Boolean,
     bigWord: Boolean?,
@@ -985,7 +967,7 @@ internal fun findWord(
 // ---------------------------------------------------------------------------
 
 internal fun moveToWord(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     cur: LinePos,
     repeat: Int,
     forward: Boolean,
@@ -1044,7 +1026,7 @@ internal fun moveToWord(
 // ---------------------------------------------------------------------------
 
 internal fun moveToEol(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     head: LinePos,
     motionArgs: MotionArgs,
     vim: VimState,
@@ -1064,7 +1046,7 @@ internal fun moveToEol(
 // ---------------------------------------------------------------------------
 
 internal fun moveToCharacter(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     repeat: Int,
     forward: Boolean?,
     character: String?,
@@ -1087,7 +1069,7 @@ internal fun moveToCharacter(
 // moveToColumn
 // ---------------------------------------------------------------------------
 
-internal fun moveToColumn(cm: CodeMirrorAdapter, repeat: Int): LinePos {
+internal fun moveToColumn(cm: VimEditor, repeat: Int): LinePos {
     val line = cm.getCursor().line
     return clipCursorToContent(cm, LinePos(line, repeat - 1))
 }
@@ -1096,7 +1078,7 @@ internal fun moveToColumn(cm: CodeMirrorAdapter, repeat: Int): LinePos {
 // updateMark
 // ---------------------------------------------------------------------------
 
-internal fun updateMark(cm: CodeMirrorAdapter, vim: VimState, markName: String, pos: LinePos) {
+internal fun updateMark(cm: VimEditor, vim: VimState, markName: String, pos: LinePos) {
     if (!inArray(markName, validMarks) && !latinCharRegex.matches(markName)) {
         return
     }
@@ -1133,7 +1115,7 @@ internal fun charIdxInLine(
 internal data class ParagraphRange(val start: LinePos, val end: LinePos)
 
 internal fun findParagraph(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     head: LinePos,
     repeat: Int,
     dir: Int,
@@ -1203,7 +1185,7 @@ internal fun findParagraph(
 // ---------------------------------------------------------------------------
 
 internal fun getSentence(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     cur: LinePos,
     repeat: Int,
     dir: Int,
@@ -1220,7 +1202,7 @@ internal fun getSentence(
         }
     }
 
-    fun forward(cm: CodeMirrorAdapter, ln: Int, pos: Int, d: Int): Pair<Int, Int> {
+    fun forward(cm: VimEditor, ln: Int, pos: Int, d: Int): Pair<Int, Int> {
         val line = cm.getLine(ln)
         val curr = Index(line = line, ln = ln, pos = pos, dir = d)
         if (curr.line?.isEmpty() == true) return curr.ln to curr.pos
@@ -1249,7 +1231,7 @@ internal fun getSentence(
         return curr.ln to (lastSentencePos + 1)
     }
 
-    fun reverse(cm: CodeMirrorAdapter, ln: Int, pos: Int, d: Int): Pair<Int, Int> {
+    fun reverse(cm: VimEditor, ln: Int, pos: Int, d: Int): Pair<Int, Int> {
         val line = cm.getLine(ln)
         val curr = Index(line = line, ln = ln, pos = pos, dir = d)
         if (curr.line?.isEmpty() == true) return curr.ln to curr.pos
@@ -1304,7 +1286,7 @@ internal fun getSentence(
 // findSentence
 // ---------------------------------------------------------------------------
 
-internal fun findSentence(cm: CodeMirrorAdapter, cur: LinePos, repeat: Int, dir: Int): LinePos {
+internal fun findSentence(cm: VimEditor, cur: LinePos, repeat: Int, dir: Int): LinePos {
     data class Idx(
         var line: String?,
         var ln: Int,
@@ -1312,7 +1294,7 @@ internal fun findSentence(cm: CodeMirrorAdapter, cur: LinePos, repeat: Int, dir:
         var dir: Int
     )
 
-    fun nextChar(cm: CodeMirrorAdapter, idx: Idx) {
+    fun nextChar(cm: VimEditor, idx: Idx) {
         if (idx.line == null) return
         if (idx.pos + idx.dir < 0 || idx.pos + idx.dir >= (idx.line?.length ?: 0)) {
             idx.ln += idx.dir
@@ -1327,7 +1309,7 @@ internal fun findSentence(cm: CodeMirrorAdapter, cur: LinePos, repeat: Int, dir:
         }
     }
 
-    fun forward(cm: CodeMirrorAdapter, ln: Int, pos: Int, d: Int): Pair<Int, Int> {
+    fun forward(cm: VimEditor, ln: Int, pos: Int, d: Int): Pair<Int, Int> {
         val line = cm.getLine(ln)
         var stop = line.isEmpty()
         val curr = Idx(line = line, ln = ln, pos = pos, dir = d)
@@ -1367,7 +1349,7 @@ internal fun findSentence(cm: CodeMirrorAdapter, cur: LinePos, repeat: Int, dir:
         return lastValidLn to lastValidPos
     }
 
-    fun reverse(cm: CodeMirrorAdapter, ln: Int, pos: Int, d: Int): Pair<Int, Int> {
+    fun reverse(cm: VimEditor, ln: Int, pos: Int, d: Int): Pair<Int, Int> {
         val line = cm.getLine(ln)
         val curr = Idx(line = line, ln = ln, pos = pos, dir = d)
         var lastValidLn = curr.ln
@@ -1429,7 +1411,7 @@ internal fun findSentence(cm: CodeMirrorAdapter, cur: LinePos, repeat: Int, dir:
 // ---------------------------------------------------------------------------
 
 internal fun selectCompanionObject(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     head: LinePos,
     symb: String,
     inclusive: Boolean
@@ -1491,7 +1473,7 @@ internal fun selectCompanionObject(
 // ---------------------------------------------------------------------------
 
 internal fun findBeginningAndEnd(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     head: LinePos,
     symb: String,
     inclusive: Boolean
@@ -1556,7 +1538,7 @@ internal fun findBeginningAndEnd(
 // Search functions
 // ---------------------------------------------------------------------------
 
-internal fun getSearchState(cm: CodeMirrorAdapter): SearchState {
+internal fun getSearchState(cm: VimEditor): SearchState {
     val vim = cm.vim!!
     return vim.searchState_ ?: SearchState().also { vim.searchState_ = it }
 }
@@ -1755,7 +1737,7 @@ internal fun regexEqual(r1: Regex?, r2: Regex?): Boolean {
 }
 
 internal fun updateSearchQuery(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     rawQuery: String,
     ignoreCase: Boolean = false,
     smartCase: Boolean = false
@@ -1771,7 +1753,7 @@ internal fun updateSearchQuery(
     return query
 }
 
-internal fun highlightSearchMatches(cm: CodeMirrorAdapter, query: Regex) {
+internal fun highlightSearchMatches(cm: VimEditor, query: Regex) {
     val searchState = getSearchState(cm)
     val overlay = searchState.getOverlay()
     if (overlay == null || query.pattern != overlay.query.pattern) {
@@ -1784,12 +1766,7 @@ internal fun highlightSearchMatches(cm: CodeMirrorAdapter, query: Regex) {
     }
 }
 
-internal fun findNext(
-    cm: CodeMirrorAdapter,
-    prev: Boolean,
-    query: Regex,
-    repeat: Int? = null
-): LinePos? {
+internal fun findNext(cm: VimEditor, prev: Boolean, query: Regex, repeat: Int? = null): LinePos? {
     return cm.operation {
         val rpt = repeat ?: 1
         var pos = cm.getCursor()
@@ -1825,7 +1802,7 @@ internal fun findNext(
 }
 
 internal fun findNextFromAndToInclusive(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     prev: Boolean,
     query: Regex,
     repeat: Int? = null,
@@ -1868,7 +1845,7 @@ internal fun findNextFromAndToInclusive(
     }
 }
 
-internal fun clearSearchHighlight(cm: CodeMirrorAdapter) {
+internal fun clearSearchHighlight(cm: VimEditor) {
     val state = getSearchState(cm)
     cm.removeOverlay(state.getOverlay())
     state.setOverlay(null)
@@ -1886,7 +1863,7 @@ internal fun isInRange(pos: LinePos, start: Int, end: Int): Boolean = pos.line i
 // getUserVisibleLines (stub - no scroll info in Compose)
 // ---------------------------------------------------------------------------
 
-internal fun getUserVisibleLines(cm: CodeMirrorAdapter): Pair<Int, Int> {
+internal fun getUserVisibleLines(cm: VimEditor): Pair<Int, Int> {
     // Without scroll info, return the full document range
     return cm.firstLine() to cm.lastLine()
 }
@@ -1895,7 +1872,7 @@ internal fun getUserVisibleLines(cm: CodeMirrorAdapter): Pair<Int, Int> {
 // getMarkPos
 // ---------------------------------------------------------------------------
 
-internal fun getMarkPos(cm: CodeMirrorAdapter, vim: VimState, markName: String): LinePos? {
+internal fun getMarkPos(cm: VimEditor, vim: VimState, markName: String): LinePos? {
     if (markName == "'" || markName == "`") {
         return vimGlobalState.jumpList.find(cm, -1) ?: LinePos(0, 0)
     } else if (markName == ".") {
@@ -1905,7 +1882,7 @@ internal fun getMarkPos(cm: CodeMirrorAdapter, vim: VimState, markName: String):
     return mark?.find()
 }
 
-internal fun getLastEditPos(cm: CodeMirrorAdapter): LinePos? {
+internal fun getLastEditPos(cm: VimEditor): LinePos? {
     return cm.getLastEditEnd()
 }
 
@@ -1914,7 +1891,7 @@ internal fun getLastEditPos(cm: CodeMirrorAdapter): LinePos? {
 // ---------------------------------------------------------------------------
 
 internal fun showConfirm(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     template: String,
     long: Boolean = false,
     duration: Int? = null
@@ -1936,7 +1913,7 @@ internal fun showConfirm(
     }
 }
 
-internal fun showPrompt(cm: CodeMirrorAdapter, options: PromptOptions) {
+internal fun showPrompt(cm: VimEditor, options: PromptOptions) {
     if (cm.openDialogFn != null) {
         // In Compose/UI mode, prompts are handled through the dialog interface
         cm.openDialog(
@@ -1966,7 +1943,7 @@ internal class ExCommandDispatcher {
         buildCommandMap()
     }
 
-    fun processCommand(cm: CodeMirrorAdapter, input: String, optParams: ExParams? = null) {
+    fun processCommand(cm: VimEditor, input: String, optParams: ExParams? = null) {
         cm.operation {
             val op = cm.curOp
             if (op != null) op.isVimOp = true
@@ -1974,11 +1951,7 @@ internal class ExCommandDispatcher {
         }
     }
 
-    private fun processCommandInternal(
-        cm: CodeMirrorAdapter,
-        input: String,
-        optParams: ExParams? = null
-    ) {
+    private fun processCommandInternal(cm: VimEditor, input: String, optParams: ExParams? = null) {
         val vim = cm.vim!!
         val commandHistoryRegister = vimGlobalState.registerController.getRegister(":")
         val previousCommand = commandHistoryRegister.toString()
@@ -2035,7 +2008,7 @@ internal class ExCommandDispatcher {
         }
     }
 
-    internal fun parseInput(cm: CodeMirrorAdapter, input: String, result: ExParams) {
+    internal fun parseInput(cm: VimEditor, input: String, result: ExParams) {
         var pos = 0
         // Skip leading colons
         while (pos < input.length && input[pos] == ':') pos++
@@ -2101,11 +2074,7 @@ internal class ExCommandDispatcher {
         }
     }
 
-    private fun parseLineSpec(
-        cm: CodeMirrorAdapter,
-        input: String,
-        startPos: Int
-    ): Pair<Int?, Int> {
+    private fun parseLineSpec(cm: VimEditor, input: String, startPos: Int): Pair<Int?, Int> {
         var pos = startPos
         if (pos >= input.length) return null to pos
 
@@ -2227,7 +2196,7 @@ internal val exCommandDispatcher = ExCommandDispatcher()
 // ---------------------------------------------------------------------------
 
 internal fun executeMacroRegister(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     vim: VimState,
     macroModeState: MacroModeState,
     registerName: String
@@ -2288,7 +2257,7 @@ internal fun logSearchQuery(macroModeState: MacroModeState, query: String) {
 // Insert mode tracking
 // ---------------------------------------------------------------------------
 
-internal fun onChange(cm: CodeMirrorAdapter, changeObj: Change?) {
+internal fun onChange(cm: VimEditor, changeObj: Change?) {
     val macroModeState = vimGlobalState.macroModeState
     val lastChange = macroModeState.lastInsertModeChanges
     if (!macroModeState.isPlaying) {
@@ -2333,7 +2302,7 @@ internal fun onChange(cm: CodeMirrorAdapter, changeObj: Change?) {
     }
 }
 
-internal fun onCursorActivity(cm: CodeMirrorAdapter) {
+internal fun onCursorActivity(cm: VimEditor) {
     val vim = cm.vim ?: return
     if (vim.insertMode) {
         val macroModeState = vimGlobalState.macroModeState
@@ -2354,7 +2323,7 @@ internal fun onCursorActivity(cm: CodeMirrorAdapter) {
     }
 }
 
-internal fun handleExternalSelection(cm: CodeMirrorAdapter, vim: VimState) {
+internal fun handleExternalSelection(cm: VimEditor, vim: VimState) {
     val anchor = cm.getCursor("anchor")
     val head = cm.getCursor("head")
     if (vim.visualMode && !cm.somethingSelected()) {
@@ -2381,7 +2350,7 @@ internal fun handleExternalSelection(cm: CodeMirrorAdapter, vim: VimState) {
 // exitInsertMode
 // ---------------------------------------------------------------------------
 
-internal fun exitInsertMode(cm: CodeMirrorAdapter, keepCursor: Boolean = false) {
+internal fun exitInsertMode(cm: VimEditor, keepCursor: Boolean = false) {
     val vim = cm.vim ?: return
     val macroModeState = vimGlobalState.macroModeState
     val insertModeChangeRegister = vimGlobalState.registerController.getRegister(".")
@@ -2414,12 +2383,7 @@ internal fun exitInsertMode(cm: CodeMirrorAdapter, keepCursor: Boolean = false) 
 // repeatLastEdit
 // ---------------------------------------------------------------------------
 
-internal fun repeatLastEdit(
-    cm: CodeMirrorAdapter,
-    vim: VimState,
-    repeat: Int,
-    repeatForInsert: Boolean
-) {
+internal fun repeatLastEdit(cm: VimEditor, vim: VimState, repeat: Int, repeatForInsert: Boolean) {
     val macroModeState = vimGlobalState.macroModeState
     macroModeState.isPlaying = true
     val lastAction = vim.lastEditActionCommand
@@ -2460,7 +2424,7 @@ internal fun repeatLastEdit(
     macroModeState.isPlaying = false
 }
 
-internal fun sendCmKey(cm: CodeMirrorAdapter, key: String) {
+internal fun sendCmKey(cm: VimEditor, key: String) {
     when (key) {
         "Backspace" -> cm.execCommand("cursorCharLeft")
         "Delete" -> {
@@ -2474,11 +2438,7 @@ internal fun sendCmKey(cm: CodeMirrorAdapter, key: String) {
     }
 }
 
-internal fun repeatInsertModeChanges(
-    cm: CodeMirrorAdapter,
-    changes: MutableList<Any>,
-    repeat: Int
-) {
+internal fun repeatInsertModeChanges(cm: VimEditor, changes: MutableList<Any>, repeat: Int) {
     val head = cm.getCursor("head")
     val visualBlock = vimGlobalState.macroModeState.lastInsertModeChanges.visualBlock
     var rpt = repeat
@@ -2516,7 +2476,7 @@ internal fun repeatInsertModeChanges(
 // ---------------------------------------------------------------------------
 
 internal fun clearInputState(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     @Suppress(
         "UNUSED_PARAMETER"
     ) reason: String? = null
@@ -2533,7 +2493,7 @@ internal fun clearInputState(
 // ---------------------------------------------------------------------------
 
 internal fun doReplace(
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     confirm: Boolean,
     global: Boolean,
     lineStart: Int,
@@ -2872,7 +2832,7 @@ internal class CircularJumpList {
     private val buffer = arrayOfNulls<Marker>(size)
     var cachedCursor: LinePos? = null
 
-    fun add(cm: CodeMirrorAdapter, oldCur: LinePos, newCur: LinePos) {
+    fun add(cm: VimEditor, oldCur: LinePos, newCur: LinePos) {
         val current = ((pointer % size) + size) % size
         val curMark = buffer[current]
 
@@ -2897,7 +2857,7 @@ internal class CircularJumpList {
         if (tail < 0) tail = 0
     }
 
-    fun move(cm: CodeMirrorAdapter, offset: Int): Marker? {
+    fun move(cm: VimEditor, offset: Int): Marker? {
         pointer += offset
         if (pointer > head) {
             pointer = head
@@ -2916,7 +2876,7 @@ internal class CircularJumpList {
         return mark
     }
 
-    fun find(cm: CodeMirrorAdapter, offset: Int): LinePos? {
+    fun find(cm: VimEditor, offset: Int): LinePos? {
         val oldPointer = pointer
         val mark = move(cm, offset)
         pointer = oldPointer
@@ -3057,7 +3017,7 @@ internal class MacroModeState {
     var lastInsertModeChanges = InsertModeChanges()
     var replaySearchQueries: MutableList<String> = mutableListOf()
 
-    fun enterMacroRecordMode(cm: CodeMirrorAdapter, registerName: String?) {
+    fun enterMacroRecordMode(cm: VimEditor, registerName: String?) {
         if (isRecording) return
         val register = vimGlobalState.registerController.getRegister(registerName)
         register.clear()
@@ -3096,9 +3056,9 @@ internal fun resetVimGlobalState() {
 // ---------------------------------------------------------------------------
 
 internal interface CommandDispatcherInterface {
-    fun processAction(cm: CodeMirrorAdapter, vim: VimState, command: ActionCommand)
-    fun evalInput(cm: CodeMirrorAdapter, vim: VimState)
-    fun processCommand(cm: CodeMirrorAdapter, vim: VimState, command: VimKeyCommand)
+    fun processAction(cm: VimEditor, vim: VimState, command: ActionCommand)
+    fun evalInput(cm: VimEditor, vim: VimState)
+    fun processCommand(cm: VimEditor, vim: VimState, command: VimKeyCommand)
 }
 
 internal lateinit var commandDispatcher: CommandDispatcherInterface
@@ -3108,7 +3068,7 @@ internal lateinit var commandDispatcher: CommandDispatcherInterface
 // ---------------------------------------------------------------------------
 
 internal interface VimApiInterface {
-    fun handleKey(cm: CodeMirrorAdapter, key: String, origin: String): Boolean
+    fun handleKey(cm: VimEditor, key: String, origin: String): Boolean
     fun mapclear(ctx: String? = null)
 }
 

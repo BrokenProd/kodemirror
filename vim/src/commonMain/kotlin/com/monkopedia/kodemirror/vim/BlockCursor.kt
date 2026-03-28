@@ -43,7 +43,7 @@ private val BLOCK_CURSOR_COLOR = Color(0xFFFF9696)
  * character(s) under the cursor in normal/visual/overwrite mode. Returns an
  * empty set in insert mode.
  */
-internal fun buildBlockCursorDecorations(state: EditorState, cm: CodeMirrorAdapter): DecorationSet {
+internal fun buildBlockCursorDecorations(state: EditorState, cm: VimEditor): DecorationSet {
     val vim = cm.vim ?: return RangeSet.empty()
 
     // No block cursor in insert mode (unless overwrite)
@@ -81,7 +81,7 @@ private data class CursorPiece(
  */
 private fun measureBlockCursor(
     vim: VimState,
-    cm: CodeMirrorAdapter,
+    cm: VimEditor,
     docLength: Int,
     cursor: SelectionRange,
     primary: Boolean,

@@ -19,7 +19,7 @@
 package com.monkopedia.kodemirror.vim
 
 /**
- * All ex command functions. Each takes a CodeMirrorAdapter and ExParams.
+ * All ex command functions. Each takes a VimEditor and ExParams.
  */
 internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
 
@@ -843,12 +843,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
 // Helper functions for ex commands
 // ---------------------------------------------------------------------------
 
-private fun exMapCommand(
-    cm: CodeMirrorAdapter,
-    params: ExParams,
-    ctx: String?,
-    defaultOnly: Boolean
-) {
+private fun exMapCommand(cm: VimEditor, params: ExParams, ctx: String?, defaultOnly: Boolean) {
     val mapArgs = params.args
     if (mapArgs == null || mapArgs.size < 2) {
         showConfirm(cm, "Invalid mapping: ${params.input}")
@@ -857,14 +852,14 @@ private fun exMapCommand(
     exCommandDispatcher.map(mapArgs[0], mapArgs[1], ctx, defaultOnly)
 }
 
-private fun exUnmapCommand(cm: CodeMirrorAdapter, params: ExParams, ctx: String?) {
+private fun exUnmapCommand(cm: VimEditor, params: ExParams, ctx: String?) {
     val mapArgs = params.args
     if (mapArgs == null || mapArgs.isEmpty() || !exCommandDispatcher.unmap(mapArgs[0], ctx)) {
         showConfirm(cm, "No such mapping: ${params.input}")
     }
 }
 
-private fun exPutCommand(cm: CodeMirrorAdapter, params: ExParams, matchIndent: Boolean) {
+private fun exPutCommand(cm: VimEditor, params: ExParams, matchIndent: Boolean) {
     val actionArgs = ActionArgs(
         after = true,
         isEdit = true,
