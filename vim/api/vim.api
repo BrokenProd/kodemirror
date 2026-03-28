@@ -902,6 +902,7 @@ public final class com/monkopedia/kodemirror/vim/VimEditorKt {
 
 public final class com/monkopedia/kodemirror/vim/VimExtensionKt {
 	public static final fun getCM (Lcom/monkopedia/kodemirror/view/EditorSession;)Lcom/monkopedia/kodemirror/vim/VimEditor;
+	public static final fun getVimEditor (Lcom/monkopedia/kodemirror/view/EditorSession;)Lcom/monkopedia/kodemirror/vim/VimEditor;
 	public static final fun vim (Z)Lcom/monkopedia/kodemirror/state/Extension;
 	public static synthetic fun vim$default (ZILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
 }

@@ -65,9 +65,13 @@ fun vim(status: Boolean = false): Extension {
  * Get the [VimEditor] associated with an [EditorSession], or null
  * if vim mode is not active.
  */
-fun getCM(view: EditorSession): VimEditor? {
+fun getVimEditor(view: EditorSession): VimEditor? {
     return view.plugin(vimPlugin)?.cm
 }
+
+/** @see getVimEditor */
+@Deprecated("Use getVimEditor()", ReplaceWith("getVimEditor(view)"))
+fun getCM(view: EditorSession): VimEditor? = getVimEditor(view)
 
 // ---------------------------------------------------------------------------
 // State effect for toggling the vim panel

@@ -22,7 +22,7 @@ import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.getPanel
-import com.monkopedia.kodemirror.vim.getCM
+import com.monkopedia.kodemirror.vim.getVimEditor
 import kotlin.JsFun
 
 @JsFun(
@@ -93,7 +93,7 @@ private fun serializeVimState(session: EditorSession): String {
     val isSearchOpen = searchPanelOpen(state)
 
     // Get vim mode info
-    val cm = getCM(session)
+    val cm = getVimEditor(session)
     val vimState = cm?.vim
     val vimMode = when {
         vimState == null -> "normal"
