@@ -37,7 +37,10 @@ class VimInsertModeTest {
     }
 
     @Test
-    fun capitalI_inserts_at_first_nonblank() = testVim(value = "  abc", cursor = Pos(0, 4)) { h ->
+    fun capitalI_inserts_at_first_nonblank() = testVim(
+        value = "  abc",
+        cursor = LinePos(0, 4)
+    ) { h ->
         h.doKeys("I")
         assertEquals(true, h.vim.insertMode)
         h.assertCursorAt(0, 2)

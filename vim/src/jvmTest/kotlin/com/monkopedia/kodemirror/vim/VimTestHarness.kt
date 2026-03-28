@@ -85,16 +85,16 @@ class VimHelpers(
     fun assertCursorAt(line: Int, ch: Int) {
         val actual = cm.getCursor()
         assertEquals(
-            Pos(line, ch),
-            Pos(actual.line, actual.ch),
+            LinePos(line, ch),
+            LinePos(actual.line, actual.ch),
             "Expected cursor at ($line, $ch) but was at (${actual.line}, ${actual.ch})"
         )
     }
 
     /**
-     * Assert the cursor is at the given Pos.
+     * Assert the cursor is at the given LinePos.
      */
-    fun assertCursorAt(pos: Pos) = assertCursorAt(pos.line, pos.ch)
+    fun assertCursorAt(pos: LinePos) = assertCursorAt(pos.line, pos.ch)
 
     /**
      * Get the register controller for inspecting register contents.
@@ -142,13 +142,13 @@ internal fun typeKey(cm: CodeMirrorAdapter, key: String) {
  *
  * Usage:
  * ```kotlin
- * @Test fun myTest() = testVim(value = "hello\nworld", cursor = Pos(0, 0)) { helpers ->
+ * @Test fun myTest() = testVim(value = "hello\nworld", cursor = LinePos(0, 0)) { helpers ->
  *     helpers.doKeys("d", "d")
  *     assertEquals("world", helpers.cm.getValue())
  * }
  * ```
  */
-fun testVim(value: String = DEFAULT_CODE, cursor: Pos? = null, fn: (VimHelpers) -> Unit) {
+fun testVim(value: String = DEFAULT_CODE, cursor: LinePos? = null, fn: (VimHelpers) -> Unit) {
     // Create editor state
     val cursorOffset = if (cursor != null) {
         val lines = value.split("\n")
@@ -185,7 +185,7 @@ fun testVim(value: String = DEFAULT_CODE, cursor: Pos? = null, fn: (VimHelpers) 
 /**
  * Shorthand for testing a motion: press keys, assert cursor position.
  */
-fun testMotion(keys: List<String>, endPos: Pos, startPos: Pos = Pos(0, 0)) =
+fun testMotion(keys: List<String>, endPos: LinePos, startPos: LinePos = LinePos(0, 0)) =
     testVim(cursor = startPos) { helpers ->
         helpers.doKeys(*keys.toTypedArray())
         helpers.assertCursorAt(endPos)

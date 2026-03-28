@@ -53,8 +53,8 @@ import kotlin.math.min
 // Position conversion helpers
 // ---------------------------------------------------------------------------
 
-/** Convert a vim Pos (0-based line, ch) to an absolute document offset. */
-fun indexFromPos(doc: Text, pos: Pos): DocPos {
+/** Convert a vim LinePos (0-based line, ch) to an absolute document offset. */
+fun indexFromPos(doc: Text, pos: LinePos): DocPos {
     var ch = pos.ch
     var lineNumber = pos.line + 1
     if (lineNumber < 1) {
@@ -71,10 +71,10 @@ fun indexFromPos(doc: Text, pos: Pos): DocPos {
     return DocPos(line.from.value + clampedCh)
 }
 
-/** Convert an absolute document offset to a vim Pos (0-based line, ch). */
-fun posFromIndex(doc: Text, offset: DocPos): Pos {
+/** Convert an absolute document offset to a vim LinePos (0-based line, ch). */
+fun posFromIndex(doc: Text, offset: DocPos): LinePos {
     val line = doc.lineAt(offset)
-    return Pos(line.number.value - 1, offset.value - line.from.value)
+    return LinePos(line.number.value - 1, offset.value - line.from.value)
 }
 
 // ---------------------------------------------------------------------------
@@ -157,7 +157,7 @@ private val BRACKET_MATCHING = mapOf(
 class VimSearchCursor(
     private val cm: CodeMirrorAdapter,
     query: Regex,
-    pos: Pos
+    pos: LinePos
 ) {
     private var last: SearchMatch? = null
     private var lastCM5Result: CM5SearchMatch? = null
@@ -184,7 +184,7 @@ class VimSearchCursor(
     }
 
     data class SearchMatch(val from: DocPos, val to: DocPos, val match: List<String?>)
-    data class CM5SearchMatch(val from: Pos, val to: Pos, val match: List<String?>)
+    data class CM5SearchMatch(val from: LinePos, val to: LinePos, val match: List<String?>)
 
     private fun rCursor(
         doc: Text,
@@ -261,8 +261,8 @@ class VimSearchCursor(
         return last?.match
     }
 
-    fun from(): Pos? = lastCM5Result?.from
-    fun to(): Pos? = lastCM5Result?.to
+    fun from(): LinePos? = lastCM5Result?.from
+    fun to(): LinePos? = lastCM5Result?.to
 
     fun replace(text: String) {
         val l = last ?: return
@@ -308,8 +308,8 @@ class CodeMirrorAdapter(val session: EditorSession) {
         var closeVimNotification: (() -> Unit)? = null
     }
 
-    fun indexFromPos(pos: Pos): DocPos = indexFromPos(session.state.doc, pos)
-    fun posFromIndex(offset: DocPos): Pos = posFromIndex(session.state.doc, offset)
+    fun indexFromPos(pos: LinePos): DocPos = indexFromPos(session.state.doc, pos)
+    fun posFromIndex(offset: DocPos): LinePos = posFromIndex(session.state.doc, offset)
 
     var openDialogFn: (
         (prefix: String, callback: (String) -> Unit, options: Map<String, Any?>) -> (() -> Unit)
@@ -319,8 +319,8 @@ class CodeMirrorAdapter(val session: EditorSession) {
 
 var isMac: Boolean = false
 
-data class BracketMatch(val to: Pos?)
-data class ScanResult(val pos: Pos, val ch: String)
+data class BracketMatch(val to: LinePos?)
+data class ScanResult(val pos: LinePos, val ch: String)
 data class BookmarkOptions(val insertLeft: Boolean = false)
 data class LineHandleImpl(val row: Int, val index: DocPos)
 data class HardWrapOptions(
@@ -338,7 +338,7 @@ fun CodeMirrorAdapter.on(type: String, f: (Array<out Any?>) -> Unit) = events.on
 fun CodeMirrorAdapter.off(type: String, f: (Array<out Any?>) -> Unit) = events.off(type, f)
 fun CodeMirrorAdapter.signal(type: String, vararg args: Any?) = events.signal(type, *args)
 
-fun CodeMirrorAdapter.findMatchingBracket(pos: Pos): BracketMatch {
+fun CodeMirrorAdapter.findMatchingBracket(pos: LinePos): BracketMatch {
     val state = session.state
     val offset = indexFromPos(state.doc, pos)
     var m = matchBrackets(state, offset + 1, -1)
@@ -353,7 +353,7 @@ fun CodeMirrorAdapter.findMatchingBracket(pos: Pos): BracketMatch {
 }
 
 fun CodeMirrorAdapter.scanForBracket(
-    where: Pos,
+    where: LinePos,
     dir: Int,
     @Suppress("UNUSED_PARAMETER") style: Any? = null,
     config: Map<String, Any?>? = null
@@ -391,7 +391,7 @@ fun CodeMirrorAdapter.scanForBracket(
                 if (match != null && (match[1] == '>') == (dir > 0)) {
                     stack.add(ch)
                 } else if (stack.isEmpty()) {
-                    return ScanResult(Pos(lineNo, pos), ch)
+                    return ScanResult(LinePos(lineNo, pos), ch)
                 } else {
                     stack.removeLastOrNull()
                 }
@@ -427,12 +427,12 @@ fun CodeMirrorAdapter.removeOverlay(@Suppress("UNUSED_PARAMETER") overlay: Any? 
     )
 }
 
-fun CodeMirrorAdapter.getSearchCursor(query: Regex, pos: Pos): VimSearchCursor =
+fun CodeMirrorAdapter.getSearchCursor(query: Regex, pos: LinePos): VimSearchCursor =
     VimSearchCursor(this, query, pos)
 
 fun CodeMirrorAdapter.getLineHandle(row: Int): LineHandleImpl {
     if (lineHandleChanges == null) lineHandleChanges = mutableListOf()
-    return LineHandleImpl(row, indexFromPos(Pos(row, 0)))
+    return LineHandleImpl(row, indexFromPos(LinePos(row, 0)))
 }
 
 fun CodeMirrorAdapter.getLineNumber(handle: LineHandleImpl): Int? {
@@ -465,8 +465,8 @@ fun CodeMirrorAdapter.hardWrap(options: HardWrapOptions): Int {
                 val indentation = Regex("^\\s*").find(line)?.value ?: ""
                 replaceRange(
                     "\n$indentation",
-                    Pos(row, space.start),
-                    Pos(row, space.end)
+                    LinePos(row, space.start),
+                    LinePos(row, space.end)
                 )
             }
             endRow[0]++
@@ -483,16 +483,16 @@ fun CodeMirrorAdapter.hardWrap(options: HardWrapOptions): Int {
                 ) {
                     replaceRange(
                         " ",
-                        Pos(row, trimmedLine.length),
-                        Pos(row + 1, nextLine.length - trimmedNextLine.length)
+                        LinePos(row, trimmedLine.length),
+                        LinePos(row + 1, nextLine.length - trimmedNextLine.length)
                     )
                     row--
                     endRow[0]--
                 } else if (trimmedLine.length < line.length) {
                     replaceRange(
                         "",
-                        Pos(row, trimmedLine.length),
-                        Pos(row, line.length)
+                        LinePos(row, trimmedLine.length),
+                        LinePos(row, line.length)
                     )
                 }
             }
@@ -631,7 +631,7 @@ fun CodeMirrorAdapter.getLine(row: Int): String {
 
 fun CodeMirrorAdapter.getValue(): String = session.state.doc.toString()
 
-fun CodeMirrorAdapter.getRange(s: Pos, e: Pos): String {
+fun CodeMirrorAdapter.getRange(s: LinePos, e: LinePos): String {
     val doc = session.state.doc
     val from = indexFromPos(doc, s)
     val to = indexFromPos(doc, e)
@@ -640,7 +640,7 @@ fun CodeMirrorAdapter.getRange(s: Pos, e: Pos): String {
     return session.state.sliceDoc(lo, hi)
 }
 
-fun CodeMirrorAdapter.clipPos(p: Pos): Pos {
+fun CodeMirrorAdapter.clipPos(p: LinePos): LinePos {
     val doc = session.state.doc
     var ch = p.ch
     var lineNumber = p.line + 1
@@ -654,10 +654,10 @@ fun CodeMirrorAdapter.clipPos(p: Pos): Pos {
     }
     val line = doc.line(LineNumber(lineNumber))
     ch = min(max(0, ch), line.to.value - line.from.value)
-    return Pos(lineNumber - 1, ch)
+    return LinePos(lineNumber - 1, ch)
 }
 
-fun CodeMirrorAdapter.getCursor(p: String? = null): Pos {
+fun CodeMirrorAdapter.getCursor(p: String? = null): LinePos {
     val sel = session.state.selection.main
     val offset = when (p) {
         "head", null -> sel.head
@@ -690,14 +690,14 @@ fun CodeMirrorAdapter.getSelections(): List<String> {
 fun CodeMirrorAdapter.somethingSelected(): Boolean =
     session.state.selection.ranges.any { !it.empty }
 
-fun CodeMirrorAdapter.getLastEditEnd(): Pos = posFromIndex(lastChangeEndOffset)
+fun CodeMirrorAdapter.getLastEditEnd(): LinePos = posFromIndex(lastChangeEndOffset)
 
 internal fun CodeMirrorAdapter.dispatchChange(spec: TransactionSpec) {
     if (session.state.readOnly) return
     session.dispatch(spec)
 }
 
-fun CodeMirrorAdapter.replaceRange(text: String, s: Pos, e: Pos? = null) {
+fun CodeMirrorAdapter.replaceRange(text: String, s: LinePos, e: LinePos? = null) {
     val end = e ?: s
     val doc = session.state.doc
     val from = indexFromPos(doc, s)
@@ -724,7 +724,7 @@ fun CodeMirrorAdapter.replaceSelections(replacements: List<String>) {
 }
 
 fun CodeMirrorAdapter.setCursor(line: Int, ch: Int = 0) {
-    val offset = indexFromPos(session.state.doc, Pos(line, ch))
+    val offset = indexFromPos(session.state.doc, LinePos(line, ch))
     session.dispatch(
         TransactionSpec(
             selection = SelectionSpec.CursorSpec(offset),
@@ -736,7 +736,7 @@ fun CodeMirrorAdapter.setCursor(line: Int, ch: Int = 0) {
     }
 }
 
-fun CodeMirrorAdapter.setCursor(pos: Pos) = setCursor(pos.line, pos.ch)
+fun CodeMirrorAdapter.setCursor(pos: LinePos) = setCursor(pos.line, pos.ch)
 
 fun CodeMirrorAdapter.setSelections(selections: List<CM5Range>, primIndex: Int? = null) {
     val doc = session.state.doc
@@ -758,7 +758,11 @@ fun CodeMirrorAdapter.setSelections(selections: List<CM5Range>, primIndex: Int? 
     )
 }
 
-fun CodeMirrorAdapter.setSelection(anchor: Pos, head: Pos, options: Map<String, Any?>? = null) {
+fun CodeMirrorAdapter.setSelection(
+    anchor: LinePos,
+    head: LinePos,
+    options: Map<String, Any?>? = null
+) {
     setSelections(listOf(CM5Range(anchor, head)), 0)
     if (options?.get("origin") == "*mouse") {
         onBeforeEndOperation()
@@ -766,7 +770,7 @@ fun CodeMirrorAdapter.setSelection(anchor: Pos, head: Pos, options: Map<String, 
 }
 
 fun CodeMirrorAdapter.scrollIntoView(
-    pos: Pos? = null,
+    pos: LinePos? = null,
     @Suppress("UNUSED_PARAMETER") margin: Int? = null
 ) {
     if (pos != null) {
@@ -885,7 +889,7 @@ fun CodeMirrorAdapter.indentLine(line: Int, more: Boolean = false) {
 fun CodeMirrorAdapter.indentMore() = indentMore(session)
 fun CodeMirrorAdapter.indentLess() = indentLess(session)
 
-fun CodeMirrorAdapter.setBookmark(cursor: Pos, options: BookmarkOptions? = null): Marker {
+fun CodeMirrorAdapter.setBookmark(cursor: LinePos, options: BookmarkOptions? = null): Marker {
     val assoc = if (options?.insertLeft == true) 1 else -1
     val offset = indexFromPos(cursor)
     val bm = BookmarkMarker(this, offset, assoc)
@@ -894,7 +898,7 @@ fun CodeMirrorAdapter.setBookmark(cursor: Pos, options: BookmarkOptions? = null)
     return bm
 }
 
-fun CodeMirrorAdapter.getTokenTypeAt(pos: Pos): String {
+fun CodeMirrorAdapter.getTokenTypeAt(pos: LinePos): String {
     val offset = indexFromPos(pos)
     val tree = ensureSyntaxTree(session.state, offset.value)
     val node = tree?.resolve(offset.value)
@@ -917,7 +921,7 @@ class BookmarkMarker(
 ) : Marker {
     internal var id: Int = 0
 
-    override fun find(): Pos? {
+    override fun find(): LinePos? {
         val off = offset ?: return null
         return cm.posFromIndex(off)
     }

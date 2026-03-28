@@ -830,8 +830,8 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
         )
         val oldHead = copyCursor(origHead)
         val oldAnchor = copyCursor(origAnchor)
-        var newHead: Pos? = null
-        var newAnchor: Pos? = null
+        var newHead: LinePos? = null
+        var newAnchor: LinePos? = null
 
         if (operator != null) {
             recordLastEdit(vim, inputState)
@@ -928,16 +928,16 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
                 val lineOffset = abs(lastSel.head.line - lastSel.anchor.line)
                 val chOffset = abs(lastSel.head.ch - lastSel.anchor.ch)
                 newHead = when {
-                    lastSel.visualLine -> Pos(oldAnchor.line + lineOffset, oldAnchor.ch)
-                    lastSel.visualBlock -> Pos(
+                    lastSel.visualLine -> LinePos(oldAnchor.line + lineOffset, oldAnchor.ch)
+                    lastSel.visualBlock -> LinePos(
                         oldAnchor.line + lineOffset,
                         oldAnchor.ch + chOffset
                     )
-                    lastSel.head.line == lastSel.anchor.line -> Pos(
+                    lastSel.head.line == lastSel.anchor.line -> LinePos(
                         oldAnchor.line,
                         oldAnchor.ch + chOffset
                     )
-                    else -> Pos(oldAnchor.line + lineOffset, oldAnchor.ch)
+                    else -> LinePos(oldAnchor.line + lineOffset, oldAnchor.ch)
                 }
                 vim.visualMode = true
                 vim.visualLine = lastSel.visualLine
@@ -953,8 +953,8 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
                 )
             }
 
-            val curStart: Pos
-            val curEnd: Pos
+            val curStart: LinePos
+            val curEnd: LinePos
             val linewise: Boolean
             val mode: String
             val cmSel: CmSelectionResult
@@ -980,13 +980,13 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
                         for (i in ranges.indices) {
                             ranges[i] = CM5Range(
                                 ranges[i].anchor,
-                                Pos(ranges[i].head.line, lineLength(cm, ranges[i].head.line))
+                                LinePos(ranges[i].head.line, lineLength(cm, ranges[i].head.line))
                             )
                         }
                     } else if (mode == "line") {
                         ranges[0] = CM5Range(
                             ranges[0].anchor,
-                            Pos(ranges[0].head.line + 1, 0)
+                            LinePos(ranges[0].head.line + 1, 0)
                         )
                     }
                 }

@@ -38,7 +38,7 @@ private fun fillArray(value: String, times: Int): List<String> {
 
 internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
     "change" to { cm, args, ranges, _oldAnchor, _newHead ->
-        var finalHead: Pos
+        var finalHead: LinePos
         var text: String
         val vim = cm.state.vim!!
         var anchor = ranges[0].anchor
@@ -55,18 +55,18 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
                 }
             }
             if (args.linewise == true) {
-                anchor = Pos(
+                anchor = LinePos(
                     anchor.line,
                     findFirstNonWhiteSpaceCharacter(cm.getLine(anchor.line))
                 )
                 if (head.line > anchor.line) {
-                    head = Pos(head.line - 1, Int.MAX_VALUE)
+                    head = LinePos(head.line - 1, Int.MAX_VALUE)
                 }
             }
             cm.replaceRange("", anchor, head)
             finalHead = anchor
         } else if (args.fullLine == true) {
-            head = Pos(head.line - 1, Int.MAX_VALUE)
+            head = LinePos(head.line - 1, Int.MAX_VALUE)
             cm.setSelection(anchor, head)
             text = cm.getSelection()
             cm.replaceSelection("")
@@ -91,7 +91,7 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
     },
 
     "delete" to { cm, args, ranges, _oldAnchor, _newHead ->
-        var finalHead: Pos
+        var finalHead: LinePos
         var text: String
         val vim = cm.state.vim!!
         if (!vim.visualBlock) {
@@ -104,9 +104,9 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
             ) {
                 // Special case for dd on last line (and first line).
                 if (anchor.line == cm.firstLine()) {
-                    anchor = Pos(anchor.line, 0)
+                    anchor = LinePos(anchor.line, 0)
                 } else {
-                    anchor = Pos(anchor.line - 1, lineLength(cm, anchor.line - 1))
+                    anchor = LinePos(anchor.line - 1, lineLength(cm, anchor.line - 1))
                 }
             }
             text = cm.getRange(anchor, head)
@@ -149,7 +149,7 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
             } else {
                 " ".repeat(tabSize)
             }
-            var cursor: Pos? = null
+            var cursor: LinePos? = null
             for (i in ranges.size - 1 downTo 0) {
                 cursor = cursorMin(ranges[i].anchor, ranges[i].head)
                 if (args.indentRight == true) {
@@ -212,7 +212,7 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
             HardWrapOptions(from = from, to = to)
         )
         if (endRow > from && operatorArgs.linewise == true) endRow--
-        if (operatorArgs.keepCursor == true) oldAnchor else Pos(endRow, 0)
+        if (operatorArgs.keepCursor == true) oldAnchor else LinePos(endRow, 0)
     },
 
     "toggleComment" to { cm, _args, _ranges, _oldAnchor, newHead ->

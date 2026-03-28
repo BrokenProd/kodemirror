@@ -25,7 +25,7 @@ class VimSearchTest {
     @Test
     fun star_searches_word_under_cursor() = testVim(
         value = "foo bar foo baz foo",
-        cursor = Pos(0, 0)
+        cursor = LinePos(0, 0)
     ) { h ->
         h.doKeys("*")
         h.assertCursorAt(0, 8)
@@ -34,7 +34,7 @@ class VimSearchTest {
     @Test
     fun star_wraps_around() = testVim(
         value = "foo bar foo",
-        cursor = Pos(0, 8)
+        cursor = LinePos(0, 8)
     ) { h ->
         h.doKeys("*")
         h.assertCursorAt(0, 0)
@@ -43,7 +43,7 @@ class VimSearchTest {
     @Test
     fun hash_searches_backward() = testVim(
         value = "foo bar foo",
-        cursor = Pos(0, 8)
+        cursor = LinePos(0, 8)
     ) { h ->
         h.doKeys("#")
         h.assertCursorAt(0, 0)
@@ -52,7 +52,7 @@ class VimSearchTest {
     @Test
     fun n_repeats_search_forward() = testVim(
         value = "foo bar foo baz foo",
-        cursor = Pos(0, 0)
+        cursor = LinePos(0, 0)
     ) { h ->
         h.doKeys("*")
         h.assertCursorAt(0, 8)
@@ -63,7 +63,7 @@ class VimSearchTest {
     @Test
     fun capitalN_repeats_search_backward() = testVim(
         value = "foo bar foo baz foo",
-        cursor = Pos(0, 0)
+        cursor = LinePos(0, 0)
     ) { h ->
         h.doKeys("*")
         h.assertCursorAt(0, 8)

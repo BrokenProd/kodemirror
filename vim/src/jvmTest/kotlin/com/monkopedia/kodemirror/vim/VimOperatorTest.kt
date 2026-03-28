@@ -24,7 +24,7 @@ import kotlin.test.assertEquals
 class VimOperatorTest {
 
     @Test
-    fun dd_deletes_line() = testVim(value = "foo\nbar\nbaz", cursor = Pos(1, 0)) { h ->
+    fun dd_deletes_line() = testVim(value = "foo\nbar\nbaz", cursor = LinePos(1, 0)) { h ->
         h.doKeys("d", "d")
         assertEquals("foo\nbaz", h.cm.getValue())
         h.assertCursorAt(1, 0)
@@ -38,7 +38,7 @@ class VimOperatorTest {
     }
 
     @Test
-    fun dd_deletes_last_line() = testVim(value = "foo\nbar\nbaz", cursor = Pos(2, 0)) { h ->
+    fun dd_deletes_last_line() = testVim(value = "foo\nbar\nbaz", cursor = LinePos(2, 0)) { h ->
         h.doKeys("d", "d")
         assertEquals("foo\nbar", h.cm.getValue())
         h.assertCursorAt(1, 0)
@@ -70,19 +70,19 @@ class VimOperatorTest {
     }
 
     @Test
-    fun db_deletes_backward_word() = testVim(value = "foo bar baz", cursor = Pos(0, 4)) { h ->
+    fun db_deletes_backward_word() = testVim(value = "foo bar baz", cursor = LinePos(0, 4)) { h ->
         h.doKeys("d", "b")
         assertEquals("bar baz", h.cm.getValue())
     }
 
     @Test
-    fun d_dollar_deletes_to_eol() = testVim(value = "foo bar\nbaz", cursor = Pos(0, 3)) { h ->
+    fun d_dollar_deletes_to_eol() = testVim(value = "foo bar\nbaz", cursor = LinePos(0, 3)) { h ->
         h.doKeys("d", "$")
         assertEquals("foo\nbaz", h.cm.getValue())
     }
 
     @Test
-    fun capitalD_deletes_to_eol() = testVim(value = "foo bar\nbaz", cursor = Pos(0, 3)) { h ->
+    fun capitalD_deletes_to_eol() = testVim(value = "foo bar\nbaz", cursor = LinePos(0, 3)) { h ->
         h.doKeys("D")
         assertEquals("foo\nbaz", h.cm.getValue())
     }
@@ -100,13 +100,13 @@ class VimOperatorTest {
     }
 
     @Test
-    fun capitalX_deletes_char_before() = testVim(value = "abc", cursor = Pos(0, 1)) { h ->
+    fun capitalX_deletes_char_before() = testVim(value = "abc", cursor = LinePos(0, 1)) { h ->
         h.doKeys("X")
         assertEquals("bc", h.cm.getValue())
     }
 
     @Test
-    fun cc_changes_line() = testVim(value = "foo\nbar\nbaz", cursor = Pos(1, 0)) { h ->
+    fun cc_changes_line() = testVim(value = "foo\nbar\nbaz", cursor = LinePos(1, 0)) { h ->
         h.doKeys("c", "c")
         assertEquals("foo\n\nbaz", h.cm.getValue())
         h.assertCursorAt(1, 0)
@@ -122,14 +122,14 @@ class VimOperatorTest {
     @Test
     fun capitalC_changes_to_eol() = testVim(
         value = "foo bar\nbaz",
-        cursor = Pos(0, 3)
+        cursor = LinePos(0, 3)
     ) { h ->
         h.doKeys("C")
         assertEquals("foo\nbaz", h.cm.getValue())
     }
 
     @Test
-    fun yy_yanks_line() = testVim(value = "foo\nbar\nbaz", cursor = Pos(1, 0)) { h ->
+    fun yy_yanks_line() = testVim(value = "foo\nbar\nbaz", cursor = LinePos(1, 0)) { h ->
         h.doKeys("y", "y")
         h.doKeys("p")
         assertEquals("foo\nbar\nbar\nbaz", h.cm.getValue())

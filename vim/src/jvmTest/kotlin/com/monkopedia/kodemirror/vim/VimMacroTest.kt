@@ -24,7 +24,10 @@ import kotlin.test.assertEquals
 class VimMacroTest {
 
     @Test
-    fun qq_at_q_records_and_replays() = testVim(value = "            ", cursor = Pos(0, 0)) { h ->
+    fun qq_at_q_records_and_replays() = testVim(
+        value = "            ",
+        cursor = LinePos(0, 0)
+    ) { h ->
         h.doKeys("q", "q", "l", "l", "q")
         h.assertCursorAt(0, 2)
         h.doKeys("@", "q")
@@ -32,7 +35,7 @@ class VimMacroTest {
     }
 
     @Test
-    fun at_at_replays_last() = testVim(value = "            ", cursor = Pos(0, 0)) { h ->
+    fun at_at_replays_last() = testVim(value = "            ", cursor = LinePos(0, 0)) { h ->
         h.doKeys("q", "q", "l", "l", "q")
         h.assertCursorAt(0, 2)
         h.doKeys("@", "q")
@@ -42,7 +45,7 @@ class VimMacroTest {
     }
 
     @Test
-    fun macro_with_insert() = testVim(value = "aaa\nbbb\nccc", cursor = Pos(0, 0)) { h ->
+    fun macro_with_insert() = testVim(value = "aaa\nbbb\nccc", cursor = LinePos(0, 0)) { h ->
         h.doKeys("q", "a", "I", "x", "<Esc>", "j", "q")
         h.assertCursorAt(1, 0)
         h.doKeys("@", "a")

@@ -55,7 +55,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
             val direction = if (actionArgs.forward == true) 1 else -1
             val newLine = cursor.line + (repeat * direction)
             val clampedLine = min(max(cm.firstLine(), newLine), cm.lastLine())
-            cm.setCursor(Pos(clampedLine, cursor.ch))
+            cm.setCursor(LinePos(clampedLine, cursor.ch))
         }
     },
 
@@ -124,10 +124,10 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
             var height = cm.listSelections().size
             when (insertAt) {
                 "eol" -> {
-                    head = Pos(head.line, lineLength(cm, head.line))
+                    head = LinePos(head.line, lineLength(cm, head.line))
                 }
                 "bol" -> {
-                    head = Pos(head.line, 0)
+                    head = LinePos(head.line, 0)
                 }
                 "charAfter" -> {
                     val newPosition = updateSelectionForSurrogateCharacters(
@@ -138,7 +138,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
                 "firstNonBlank" -> {
                     val fns = findFirstNonWhiteSpaceCharacter(cm.getLine(head.line))
                     val newPosition = updateSelectionForSurrogateCharacters(
-                        cm, head, Pos(head.line, fns)
+                        cm, head, LinePos(head.line, fns)
                     )
                     head = newPosition.end
                 }
@@ -148,10 +148,10 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
                         head = if (sel.head.line < sel.anchor.line) {
                             sel.head
                         } else {
-                            Pos(sel.anchor.line, 0)
+                            LinePos(sel.anchor.line, 0)
                         }
                     } else {
-                        head = Pos(
+                        head = LinePos(
                             min(sel.head.line, sel.anchor.line),
                             min(sel.head.ch, sel.anchor.ch)
                         )
@@ -164,10 +164,10 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
                         head = if (sel.head.line >= sel.anchor.line) {
                             offsetCursor(sel.head, 0, 1)
                         } else {
-                            Pos(sel.anchor.line, 0)
+                            LinePos(sel.anchor.line, 0)
                         }
                     } else {
-                        head = Pos(
+                        head = LinePos(
                             min(sel.head.line, sel.anchor.line),
                             max(sel.head.ch, sel.anchor.ch) + 1
                         )
@@ -215,7 +215,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
             vim.visualMode = true
             vim.visualLine = actionArgs.linewise == true
             vim.visualBlock = actionArgs.blockwise == true
-            val head = clipCursorToContent(cm, Pos(anchor.line, anchor.ch + repeat - 1))
+            val head = clipCursorToContent(cm, LinePos(anchor.line, anchor.ch + repeat - 1))
             val newPosition = updateSelectionForSurrogateCharacters(cm, anchor, head)
             vim.sel = CM5Range(
                 anchor = newPosition.start,
@@ -291,8 +291,8 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
     // joinLines
     // -----------------------------------------------------------------------
     "joinLines" to { cm, actionArgs, vim ->
-        var curStart: Pos
-        var curEnd: Pos
+        var curStart: LinePos
+        var curEnd: LinePos
         if (vim.visualMode) {
             curStart = cm.getCursor("anchor")
             curEnd = cm.getCursor("head")
@@ -301,11 +301,11 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
                 curEnd = curStart
                 curStart = tmp
             }
-            curEnd = Pos(curEnd.line, lineLength(cm, curEnd.line) - 1)
+            curEnd = LinePos(curEnd.line, lineLength(cm, curEnd.line) - 1)
         } else {
             val repeat = max(actionArgs.repeat, 2)
             curStart = cm.getCursor()
-            curEnd = clipCursorToContent(cm, Pos(curStart.line + repeat - 1, Int.MAX_VALUE))
+            curEnd = clipCursorToContent(cm, LinePos(curStart.line + repeat - 1, Int.MAX_VALUE))
         }
         var finalCh = 0
         for (i in curStart.line until curEnd.line) {
@@ -323,11 +323,11 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
             }
             cm.replaceRange(
                 text,
-                Pos(curStart.line, finalCh),
-                Pos(curStart.line + 1, nextStartCh)
+                LinePos(curStart.line, finalCh),
+                LinePos(curStart.line + 1, nextStartCh)
             )
         }
-        val curFinalPos = clipCursorToContent(cm, Pos(curStart.line, finalCh))
+        val curFinalPos = clipCursorToContent(cm, LinePos(curStart.line, finalCh))
         if (vim.visualMode) {
             exitVisualMode(cm, false)
         }
@@ -342,12 +342,12 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
         val insertAt = copyCursor(cm.getCursor())
         if (insertAt.line == cm.firstLine() && actionArgs.after != true) {
             // Special case for inserting newline before start of document.
-            cm.replaceRange("\n", Pos(cm.firstLine(), 0))
+            cm.replaceRange("\n", LinePos(cm.firstLine(), 0))
             cm.setCursor(cm.firstLine(), 0)
         } else {
             val targetLine = if (actionArgs.after == true) insertAt.line else insertAt.line - 1
             val ch = lineLength(cm, targetLine)
-            cm.setCursor(Pos(targetLine, ch))
+            cm.setCursor(LinePos(targetLine, ch))
             cm.execCommand("newlineAndIndent")
         }
         actions["enterInsertMode"]?.invoke(cm, ActionArgs(repeat = actionArgs.repeat), vim)
@@ -413,8 +413,8 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
             for (i in textLines.indices) {
                 if (textLines[i].isEmpty()) textLines[i] = " "
             }
-            cur = Pos(cur.line, cur.ch + if (actionArgs.after == true) 1 else 0)
-            cur = Pos(cur.line, min(lineLength(cm, cur.line), cur.ch))
+            cur = LinePos(cur.line, cur.ch + if (actionArgs.after == true) 1 else 0)
+            cur = LinePos(cur.line, min(lineLength(cm, cur.line), cur.ch))
         } else if (linewise) {
             if (vim.visualMode) {
                 text = if (vim.visualLine) {
@@ -424,17 +424,17 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
                 }
             } else if (actionArgs.after == true) {
                 text = "\n" + text.substring(0, text.length - 1)
-                cur = Pos(cur.line, lineLength(cm, cur.line))
+                cur = LinePos(cur.line, lineLength(cm, cur.line))
             } else {
-                cur = Pos(cur.line, 0)
+                cur = LinePos(cur.line, 0)
             }
         } else {
-            cur = Pos(cur.line, cur.ch + if (actionArgs.after == true) 1 else 0)
+            cur = LinePos(cur.line, cur.ch + if (actionArgs.after == true) 1 else 0)
         }
-        var curPosFinal: Pos
+        var curPosFinal: LinePos
         if (vim.visualMode) {
             vim.lastPastedText = text
-            var lastSelectionCurEnd: Pos? = null
+            var lastSelectionCurEnd: LinePos? = null
             val (selectionStart, selectionEnd) = getSelectedAreaRange(cm, vim)
             val selectedText = cm.getSelection()
             val selections = cm.listSelections()
@@ -445,7 +445,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
             vimGlobalState.registerController.unnamedRegister.setText(selectedText)
             if (blockwise) {
                 cm.replaceSelections(emptyStrings)
-                val se = Pos(selectionStart.line + text.split('\n').size - 1, selectionStart.ch)
+                val se = LinePos(selectionStart.line + text.split('\n').size - 1, selectionStart.ch)
                 cm.setCursor(selectionStart)
                 selectBlock(cm, se)
                 cm.replaceSelections(text.split('\n'))
@@ -466,7 +466,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
                 vim.lastSelection!!.headMark = cm.setBookmark(lastSelectionCurEnd)
             }
             if (linewise) {
-                curPosFinal = Pos(curPosFinal.line, 0)
+                curPosFinal = LinePos(curPosFinal.line, 0)
             }
         } else {
             if (blockwise && textLines != null) {
@@ -474,7 +474,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
                 for (i in textLines.indices) {
                     val line = cur.line + i
                     if (line > cm.lastLine()) {
-                        cm.replaceRange("\n", Pos(line, 0))
+                        cm.replaceRange("\n", LinePos(line, 0))
                     }
                     val lastCh = lineLength(cm, line)
                     if (lastCh < cur.ch) {
@@ -482,21 +482,21 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
                     }
                 }
                 cm.setCursor(cur)
-                selectBlock(cm, Pos(cur.line + textLines.size - 1, cur.ch))
+                selectBlock(cm, LinePos(cur.line + textLines.size - 1, cur.ch))
                 cm.replaceSelections(textLines)
                 curPosFinal = cur
             } else {
                 cm.replaceRange(text, cur)
                 if (linewise) {
                     val line = if (actionArgs.after == true) cur.line + 1 else cur.line
-                    curPosFinal = Pos(
+                    curPosFinal = LinePos(
                         line,
                         findFirstNonWhiteSpaceCharacter(cm.getLine(line))
                     )
                 } else {
                     curPosFinal = copyCursor(cur)
                     if (!text.contains('\n')) {
-                        curPosFinal = Pos(
+                        curPosFinal = LinePos(
                             curPosFinal.line,
                             curPosFinal.ch + text.length - if (actionArgs.after == true) 1 else 0
                         )
@@ -577,7 +577,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
     "replace" to { cm, actionArgs, vim ->
         val replaceWith = actionArgs.selectedCharacter ?: ""
         var curStart = cm.getCursor()
-        var curEnd: Pos
+        var curEnd: LinePos
         val selections = cm.listSelections()
         if (vim.visualMode) {
             curStart = cm.getCursor("start")
@@ -588,7 +588,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
             if (replaceTo > line.length) {
                 replaceTo = line.length
             }
-            curEnd = Pos(curStart.line, replaceTo)
+            curEnd = LinePos(curStart.line, replaceTo)
         }
         val newPositions = updateSelectionForSurrogateCharacters(cm, curStart, curEnd)
         curStart = newPositions.start
@@ -673,10 +673,10 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
             } else {
                 baseStr + zeroPadding + numberStr
             }
-            val from = Pos(cur.line, start)
-            val to = Pos(cur.line, end)
+            val from = LinePos(cur.line, start)
+            val to = LinePos(cur.line, end)
             cm.replaceRange(numberStr, from, to)
-            cm.setCursor(Pos(cur.line, start + numberStr.length - 1))
+            cm.setCursor(LinePos(cur.line, start + numberStr.length - 1))
         }
     },
 

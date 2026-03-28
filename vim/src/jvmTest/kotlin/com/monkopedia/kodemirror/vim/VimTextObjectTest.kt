@@ -24,55 +24,55 @@ import kotlin.test.assertEquals
 class VimTextObjectTest {
 
     @Test
-    fun diw_deletes_inner_word() = testVim(value = "foo bar baz", cursor = Pos(0, 5)) { h ->
+    fun diw_deletes_inner_word() = testVim(value = "foo bar baz", cursor = LinePos(0, 5)) { h ->
         h.doKeys("d", "i", "w")
         assertEquals("foo  baz", h.cm.getValue())
     }
 
     @Test
-    fun daw_deletes_a_word() = testVim(value = "foo bar baz", cursor = Pos(0, 4)) { h ->
+    fun daw_deletes_a_word() = testVim(value = "foo bar baz", cursor = LinePos(0, 4)) { h ->
         h.doKeys("d", "a", "w")
         assertEquals("foo baz", h.cm.getValue())
     }
 
     @Test
     fun di_paren_deletes_inner_parens() =
-        testVim(value = "foo (bar baz) qux", cursor = Pos(0, 6)) { h ->
+        testVim(value = "foo (bar baz) qux", cursor = LinePos(0, 6)) { h ->
             h.doKeys("d", "i", "(")
             assertEquals("foo () qux", h.cm.getValue())
         }
 
     @Test
     fun da_paren_deletes_including_parens() =
-        testVim(value = "foo (bar baz) qux", cursor = Pos(0, 6)) { h ->
+        testVim(value = "foo (bar baz) qux", cursor = LinePos(0, 6)) { h ->
             h.doKeys("d", "a", "(")
             assertEquals("foo  qux", h.cm.getValue())
         }
 
     @Test
     fun di_quote_deletes_inner_quotes() =
-        testVim(value = """foo "bar baz" qux""", cursor = Pos(0, 6)) { h ->
+        testVim(value = """foo "bar baz" qux""", cursor = LinePos(0, 6)) { h ->
             h.doKeys("d", "i", "\"")
             assertEquals("""foo "" qux""", h.cm.getValue())
         }
 
     @Test
     fun da_quote_deletes_including_quotes() =
-        testVim(value = """foo "bar baz" qux""", cursor = Pos(0, 6)) { h ->
+        testVim(value = """foo "bar baz" qux""", cursor = LinePos(0, 6)) { h ->
             h.doKeys("d", "a", "\"")
             assertEquals("foo  qux", h.cm.getValue())
         }
 
     @Test
     fun di_brace_deletes_inner_braces() =
-        testVim(value = "foo {bar baz} qux", cursor = Pos(0, 6)) { h ->
+        testVim(value = "foo {bar baz} qux", cursor = LinePos(0, 6)) { h ->
             h.doKeys("d", "i", "{")
             assertEquals("foo {} qux", h.cm.getValue())
         }
 
     @Test
     fun di_bracket_deletes_inner_brackets() =
-        testVim(value = "foo [bar baz] qux", cursor = Pos(0, 6)) { h ->
+        testVim(value = "foo [bar baz] qux", cursor = LinePos(0, 6)) { h ->
             h.doKeys("d", "i", "[")
             assertEquals("foo [] qux", h.cm.getValue())
         }

@@ -22,7 +22,7 @@ package com.monkopedia.kodemirror.vim
  * A bookmark marker that tracks a position through document changes.
  */
 interface Marker {
-    fun find(): Pos?
+    fun find(): LinePos?
     fun clear()
 }
 
@@ -38,10 +38,10 @@ interface LineHandle {
  * A CM5-style selection range with anchor and head.
  */
 data class CM5Range(
-    var anchor: Pos,
-    var head: Pos
+    var anchor: LinePos,
+    var head: LinePos
 ) {
-    fun from(): Pos = cursorMin(anchor, head)
+    fun from(): LinePos = cursorMin(anchor, head)
     fun empty(): Boolean = cursorEqual(anchor, head)
 }
 
@@ -75,8 +75,8 @@ data class OperatorArgs(
 )
 
 data class LastSelection(
-    val head: Pos,
-    val anchor: Pos,
+    val head: LinePos,
+    val anchor: LinePos,
     val visualLine: Boolean,
     val visualBlock: Boolean
 )
@@ -88,7 +88,7 @@ data class LastSelection(
 data class ActionArgs(
     var repeat: Int = 1,
     var forward: Boolean? = null,
-    var head: Pos? = null,
+    var head: LinePos? = null,
     var position: String? = null,
     var backtrack: Boolean? = null,
     var increase: Boolean? = null,
@@ -350,7 +350,7 @@ data class InsertModeKey(val keyName: String)
 
 class VimState {
     var onPasteFn: (() -> Unit)? = null
-    var sel: CM5Range = CM5Range(Pos(0, 0), Pos(0, 0))
+    var sel: CM5Range = CM5Range(LinePos(0, 0), LinePos(0, 0))
     var insertModeReturn: Boolean = false
     var visualBlock: Boolean = false
     val marks: MutableMap<String, Marker> = mutableMapOf()
@@ -388,8 +388,8 @@ data class VimLastSelection(
     var visualLine: Boolean,
     var visualBlock: Boolean,
     var visualMode: Boolean,
-    var anchor: Pos,
-    var head: Pos
+    var anchor: LinePos,
+    var head: LinePos
 )
 
 // ---------------------------------------------------------------------------
@@ -462,7 +462,7 @@ data class VimKeyEvent(
 
 typealias MotionFn = (
     cm: CodeMirrorAdapter,
-    head: Pos,
+    head: LinePos,
     motionArgs: MotionArgs,
     vim: VimState,
     inputState: InputState
@@ -472,9 +472,9 @@ typealias OperatorFn = (
     cm: CodeMirrorAdapter,
     args: OperatorArgs,
     ranges: List<CM5Range>,
-    oldAnchor: Pos,
-    newHead: Pos?
-) -> Pos?
+    oldAnchor: LinePos,
+    newHead: LinePos?
+) -> LinePos?
 
 typealias ActionFn = (
     cm: CodeMirrorAdapter,
@@ -491,16 +491,16 @@ typealias ExFn = (
  * Result of a motion: either a single position or a pair (anchor, head).
  */
 sealed class MotionResult {
-    data class SinglePos(val pos: Pos) : MotionResult()
-    data class Range(val anchor: Pos, val head: Pos) : MotionResult()
+    data class SinglePos(val pos: LinePos) : MotionResult()
+    data class Range(val anchor: LinePos, val head: LinePos) : MotionResult()
 
     companion object {
-        fun from(pos: Pos): MotionResult = SinglePos(pos)
-        fun from(anchor: Pos, head: Pos): MotionResult = Range(anchor, head)
+        fun from(pos: LinePos): MotionResult = SinglePos(pos)
+        fun from(anchor: LinePos, head: LinePos): MotionResult = Range(anchor, head)
     }
 }
 
-fun MotionResult?.toPos(): Pos? = when (this) {
+fun MotionResult?.toPos(): LinePos? = when (this) {
     is MotionResult.SinglePos -> pos
     is MotionResult.Range -> head
     null -> null

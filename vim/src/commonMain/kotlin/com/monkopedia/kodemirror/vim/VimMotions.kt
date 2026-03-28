@@ -29,7 +29,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
         val visible = getUserVisibleLines(cm)
         val line = visible.first + motionArgs.repeat - 1
         MotionResult.from(
-            Pos(line, findFirstNonWhiteSpaceCharacter(cm.getLine(line)))
+            LinePos(line, findFirstNonWhiteSpaceCharacter(cm.getLine(line)))
         )
     },
 
@@ -37,7 +37,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
         val visible = getUserVisibleLines(cm)
         val line = floor((visible.first + visible.second) * 0.5).toInt()
         MotionResult.from(
-            Pos(line, findFirstNonWhiteSpaceCharacter(cm.getLine(line)))
+            LinePos(line, findFirstNonWhiteSpaceCharacter(cm.getLine(line)))
         )
     },
 
@@ -45,7 +45,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
         val visible = getUserVisibleLines(cm)
         val line = visible.second - motionArgs.repeat + 1
         MotionResult.from(
-            Pos(line, findFirstNonWhiteSpaceCharacter(cm.getLine(line)))
+            LinePos(line, findFirstNonWhiteSpaceCharacter(cm.getLine(line)))
         )
     },
 
@@ -53,7 +53,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
         // Expands forward to end of line, and then to next line if repeat is >1.
         // Does not handle backward motion!
         val cur = head
-        MotionResult.from(Pos(cur.line + motionArgs.repeat - 1, Int.MAX_VALUE))
+        MotionResult.from(LinePos(cur.line + motionArgs.repeat - 1, Int.MAX_VALUE))
     },
 
     "findNext" to { cm, _head, motionArgs, _vim, _inputState ->
@@ -92,7 +92,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
             var prev = motionArgs.forward != true
             prev = if (state.isReversed()) !prev else prev
 
-            // next: Pair<Pos, Pos>? (from, to)
+            // next: Pair<LinePos, LinePos>? (from, to)
             val next = findNextFromAndToInclusive(cm, prev, query, motionArgs.repeat, vim)
 
             if (next == null) {
@@ -104,7 +104,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
                 } else {
                     val from = next.first
                     // Shrink selection by 1 char so that only the match is selected.
-                    val to = Pos(next.second.line, next.second.ch - 1)
+                    val to = LinePos(next.second.line, next.second.ch - 1)
 
                     if (vim.visualMode) {
                         // If we were in visualLine or visualBlock mode, get out of it.
@@ -157,7 +157,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
         if (pos != null) {
             if (motionArgs.linewise == true) {
                 MotionResult.from(
-                    Pos(
+                    LinePos(
                         pos.line,
                         findFirstNonWhiteSpaceCharacter(cm.getLine(pos.line))
                     )
@@ -174,8 +174,8 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
         val sel = vim.sel
         if (vim.visualBlock && motionArgs.sameLine == true) {
             MotionResult.from(
-                clipCursorToContent(cm, Pos(sel.anchor.line, sel.head.ch)),
-                clipCursorToContent(cm, Pos(sel.head.line, sel.anchor.ch))
+                clipCursorToContent(cm, LinePos(sel.anchor.line, sel.head.ch)),
+                clipCursorToContent(cm, LinePos(sel.head.line, sel.anchor.ch))
             )
         } else {
             MotionResult.from(sel.head, sel.anchor)
@@ -218,7 +218,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
         }
 
         if (motionArgs.linewise == true) {
-            best = Pos(
+            best = LinePos(
                 best.line,
                 findFirstNonWhiteSpaceCharacter(cm.getLine(best.line))
             )
@@ -230,7 +230,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
         val cur = head
         val repeat = motionArgs.repeat
         val ch = if (motionArgs.forward == true) cur.ch + repeat else cur.ch - repeat
-        MotionResult.from(Pos(cur.line, ch))
+        MotionResult.from(LinePos(cur.line, ch))
     },
 
     "moveByLines" to { cm, head, motionArgs, vim, _inputState ->
@@ -261,7 +261,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
         val last = cm.lastLine()
         // Vim go to line begin or line end when cursor at first/last line
         if (line < first && cur.line == first) {
-            MotionResult.from(Pos(head.line, 0))
+            MotionResult.from(LinePos(head.line, 0))
         } else if (line > last && cur.line == last) {
             MotionResult.from(moveToEol(cm, head, motionArgs, vim, true))
         } else {
@@ -270,7 +270,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
                 vim.lastHPos = endCh
             }
             vim.lastHSPos = 0 // charCoords not available, use placeholder
-            MotionResult.from(Pos(line, endCh))
+            MotionResult.from(LinePos(line, endCh))
         }
     },
 
@@ -300,7 +300,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
                 current.line - 1
             }
             if (newLine < cm.firstLine() || newLine > cm.lastLine()) break
-            current = Pos(newLine, current.ch)
+            current = LinePos(newLine, current.ch)
         }
         if (!cursorEqual(current, head)) {
             vim.lastHPos = current.ch
@@ -319,7 +319,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
             -repeat * pageSize
         }
         val newLine = (curStart.line + delta).coerceIn(cm.firstLine(), cm.lastLine())
-        MotionResult.from(Pos(newLine, curStart.ch))
+        MotionResult.from(LinePos(newLine, curStart.ch))
     },
 
     "moveByParagraph" to { cm, head, motionArgs, _vim, _inputState ->
@@ -368,7 +368,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
         if (curEnd == null) {
             null
         } else {
-            MotionResult.from(Pos(curEnd.line, curEnd.ch + increment))
+            MotionResult.from(LinePos(curEnd.line, curEnd.ch + increment))
         }
     },
 
@@ -412,7 +412,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
         // whitespace-only lines
         val cursor = head
         MotionResult.from(
-            Pos(cursor.line, findFirstNonWhiteSpaceCharacter(cm.getLine(cursor.line)))
+            LinePos(cursor.line, findFirstNonWhiteSpaceCharacter(cm.getLine(cursor.line)))
         )
     },
 
@@ -425,7 +425,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
         while (ch < lineText.length) {
             symbol = lineText[ch].toString()
             if (isMatchableSymbol(symbol)) {
-                val style = cm.getTokenTypeAt(Pos(line, ch + 1))
+                val style = cm.getTokenTypeAt(LinePos(line, ch + 1))
                 if (style != "string" && style != "comment") {
                     break
                 }
@@ -433,7 +433,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
             ch++
         }
         if (ch < lineText.length) {
-            val matched = cm.findMatchingBracket(Pos(line, ch))
+            val matched = cm.findMatchingBracket(LinePos(line, ch))
             if (matched.to != null) {
                 MotionResult.from(matched.to)
             } else {
@@ -445,7 +445,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
     },
 
     "moveToStartOfLine" to { _cm, head, _motionArgs, _vim, _inputState ->
-        MotionResult.from(Pos(head.line, 0))
+        MotionResult.from(LinePos(head.line, 0))
     },
 
     "moveToLineOrEdgeOfDocument" to { cm, _head, motionArgs, _vim, _inputState ->
@@ -454,7 +454,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
             lineNum = motionArgs.repeat - (cm.getOption("firstLineNumber") as? Int ?: 1)
         }
         MotionResult.from(
-            Pos(lineNum, findFirstNonWhiteSpaceCharacter(cm.getLine(lineNum)))
+            LinePos(lineNum, findFirstNonWhiteSpaceCharacter(cm.getLine(lineNum)))
         )
     },
 
@@ -467,7 +467,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
         cm.execCommand("goLineRight")
         val resultHead = cm.getCursor()
         // In the JS version this checks head.sticky == "before" and decrements ch.
-        // We don't have sticky in the Kotlin Pos, so we return as-is.
+        // We don't have sticky in the Kotlin LinePos, so we return as-is.
         MotionResult.from(resultHead)
     },
 
@@ -544,7 +544,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
                 }
                 tmp = WordBounds(
                     start = tmp.start,
-                    end = Pos(tmp.end.line - 1, tmp.end.ch)
+                    end = LinePos(tmp.end.line - 1, tmp.end.ch)
                 )
             }
         } else if (character == "t") {
@@ -556,7 +556,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
             if (head.ch > 0 && head.ch < content.length &&
                 isEndOfSentenceSymbol(content[head.ch].toString())
             ) {
-                adjustedHead = Pos(head.line, head.ch - 1)
+                adjustedHead = LinePos(head.line, head.ch - 1)
             }
             val end = getSentence(cm, adjustedHead, motionArgs.repeat, 1, inclusive)
             val start = getSentence(cm, adjustedHead, motionArgs.repeat, -1, inclusive)
@@ -570,7 +570,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
                 end.ch > 0 && end.ch - 1 < endLine.length &&
                 isWhiteSpaceString(endLine[end.ch - 1].toString())
             ) {
-                Pos(start.line, start.ch + 1)
+                LinePos(start.line, start.ch + 1)
             } else {
                 start
             }
@@ -607,7 +607,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
         if (curEnd == null) {
             MotionResult.from(head)
         } else {
-            MotionResult.from(Pos(curEnd.line, curEnd.ch + increment))
+            MotionResult.from(LinePos(curEnd.line, curEnd.ch + increment))
         }
     }
 )

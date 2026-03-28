@@ -352,8 +352,8 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
         val lineStart = params.line.takeIf { it > 0 } ?: cm.firstLine()
         val lineEnd = params.lineEnd ?: params.line.takeIf { it > 0 } ?: cm.lastLine()
         if (lineStart == lineEnd) return@to
-        val curStart = Pos(lineStart, 0)
-        val curEnd = Pos(lineEnd, lineLength(cm, lineEnd))
+        val curStart = LinePos(lineStart, 0)
+        val curEnd = LinePos(lineEnd, lineLength(cm, lineEnd))
         var text = cm.getRange(curStart, curEnd).split('\n').toMutableList()
         val numberRegex = when (number) {
             "decimal" -> Regex("(-?)([\\d]+)")
@@ -677,7 +677,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
             lineStart = lineEnd
             lineEnd = lineStart + count - 1
         }
-        val startPos = clipCursorToContent(cm, Pos(lineStart, 0))
+        val startPos = clipCursorToContent(cm, LinePos(lineStart, 0))
         val cursor = cm.getSearchCursor(query, startPos)
         doReplace(
             cm, confirm, global, lineStart, lineEnd, cursor, query,
@@ -732,7 +732,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
             lineEnd = line
             line = tmp
         }
-        val text = cm.getRange(Pos(line, 0), Pos(lineEnd + 1, 0))
+        val text = cm.getRange(LinePos(line, 0), LinePos(lineEnd + 1, 0))
         val registerName = params.args?.getOrNull(0) ?: "0"
         vimGlobalState.registerController.pushText(
             registerName, "yank", text, true, false
@@ -768,8 +768,8 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
         val line = params.selectionLine
         val lineEnd = params.selectionLineEnd ?: line
         // Direct range deletion
-        val startPos = Pos(line, 0)
-        val endPos = Pos(lineEnd + 1, 0)
+        val startPos = LinePos(line, 0)
+        val endPos = LinePos(lineEnd + 1, 0)
         val text = cm.getRange(startPos, endPos)
         vimGlobalState.registerController.unnamedRegister.setText(text, true, false)
         cm.replaceRange("", startPos, endPos)
@@ -781,7 +781,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
     "join" to { cm, params ->
         val line = params.selectionLine
         val lineEnd = params.selectionLineEnd ?: line
-        cm.setCursor(Pos(line, 0))
+        cm.setCursor(LinePos(line, 0))
         actions["joinLines"]?.invoke(cm, ActionArgs(repeat = lineEnd - line), cm.state.vim!!)
     },
 
@@ -882,6 +882,6 @@ private fun exPutCommand(cm: CodeMirrorAdapter, params: ExParams, matchIndent: B
         actionArgs.registerName = args[0]
     }
     val line = params.selectionLine
-    cm.setCursor(Pos(line, 0))
+    cm.setCursor(LinePos(line, 0))
     actions["continuePaste"]?.invoke(cm, actionArgs, cm.state.vim!!)
 }

@@ -171,18 +171,18 @@ internal fun trim(s: String): String = s.trim()
 internal fun escapeRegex(s: String): String =
     s.replace(Regex("([.?*+\$\\[\\]/\\\\(){}|\\-])"), "\\\\$1")
 
-internal fun copyCursor(cur: Pos): Pos = Pos(cur.line, cur.ch)
+internal fun copyCursor(cur: LinePos): LinePos = LinePos(cur.line, cur.ch)
 
-internal fun cursorIsBetween(cur1: Pos, cur2: Pos, cur3: Pos): Boolean {
+internal fun cursorIsBetween(cur1: LinePos, cur2: LinePos, cur3: LinePos): Boolean {
     val cur1before2 = cursorIsBefore(cur1, cur2)
     val cur2before3 = cursorIsBefore(cur2, cur3)
     return cur1before2 && cur2before3
 }
 
-internal fun offsetCursor(cur: Pos, offsetLine: Int, offsetCh: Int): Pos {
+internal fun offsetCursor(cur: LinePos, offsetLine: Int, offsetCh: Int): LinePos {
     // Use Long arithmetic to avoid integer overflow when ch is Int.MAX_VALUE
     val newCh = cur.ch.toLong() + offsetCh.toLong()
-    return Pos(cur.line + offsetLine, newCh.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt())
+    return LinePos(cur.line + offsetLine, newCh.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt())
 }
 
 internal fun repeatFn(
@@ -204,7 +204,11 @@ internal fun repeatFn(
  * and is not inside surrogate pair.
  * If in insert/visual mode, allow cur.ch == lineLength.
  */
-internal fun clipCursorToContent(cm: CodeMirrorAdapter, cur: Pos, oldCur: Pos? = null): Pos {
+internal fun clipCursorToContent(
+    cm: CodeMirrorAdapter,
+    cur: LinePos,
+    oldCur: LinePos? = null
+): LinePos {
     val vim = cm.state.vim
     val includeLineBreak = vim != null && (vim.insertMode || vim.visualMode)
     val line = min(max(cm.firstLine(), cur.line), cm.lastLine())
@@ -220,7 +224,7 @@ internal fun clipCursorToContent(cm: CodeMirrorAdapter, cur: Pos, oldCur: Pos? =
             if (ch > maxCh) ch -= 2
         }
     }
-    return Pos(line, ch)
+    return LinePos(line, ch)
 }
 
 /**
@@ -229,22 +233,22 @@ internal fun clipCursorToContent(cm: CodeMirrorAdapter, cur: Pos, oldCur: Pos? =
  */
 internal fun updateSelectionForSurrogateCharacters(
     cm: CodeMirrorAdapter,
-    curStart: Pos,
-    curEnd: Pos
+    curStart: LinePos,
+    curEnd: LinePos
 ): SurrogateResult {
     if (curStart.line == curEnd.line && curStart.ch >= curEnd.ch - 1) {
         val text = cm.getLine(curStart.line)
         if (curStart.ch < text.length) {
             val charCode = text[curStart.ch].code
             if (charCode in 0xD800..0xD8FF) {
-                return SurrogateResult(curStart, Pos(curEnd.line, curEnd.ch + 1))
+                return SurrogateResult(curStart, LinePos(curEnd.line, curEnd.ch + 1))
             }
         }
     }
     return SurrogateResult(curStart, curEnd)
 }
 
-internal data class SurrogateResult(val start: Pos, val end: Pos)
+internal data class SurrogateResult(val start: LinePos, val end: LinePos)
 
 // ---------------------------------------------------------------------------
 // Copy args
@@ -331,7 +335,7 @@ internal fun lastChar(keys: String): String {
 internal fun extendLineToColumn(cm: CodeMirrorAdapter, lineNum: Int, column: Int) {
     val endCh = lineLength(cm, lineNum)
     val spaces = " ".repeat(column - endCh + 1)
-    cm.setCursor(Pos(lineNum, endCh))
+    cm.setCursor(LinePos(lineNum, endCh))
     cm.replaceRange(spaces, cm.getCursor())
 }
 
@@ -339,7 +343,7 @@ internal fun extendLineToColumn(cm: CodeMirrorAdapter, lineNum: Int, column: Int
 // Select block
 // ---------------------------------------------------------------------------
 
-internal fun selectBlock(cm: CodeMirrorAdapter, selectionEnd: Pos): Pos {
+internal fun selectBlock(cm: CodeMirrorAdapter, selectionEnd: LinePos): LinePos {
     val ranges = cm.listSelections()
     val head = cm.clipPos(selectionEnd)
     val isClipped = !cursorEqual(selectionEnd, head)
@@ -352,7 +356,7 @@ internal fun selectBlock(cm: CodeMirrorAdapter, selectionEnd: Pos): Pos {
     }
     val max = ranges.size - 1
     val index = if (max - primIndex > primIndex) max else 0
-    val base = if (ranges.isNotEmpty()) copyCursor(ranges[index].anchor) else Pos(0, 0)
+    val base = if (ranges.isNotEmpty()) copyCursor(ranges[index].anchor) else LinePos(0, 0)
 
     val firstLine = min(base.line, head.line)
     val lastLine = max(base.line, head.line)
@@ -373,17 +377,17 @@ internal fun selectBlock(cm: CodeMirrorAdapter, selectionEnd: Pos): Pos {
     }
     val selections = mutableListOf<CM5Range>()
     for (line in firstLine..lastLine) {
-        selections.add(CM5Range(anchor = Pos(line, baseCh), head = Pos(line, headCh)))
+        selections.add(CM5Range(anchor = LinePos(line, baseCh), head = LinePos(line, headCh)))
     }
     cm.setSelections(selections)
-    return Pos(base.line, baseCh)
+    return LinePos(base.line, baseCh)
 }
 
 // ---------------------------------------------------------------------------
 // Select for insert
 // ---------------------------------------------------------------------------
 
-internal fun selectForInsert(cm: CodeMirrorAdapter, head: Pos, height: Int) {
+internal fun selectForInsert(cm: CodeMirrorAdapter, head: LinePos, height: Int) {
     val sel = mutableListOf<CM5Range>()
     for (i in 0 until height) {
         val lineHead = offsetCursor(head, i, 0)
@@ -396,7 +400,7 @@ internal fun selectForInsert(cm: CodeMirrorAdapter, head: Pos, height: Int) {
 // getIndex
 // ---------------------------------------------------------------------------
 
-internal fun getIndex(ranges: List<CM5Range>, cursor: Pos, end: String? = null): Int {
+internal fun getIndex(ranges: List<CM5Range>, cursor: LinePos, end: String? = null): Int {
     for (i in ranges.indices) {
         val atAnchor = end != "head" && cursorEqual(ranges[i].anchor, cursor)
         val atHead = end != "anchor" && cursorEqual(ranges[i].head, cursor)
@@ -412,7 +416,7 @@ internal fun getIndex(ranges: List<CM5Range>, cursor: Pos, end: String? = null):
 internal fun getSelectedAreaRange(
     cm: CodeMirrorAdapter,
     @Suppress("UNUSED_PARAMETER") vim: VimState
-): Pair<Pos, Pos> {
+): Pair<LinePos, LinePos> {
     val selections = cm.listSelections()
     val start = selections.first()
     val end = selections.last()
@@ -455,10 +459,10 @@ internal fun updateLastSelection(cm: CodeMirrorAdapter, vim: VimState) {
 
 internal fun expandSelection(
     cm: CodeMirrorAdapter,
-    start: Pos,
-    end: Pos,
+    start: LinePos,
+    end: LinePos,
     move: Boolean = false
-): Pair<Pos, Pos> {
+): Pair<LinePos, LinePos> {
     val sel = cm.state.vim!!.sel
     var headVar = if (move) start else sel.head
     var anchorVar = if (move) start else sel.anchor
@@ -478,7 +482,7 @@ internal fun expandSelection(
         headVar = cursorMax(headVar, e)
         headVar = offsetCursor(headVar, 0, -1)
         if (headVar.ch == -1 && headVar.line != cm.firstLine()) {
-            headVar = Pos(headVar.line - 1, lineLength(cm, headVar.line - 1))
+            headVar = LinePos(headVar.line - 1, lineLength(cm, headVar.line - 1))
         }
     }
     return anchorVar to headVar
@@ -520,16 +524,16 @@ internal fun makeCmSelection(
             var a = anchor
             var h = head
             if (!cursorIsBefore(sel.head, sel.anchor)) {
-                a = Pos(a.line, 0)
+                a = LinePos(a.line, 0)
                 val lastLine = cm.lastLine()
                 h = if (h.line > lastLine) {
-                    Pos(lastLine, lineLength(cm, lastLine))
+                    LinePos(lastLine, lineLength(cm, lastLine))
                 } else {
-                    Pos(h.line, lineLength(cm, h.line))
+                    LinePos(h.line, lineLength(cm, h.line))
                 }
             } else {
-                h = Pos(h.line, 0)
-                a = Pos(a.line, lineLength(cm, a.line))
+                h = LinePos(h.line, 0)
+                a = LinePos(a.line, lineLength(cm, a.line))
             }
             CmSelectionResult(mutableListOf(CM5Range(anchor = a, head = h)), 0)
         }
@@ -547,7 +551,9 @@ internal fun makeCmSelection(
             val primary = if (head.line == top) 0 else height - 1
             val ranges = mutableListOf<CM5Range>()
             for (i in 0 until height) {
-                ranges.add(CM5Range(anchor = Pos(top + i, fromCh), head = Pos(top + i, toCh)))
+                ranges.add(
+                    CM5Range(anchor = LinePos(top + i, fromCh), head = LinePos(top + i, toCh))
+                )
             }
             CmSelectionResult(ranges, primary)
         }
@@ -559,7 +565,7 @@ internal fun makeCmSelection(
 // getHead
 // ---------------------------------------------------------------------------
 
-internal fun getHead(cm: CodeMirrorAdapter): Pos {
+internal fun getHead(cm: CodeMirrorAdapter): LinePos {
     var cur = cm.getCursor("head")
     if (cm.getSelection().length == 1) {
         cur = cursorMin(cur, cm.getCursor("anchor"))
@@ -589,7 +595,7 @@ internal fun exitVisualMode(cm: CodeMirrorAdapter, moveHead: Boolean = true) {
 // clipToLine
 // ---------------------------------------------------------------------------
 
-internal fun clipToLine(cm: CodeMirrorAdapter, curStart: Pos, curEnd: Pos): Pos {
+internal fun clipToLine(cm: CodeMirrorAdapter, curStart: LinePos, curEnd: LinePos): LinePos {
     val selection = cm.getRange(curStart, curEnd)
     var endLine = curEnd.line
     var endCh = curEnd.ch
@@ -609,7 +615,7 @@ internal fun clipToLine(cm: CodeMirrorAdapter, curStart: Pos, curEnd: Pos): Pos 
             endCh = 0
         }
     }
-    return Pos(endLine, endCh)
+    return LinePos(endLine, endCh)
 }
 
 // ---------------------------------------------------------------------------
@@ -618,10 +624,10 @@ internal fun clipToLine(cm: CodeMirrorAdapter, curStart: Pos, curEnd: Pos): Pos 
 
 internal fun expandSelectionToLine(
     @Suppress("UNUSED_PARAMETER") cm: CodeMirrorAdapter,
-    curStart: Pos,
-    curEnd: Pos
-): Pair<Pos, Pos> {
-    return Pos(curStart.line, 0) to Pos(curEnd.line + 1, 0)
+    curStart: LinePos,
+    curEnd: LinePos
+): Pair<LinePos, LinePos> {
+    return LinePos(curStart.line, 0) to LinePos(curEnd.line + 1, 0)
 }
 
 // ---------------------------------------------------------------------------
@@ -638,7 +644,7 @@ internal fun findFirstNonWhiteSpaceCharacter(text: String?): Int {
 // expandWordUnderCursor
 // ---------------------------------------------------------------------------
 
-internal data class WordBounds(val start: Pos, val end: Pos)
+internal data class WordBounds(val start: LinePos, val end: LinePos)
 
 internal fun expandWordUnderCursor(
     cm: CodeMirrorAdapter,
@@ -647,7 +653,7 @@ internal fun expandWordUnderCursor(
     bigWord: Boolean = false,
     noSymbol: Boolean = false,
     multiline: Boolean = false,
-    cursor: Pos? = null
+    cursor: LinePos? = null
 ): WordBounds? {
     val cur = cursor ?: getHead(cm)
     val line = cm.getLine(cur.line)
@@ -711,7 +717,7 @@ internal fun expandWordUnderCursor(
         }
     }
 
-    return WordBounds(start = Pos(startLineNumber, start), end = Pos(endLineNumber, end))
+    return WordBounds(start = LinePos(startLineNumber, start), end = LinePos(endLineNumber, end))
 }
 
 // ---------------------------------------------------------------------------
@@ -720,7 +726,7 @@ internal fun expandWordUnderCursor(
 
 internal fun expandTagUnderCursor(
     @Suppress("UNUSED_PARAMETER") cm: CodeMirrorAdapter,
-    head: Pos,
+    head: LinePos,
     @Suppress("UNUSED_PARAMETER") inclusive: Boolean = false
 ): WordBounds {
     // Tag matching is not supported in Kodemirror yet
@@ -731,7 +737,7 @@ internal fun expandTagUnderCursor(
 // recordJumpPosition
 // ---------------------------------------------------------------------------
 
-internal fun recordJumpPosition(cm: CodeMirrorAdapter, oldCur: Pos, newCur: Pos) {
+internal fun recordJumpPosition(cm: CodeMirrorAdapter, oldCur: LinePos, newCur: LinePos) {
     if (!cursorEqual(oldCur, newCur)) {
         vimGlobalState.jumpList.add(cm, oldCur, newCur)
     }
@@ -834,7 +840,12 @@ internal val findSymbolModes: Map<String, FindSymbolMode> = mapOf(
     }
 )
 
-internal fun findSymbol(cm: CodeMirrorAdapter, repeat: Int, forward: Boolean?, symb: String): Pos {
+internal fun findSymbol(
+    cm: CodeMirrorAdapter,
+    repeat: Int,
+    forward: Boolean?,
+    symb: String
+): LinePos {
     val cur = copyCursor(cm.getCursor())
     val increment = if (forward == true) 1 else -1
     val endLine = if (forward == true) cm.lineCount() else -1
@@ -886,12 +897,12 @@ internal fun findSymbol(cm: CodeMirrorAdapter, repeat: Int, forward: Boolean?, s
         if (symbolMode.isComplete(state)) {
             remaining--
             if (remaining == 0) {
-                return Pos(line, state.index)
+                return LinePos(line, state.index)
             }
         }
     }
     if (state.nextCh.isNotEmpty() || state.curMoveThrough) {
-        return Pos(line, state.index)
+        return LinePos(line, state.index)
     }
     return cur
 }
@@ -904,7 +915,7 @@ internal data class FindWordResult(val from: Int, val to: Int, val line: Int)
 
 internal fun findWord(
     cm: CodeMirrorAdapter,
-    cur: Pos,
+    cur: LinePos,
     forward: Boolean,
     bigWord: Boolean?,
     emptyLineIsWord: Boolean?
@@ -971,12 +982,12 @@ internal fun findWord(
 
 internal fun moveToWord(
     cm: CodeMirrorAdapter,
-    cur: Pos,
+    cur: LinePos,
     repeat: Int,
     forward: Boolean,
     wordEnd: Boolean,
     bigWord: Boolean
-): Pos? {
+): LinePos? {
     val curStart = copyCursor(cur)
     val words = mutableListOf<FindWordResult>()
     var rpt = repeat
@@ -999,7 +1010,7 @@ internal fun moveToWord(
             break
         }
         words.add(word)
-        currentCur = Pos(word.line, if (forward) word.to - 1 else word.from)
+        currentCur = LinePos(word.line, if (forward) word.to - 1 else word.from)
     }
     val shortCircuit = words.size != rpt
     val firstWord = words.firstOrNull() ?: return null
@@ -1011,16 +1022,16 @@ internal fun moveToWord(
             if (!shortCircuit && wordMoved) {
                 lastWord = words.removeLastOrNull() ?: return null
             }
-            Pos(lastWord.line, lastWord.from)
+            LinePos(lastWord.line, lastWord.from)
         }
-        forward && wordEnd -> Pos(lastWord.line, lastWord.to - 1)
+        forward && wordEnd -> LinePos(lastWord.line, lastWord.to - 1)
         !forward && wordEnd -> {
             if (!shortCircuit && (firstWord.to != curStart.ch || firstWord.line != curStart.line)) {
                 lastWord = words.removeLastOrNull() ?: return null
             }
-            Pos(lastWord.line, lastWord.to)
+            LinePos(lastWord.line, lastWord.to)
         }
-        else -> Pos(lastWord.line, lastWord.from) // b
+        else -> LinePos(lastWord.line, lastWord.from) // b
     }
 }
 
@@ -1030,12 +1041,12 @@ internal fun moveToWord(
 
 internal fun moveToEol(
     cm: CodeMirrorAdapter,
-    head: Pos,
+    head: LinePos,
     motionArgs: MotionArgs,
     vim: VimState,
     keepHPos: Boolean
-): Pos {
-    val retval = Pos(head.line + motionArgs.repeat - 1, Int.MAX_VALUE)
+): LinePos {
+    val retval = LinePos(head.line + motionArgs.repeat - 1, Int.MAX_VALUE)
     val end = cm.clipPos(retval)
     if (!keepHPos) {
         vim.lastHPos = Int.MAX_VALUE
@@ -1053,8 +1064,8 @@ internal fun moveToCharacter(
     repeat: Int,
     forward: Boolean?,
     character: String?,
-    head: Pos? = null
-): Pos? {
+    head: LinePos? = null
+): LinePos? {
     if (character == null) return null
     val cur = head ?: cm.getCursor()
     var start = cur.ch
@@ -1065,23 +1076,23 @@ internal fun moveToCharacter(
         if (idx == -1) return null
         start = idx
     }
-    return if (idx != -1) Pos(cm.getCursor().line, idx) else null
+    return if (idx != -1) LinePos(cm.getCursor().line, idx) else null
 }
 
 // ---------------------------------------------------------------------------
 // moveToColumn
 // ---------------------------------------------------------------------------
 
-internal fun moveToColumn(cm: CodeMirrorAdapter, repeat: Int): Pos {
+internal fun moveToColumn(cm: CodeMirrorAdapter, repeat: Int): LinePos {
     val line = cm.getCursor().line
-    return clipCursorToContent(cm, Pos(line, repeat - 1))
+    return clipCursorToContent(cm, LinePos(line, repeat - 1))
 }
 
 // ---------------------------------------------------------------------------
 // updateMark
 // ---------------------------------------------------------------------------
 
-internal fun updateMark(cm: CodeMirrorAdapter, vim: VimState, markName: String, pos: Pos) {
+internal fun updateMark(cm: CodeMirrorAdapter, vim: VimState, markName: String, pos: LinePos) {
     if (!inArray(markName, validMarks) && !latinCharRegex.matches(markName)) {
         return
     }
@@ -1115,11 +1126,11 @@ internal fun charIdxInLine(
 // findParagraph
 // ---------------------------------------------------------------------------
 
-internal data class ParagraphRange(val start: Pos, val end: Pos)
+internal data class ParagraphRange(val start: LinePos, val end: LinePos)
 
 internal fun findParagraph(
     cm: CodeMirrorAdapter,
-    head: Pos,
+    head: LinePos,
     repeat: Int,
     dir: Int,
     inclusive: Boolean
@@ -1147,7 +1158,7 @@ internal fun findParagraph(
             if (isBoundary(i, dir)) remaining--
             i += dir
         }
-        return ParagraphRange(start = Pos(i, 0), end = head)
+        return ParagraphRange(start = LinePos(i, 0), end = head)
     }
 
     val vim = cm.state.vim!!
@@ -1169,7 +1180,7 @@ internal fun findParagraph(
         }
         i++
     }
-    val end = Pos(i, 0)
+    val end = LinePos(i, 0)
     val adjustedStartState = if (i > maxLine && !startState) true else startState
     val adjustedInclusive = if (i > maxLine && !startState) false else inclusive
     i = line
@@ -1179,7 +1190,7 @@ internal fun findParagraph(
         }
         i--
     }
-    val start = Pos(i, 0)
+    val start = LinePos(i, 0)
     return ParagraphRange(start = start, end = end)
 }
 
@@ -1189,11 +1200,11 @@ internal fun findParagraph(
 
 internal fun getSentence(
     cm: CodeMirrorAdapter,
-    cur: Pos,
+    cur: LinePos,
     repeat: Int,
     dir: Int,
     inclusive: Boolean
-): Pos {
+): LinePos {
     data class Index(var line: String?, var ln: Int, var pos: Int, var dir: Int)
 
     fun nextChar(curr: Index) {
@@ -1282,14 +1293,14 @@ internal fun getSentence(
         currPos = result.second
         remaining--
     }
-    return Pos(currLn, currPos)
+    return LinePos(currLn, currPos)
 }
 
 // ---------------------------------------------------------------------------
 // findSentence
 // ---------------------------------------------------------------------------
 
-internal fun findSentence(cm: CodeMirrorAdapter, cur: Pos, repeat: Int, dir: Int): Pos {
+internal fun findSentence(cm: CodeMirrorAdapter, cur: LinePos, repeat: Int, dir: Int): LinePos {
     data class Idx(
         var line: String?,
         var ln: Int,
@@ -1406,7 +1417,7 @@ internal fun findSentence(cm: CodeMirrorAdapter, cur: Pos, repeat: Int, dir: Int
         currPos = result.second
         remaining--
     }
-    return Pos(currLn, currPos)
+    return LinePos(currLn, currPos)
 }
 
 // ---------------------------------------------------------------------------
@@ -1415,7 +1426,7 @@ internal fun findSentence(cm: CodeMirrorAdapter, cur: Pos, repeat: Int, dir: Int
 
 internal fun selectCompanionObject(
     cm: CodeMirrorAdapter,
-    head: Pos,
+    head: LinePos,
     symb: String,
     inclusive: Boolean
 ): WordBounds? {
@@ -1441,13 +1452,13 @@ internal fun selectCompanionObject(
     val offset = if (curChar == openSym) 1 else 0
 
     val startBracket = cm.scanForBracket(
-        Pos(head.line, head.ch + offset),
+        LinePos(head.line, head.ch + offset),
         -1,
         null,
         mapOf("bracketRegex" to bracketRegexp)
     )
     val endBracket = cm.scanForBracket(
-        Pos(head.line, head.ch + offset),
+        LinePos(head.line, head.ch + offset),
         1,
         null,
         mapOf("bracketRegex" to bracketRegexp)
@@ -1465,9 +1476,9 @@ internal fun selectCompanionObject(
     }
 
     return if (inclusive) {
-        WordBounds(start = start, end = Pos(end.line, end.ch + 1))
+        WordBounds(start = start, end = LinePos(end.line, end.ch + 1))
     } else {
-        WordBounds(start = Pos(start.line, start.ch + 1), end = end)
+        WordBounds(start = LinePos(start.line, start.ch + 1), end = end)
     }
 }
 
@@ -1477,7 +1488,7 @@ internal fun selectCompanionObject(
 
 internal fun findBeginningAndEnd(
     cm: CodeMirrorAdapter,
-    head: Pos,
+    head: LinePos,
     symb: String,
     inclusive: Boolean
 ): WordBounds {
@@ -1523,7 +1534,7 @@ internal fun findBeginningAndEnd(
     }
 
     if (start == null || end == null) {
-        return WordBounds(start = Pos(head.line, curCh), end = Pos(head.line, curCh))
+        return WordBounds(start = LinePos(head.line, curCh), end = LinePos(head.line, curCh))
     }
 
     if (inclusive) {
@@ -1532,8 +1543,8 @@ internal fun findBeginningAndEnd(
     }
 
     return WordBounds(
-        start = Pos(head.line, start),
-        end = Pos(head.line, end)
+        start = LinePos(head.line, start),
+        end = LinePos(head.line, end)
     )
 }
 
@@ -1774,7 +1785,7 @@ internal fun findNext(
     prev: Boolean,
     query: Regex,
     repeat: Int? = null
-): Pos? {
+): LinePos? {
     return cm.operation {
         val rpt = repeat ?: 1
         var pos = cm.getCursor()
@@ -1798,7 +1809,7 @@ internal fun findNext(
             if (found == null) {
                 cursor = cm.getSearchCursor(
                     query,
-                    if (prev) Pos(cm.lastLine(), 0) else Pos(cm.firstLine(), 0)
+                    if (prev) LinePos(cm.lastLine(), 0) else LinePos(cm.firstLine(), 0)
                 )
                 if (cursor.find(prev) == null) {
                     return@operation null
@@ -1815,7 +1826,7 @@ internal fun findNextFromAndToInclusive(
     query: Regex,
     repeat: Int? = null,
     vim: VimState
-): Pair<Pos, Pos>? {
+): Pair<LinePos, LinePos>? {
     return cm.operation {
         val rpt = repeat ?: 1
         val pos = cm.getCursor()
@@ -1835,7 +1846,7 @@ internal fun findNextFromAndToInclusive(
             if (found == null) {
                 val wrapCursor = cm.getSearchCursor(
                     query,
-                    if (prev) Pos(cm.lastLine(), 0) else Pos(cm.firstLine(), 0)
+                    if (prev) LinePos(cm.lastLine(), 0) else LinePos(cm.firstLine(), 0)
                 )
                 if (wrapCursor.find(prev) == null) {
                     return@operation null
@@ -1865,7 +1876,7 @@ internal fun clearSearchHighlight(cm: CodeMirrorAdapter) {
 
 internal fun isInRange(pos: Int, start: Int, end: Int): Boolean = pos in start..end
 
-internal fun isInRange(pos: Pos, start: Int, end: Int): Boolean = pos.line in start..end
+internal fun isInRange(pos: LinePos, start: Int, end: Int): Boolean = pos.line in start..end
 
 // ---------------------------------------------------------------------------
 // getUserVisibleLines (stub - no scroll info in Compose)
@@ -1880,9 +1891,9 @@ internal fun getUserVisibleLines(cm: CodeMirrorAdapter): Pair<Int, Int> {
 // getMarkPos
 // ---------------------------------------------------------------------------
 
-internal fun getMarkPos(cm: CodeMirrorAdapter, vim: VimState, markName: String): Pos? {
+internal fun getMarkPos(cm: CodeMirrorAdapter, vim: VimState, markName: String): LinePos? {
     if (markName == "'" || markName == "`") {
-        return vimGlobalState.jumpList.find(cm, -1) ?: Pos(0, 0)
+        return vimGlobalState.jumpList.find(cm, -1) ?: LinePos(0, 0)
     } else if (markName == ".") {
         return getLastEditPos(cm)
     }
@@ -1890,7 +1901,7 @@ internal fun getMarkPos(cm: CodeMirrorAdapter, vim: VimState, markName: String):
     return mark?.find()
 }
 
-internal fun getLastEditPos(cm: CodeMirrorAdapter): Pos? {
+internal fun getLastEditPos(cm: CodeMirrorAdapter): LinePos? {
     return cm.getLastEditEnd()
 }
 
@@ -2453,7 +2464,7 @@ internal fun sendCmKey(cm: CodeMirrorAdapter, key: String) {
             val cur = cm.getCursor()
             val line = cm.getLine(cur.line)
             if (cur.ch < line.length) {
-                cm.replaceRange("", cur, Pos(cur.line, cur.ch + 1))
+                cm.replaceRange("", cur, LinePos(cur.line, cur.ch + 1))
             }
         }
     }
@@ -2531,7 +2542,7 @@ internal fun doReplace(
     cm.state.vim!!.exMode = true
     var done = false
     var matches = 0
-    var lastPos: Pos? = null
+    var lastPos: LinePos? = null
     var modifiedLineNumber = -1
     var joined = false
     var adjustedLineEnd = lineEnd
@@ -2855,13 +2866,13 @@ internal class CircularJumpList {
     private var head = 0
     private var tail = 0
     private val buffer = arrayOfNulls<Marker>(size)
-    var cachedCursor: Pos? = null
+    var cachedCursor: LinePos? = null
 
-    fun add(cm: CodeMirrorAdapter, oldCur: Pos, newCur: Pos) {
+    fun add(cm: CodeMirrorAdapter, oldCur: LinePos, newCur: LinePos) {
         val current = ((pointer % size) + size) % size
         val curMark = buffer[current]
 
-        fun useNextSlot(cursor: Pos) {
+        fun useNextSlot(cursor: LinePos) {
             pointer++
             val next = ((pointer % size) + size) % size
             buffer[next]?.clear()
@@ -2901,7 +2912,7 @@ internal class CircularJumpList {
         return mark
     }
 
-    fun find(cm: CodeMirrorAdapter, offset: Int): Pos? {
+    fun find(cm: CodeMirrorAdapter, offset: Int): LinePos? {
         val oldPointer = pointer
         val mark = move(cm, offset)
         pointer = oldPointer

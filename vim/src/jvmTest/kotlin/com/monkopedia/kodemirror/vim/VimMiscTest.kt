@@ -35,7 +35,7 @@ class VimMiscTest {
     @Test
     fun backtick_mark_preserves_column() = testVim(
         value = "foo\nbar\nbaz",
-        cursor = Pos(1, 2)
+        cursor = LinePos(1, 2)
     ) { h ->
         h.doKeys("m", "a")
         h.doKeys("G")
@@ -70,13 +70,13 @@ class VimMiscTest {
     }
 
     @Test
-    fun J_joins_lines() = testVim(value = "foo\nbar\nbaz") { h ->
+    fun j_joins_lines() = testVim(value = "foo\nbar\nbaz") { h ->
         h.doKeys("J")
         assertEquals("foo bar\nbaz", h.cm.getValue())
     }
 
     @Test
-    fun J_with_count() = testVim(value = "foo\nbar\nbaz\nqux") { h ->
+    fun j_with_count() = testVim(value = "foo\nbar\nbaz\nqux") { h ->
         h.doKeys("3", "J")
         assertEquals("foo bar baz\nqux", h.cm.getValue())
     }
@@ -94,27 +94,27 @@ class VimMiscTest {
     }
 
     @Test
-    fun p_pastes_after() = testVim(value = "abc", cursor = Pos(0, 0)) { h ->
+    fun p_pastes_after() = testVim(value = "abc", cursor = LinePos(0, 0)) { h ->
         h.doKeys("x") // delete 'a', yanked to unnamed register
         h.doKeys("p") // paste after
         assertEquals("bac", h.cm.getValue())
     }
 
     @Test
-    fun capitalP_pastes_before() = testVim(value = "abc", cursor = Pos(0, 1)) { h ->
+    fun capitalP_pastes_before() = testVim(value = "abc", cursor = LinePos(0, 1)) { h ->
         h.doKeys("x") // delete 'b'
         h.doKeys("P") // paste before cursor
         assertEquals("abc", h.cm.getValue())
     }
 
     @Test
-    fun ctrl_a_increments_number() = testVim(value = "foo 42 bar", cursor = Pos(0, 4)) { h ->
+    fun ctrl_a_increments_number() = testVim(value = "foo 42 bar", cursor = LinePos(0, 4)) { h ->
         h.doKeys("<C-a>")
         assertEquals("foo 43 bar", h.cm.getValue())
     }
 
     @Test
-    fun ctrl_x_decrements_number() = testVim(value = "foo 42 bar", cursor = Pos(0, 4)) { h ->
+    fun ctrl_x_decrements_number() = testVim(value = "foo 42 bar", cursor = LinePos(0, 4)) { h ->
         h.doKeys("<C-x>")
         assertEquals("foo 41 bar", h.cm.getValue())
     }

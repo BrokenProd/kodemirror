@@ -20,31 +20,32 @@ package com.monkopedia.kodemirror.vim
 
 /**
  * A position in the editor, using 0-based line numbers and character offsets.
- * This mirrors CM5's Pos(line, ch) used throughout the vim engine.
+ * This mirrors CM5's LinePos(line, ch) used throughout the vim engine.
  */
-data class Pos(val line: Int, val ch: Int, val sticky: String? = null) : Comparable<Pos> {
-    override fun compareTo(other: Pos): Int {
+data class LinePos(val line: Int, val ch: Int, val sticky: String? = null) : Comparable<LinePos> {
+    override fun compareTo(other: LinePos): Int {
         val lineCmp = line.compareTo(other.line)
         return if (lineCmp != 0) lineCmp else ch.compareTo(other.ch)
     }
 
-    override fun toString(): String = "Pos($line, $ch)"
+    override fun toString(): String = "LinePos($line, $ch)"
 }
 
-/** Create a Pos, mirroring the CM5 `Pos(line, ch)` constructor. */
-fun makeCursor(line: Int, ch: Int): Pos = Pos(line, ch)
+/** Create a LinePos, mirroring the CM5 `LinePos(line, ch)` constructor. */
+fun makeCursor(line: Int, ch: Int): LinePos = LinePos(line, ch)
 
 /** Returns true if [a] is before [b] in the document. */
-fun cursorIsBefore(a: Pos, b: Pos): Boolean = a.line < b.line || (a.line == b.line && a.ch < b.ch)
+fun cursorIsBefore(a: LinePos, b: LinePos): Boolean =
+    a.line < b.line || (a.line == b.line && a.ch < b.ch)
 
 /** Returns true if the two positions are equal (ignoring sticky). */
-fun cursorEqual(a: Pos, b: Pos): Boolean = a.line == b.line && a.ch == b.ch
+fun cursorEqual(a: LinePos, b: LinePos): Boolean = a.line == b.line && a.ch == b.ch
 
 /** Returns the earlier of two positions. */
-fun cursorMin(a: Pos, b: Pos): Pos = if (cursorIsBefore(a, b)) a else b
+fun cursorMin(a: LinePos, b: LinePos): LinePos = if (cursorIsBefore(a, b)) a else b
 
 /** Returns the later of two positions. */
-fun cursorMax(a: Pos, b: Pos): Pos = if (cursorIsBefore(a, b)) b else a
+fun cursorMax(a: LinePos, b: LinePos): LinePos = if (cursorIsBefore(a, b)) b else a
 
-/** Copy a Pos, optionally overriding line or ch. */
-fun Pos.copy(line: Int = this.line, ch: Int = this.ch): Pos = Pos(line, ch)
+/** Copy a LinePos, optionally overriding line or ch. */
+fun LinePos.copy(line: Int = this.line, ch: Int = this.ch): LinePos = LinePos(line, ch)

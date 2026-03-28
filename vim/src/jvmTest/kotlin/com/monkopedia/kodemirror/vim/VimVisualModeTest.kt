@@ -47,7 +47,7 @@ class VimVisualModeTest {
     }
 
     @Test
-    fun visual_d_deletes_selection() = testVim(value = "abcdef", cursor = Pos(0, 1)) { h ->
+    fun visual_d_deletes_selection() = testVim(value = "abcdef", cursor = LinePos(0, 1)) { h ->
         h.doKeys("v", "l", "l", "d")
         assertEquals("aef", h.cm.getValue())
     }
@@ -55,7 +55,7 @@ class VimVisualModeTest {
     @Test
     fun visual_line_d_deletes_lines() = testVim(
         value = "foo\nbar\nbaz",
-        cursor = Pos(0, 0)
+        cursor = LinePos(0, 0)
     ) { h ->
         h.doKeys("V", "j", "d")
         assertEquals("baz", h.cm.getValue())

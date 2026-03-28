@@ -46,47 +46,47 @@ class VimMotionTest {
     // Line 15: "" (trailing newline creates empty last line)
 
     // Line info
-    private val word1Start = Pos(0, 1)
-    private val word1End = Pos(0, 5)
-    private val word2Start = Pos(0, 7)
-    private val word2End = Pos(0, 9)
-    private val word3Start = Pos(1, 1)
-    private val word3End = Pos(1, 5)
+    private val word1Start = LinePos(0, 1)
+    private val word1End = LinePos(0, 5)
+    private val word2Start = LinePos(0, 7)
+    private val word2End = LinePos(0, 9)
+    private val word3Start = LinePos(1, 1)
+    private val word3End = LinePos(1, 5)
     private val charLine = 2
-    private val endOfDocument = Pos(15, 0)
+    private val endOfDocument = LinePos(15, 0)
 
     @Test
-    fun pipe() = testMotion(listOf("|"), Pos(0, 0), Pos(0, 4))
+    fun pipe() = testMotion(listOf("|"), LinePos(0, 0), LinePos(0, 4))
 
     @Test
-    fun pipe_repeat() = testMotion(listOf("3", "|"), Pos(0, 2), Pos(0, 4))
+    fun pipe_repeat() = testMotion(listOf("3", "|"), LinePos(0, 2), LinePos(0, 4))
 
     @Test
-    fun h() = testMotion(listOf("h"), Pos(0, 0), word1Start)
+    fun h() = testMotion(listOf("h"), LinePos(0, 0), word1Start)
 
     @Test
-    fun h_repeat() = testMotion(listOf("3", "h"), Pos(0, 2), word1End)
+    fun h_repeat() = testMotion(listOf("3", "h"), LinePos(0, 2), word1End)
 
     @Test
-    fun l() = testMotion(listOf("l"), Pos(0, 1))
+    fun l() = testMotion(listOf("l"), LinePos(0, 1))
 
     @Test
-    fun l_repeat() = testMotion(listOf("2", "l"), Pos(0, 2))
+    fun l_repeat() = testMotion(listOf("2", "l"), LinePos(0, 2))
 
     @Test
-    fun j() = testMotion(listOf("j"), Pos(1, 5), word1End)
+    fun j() = testMotion(listOf("j"), LinePos(1, 5), word1End)
 
     @Test
-    fun j_repeat() = testMotion(listOf("2", "j"), Pos(2, 5), word1End)
+    fun j_repeat() = testMotion(listOf("2", "j"), LinePos(2, 5), word1End)
 
     @Test
     fun j_repeat_clip() = testMotion(listOf("1000", "j"), endOfDocument)
 
     @Test
-    fun k() = testMotion(listOf("k"), Pos(0, 5), word3End)
+    fun k() = testMotion(listOf("k"), LinePos(0, 5), word3End)
 
     @Test
-    fun k_repeat() = testMotion(listOf("2", "k"), Pos(0, 4), Pos(2, 4))
+    fun k_repeat() = testMotion(listOf("2", "k"), LinePos(0, 4), LinePos(2, 4))
 
     @Test
     fun w() = testMotion(listOf("w"), word1Start)
@@ -101,10 +101,10 @@ class VimMotionTest {
     fun w_endOfDocument() = testMotion(listOf("w"), endOfDocument, endOfDocument)
 
     @Test
-    fun w_start_to_end() = testMotion(listOf("1000", "w"), endOfDocument, Pos(0, 0))
+    fun w_start_to_end() = testMotion(listOf("1000", "w"), endOfDocument, LinePos(0, 0))
 
     @Test
-    fun capitalW() = testMotion(listOf("W"), Pos(0, 1))
+    fun capitalW() = testMotion(listOf("W"), LinePos(0, 1))
 
     @Test
     fun e() = testMotion(listOf("e"), word1End)
@@ -131,81 +131,81 @@ class VimMotionTest {
     fun ge_repeat() = testMotion(listOf("2", "g", "e"), word1End, word3Start)
 
     @Test
-    fun gg() = testMotion(listOf("g", "g"), Pos(0, 1), Pos(3, 1))
+    fun gg() = testMotion(listOf("g", "g"), LinePos(0, 1), LinePos(3, 1))
 
     @Test
-    fun gg_repeat() = testMotion(listOf("3", "g", "g"), Pos(2, 0))
+    fun gg_repeat() = testMotion(listOf("3", "g", "g"), LinePos(2, 0))
 
     @Test
-    fun capitalG() = testMotion(listOf("G"), Pos(15, 0), Pos(3, 1))
+    fun capitalG() = testMotion(listOf("G"), LinePos(15, 0), LinePos(3, 1))
 
     @Test
-    fun zero() = testMotion(listOf("0"), Pos(0, 0), Pos(0, 8))
+    fun zero() = testMotion(listOf("0"), LinePos(0, 0), LinePos(0, 8))
 
     @Test
-    fun caret() = testMotion(listOf("^"), Pos(0, 1), Pos(0, 8))
+    fun caret() = testMotion(listOf("^"), LinePos(0, 1), LinePos(0, 8))
 
     @Test
-    fun plus() = testMotion(listOf("+"), Pos(1, 1), Pos(0, 8))
+    fun plus() = testMotion(listOf("+"), LinePos(1, 1), LinePos(0, 8))
 
     @Test
-    fun minus() = testMotion(listOf("-"), Pos(0, 1), Pos(1, 4))
+    fun minus() = testMotion(listOf("-"), LinePos(0, 1), LinePos(1, 4))
 
     @Test
-    fun dollar() = testMotion(listOf("$"), Pos(0, 9), Pos(0, 1))
+    fun dollar() = testMotion(listOf("$"), LinePos(0, 9), LinePos(0, 1))
 
     @Test
-    fun dollar_repeat() = testMotion(listOf("2", "$"), Pos(1, 7), Pos(0, 3))
+    fun dollar_repeat() = testMotion(listOf("2", "$"), LinePos(1, 7), LinePos(0, 3))
 
     @Test
-    fun f() = testMotion(listOf("f", "p"), Pos(charLine, 2), Pos(charLine, 0))
+    fun f() = testMotion(listOf("f", "p"), LinePos(charLine, 2), LinePos(charLine, 0))
 
     @Test
     fun f_repeat() = testMotion(
         listOf("2", "f", "p"),
-        Pos(charLine, 6),
-        Pos(charLine, 2)
+        LinePos(charLine, 6),
+        LinePos(charLine, 2)
     )
 
     @Test
     fun t() = testMotion(
         listOf("t", "p"),
-        Pos(charLine, 1),
-        Pos(charLine, 0)
+        LinePos(charLine, 1),
+        LinePos(charLine, 0)
     )
 
     @Test
-    fun capitalF() = testMotion(listOf("F", "p"), Pos(charLine, 2), Pos(charLine, 4))
+    fun capitalF() = testMotion(listOf("F", "p"), LinePos(charLine, 2), LinePos(charLine, 4))
 
     @Test
     fun capitalT() = testMotion(
         listOf("T", "p"),
-        Pos(charLine, 3),
-        Pos(charLine, 4)
+        LinePos(charLine, 3),
+        LinePos(charLine, 4)
     )
 
     @Test
-    fun percent_parens() = testMotion(listOf("%"), Pos(3, 3), Pos(3, 1))
+    fun percent_parens() = testMotion(listOf("%"), LinePos(3, 3), LinePos(3, 1))
 
     @Test
-    fun percent_squares() = testMotion(listOf("%"), Pos(3, 7), Pos(3, 5))
+    fun percent_squares() = testMotion(listOf("%"), LinePos(3, 7), LinePos(3, 5))
 
     @Test
-    fun percent_braces() = testMotion(listOf("%"), Pos(3, 11), Pos(3, 9))
+    fun percent_braces() = testMotion(listOf("%"), LinePos(3, 11), LinePos(3, 9))
 
     // -- Operator motions (d, c, y, etc.) are tested in VimOperatorTest
 
     @Test
     fun keepHPos() = testMotion(
         listOf("5", "j", "j", "7", "k"),
-        Pos(8, 12),
-        Pos(12, 12)
+        LinePos(8, 12),
+        LinePos(12, 12)
     )
 
     @Test
     fun keepHPosEol() = testMotion(
         listOf("$", "2", "j"),
-        Pos(2, 18)
+        LinePos(2, 18)
     )
 
     @Test
