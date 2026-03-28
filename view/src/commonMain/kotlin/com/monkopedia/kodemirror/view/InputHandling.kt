@@ -204,7 +204,16 @@ fun handleKeyEvent(view: EditorSession, event: KeyEvent): Boolean {
     }
 
     for (binding in bindings) {
-        val bindingKey = resolveBindingKey(binding) ?: continue
+        val bindingKey = resolveBindingKey(binding)
+
+        // Catch-all: when `any` is set but no key is specified, call for every event
+        if (bindingKey == null) {
+            if (binding.any != null) {
+                val result = binding.any.invoke(view, event)
+                if (result) return true
+            }
+            continue
+        }
 
         // Direct match: full name matches binding key
         if (bindingKey == name) {

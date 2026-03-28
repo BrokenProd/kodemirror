@@ -323,6 +323,13 @@ public final class com/monkopedia/kodemirror/vim/CodeMirrorAdapterKt {
 	public static final fun posFromIndex-FCwYIAs (Lcom/monkopedia/kodemirror/state/Text;I)Lcom/monkopedia/kodemirror/vim/Pos;
 }
 
+public final class com/monkopedia/kodemirror/vim/ComposableSingletons$VimPanelKt {
+	public static final field INSTANCE Lcom/monkopedia/kodemirror/vim/ComposableSingletons$VimPanelKt;
+	public fun <init> ()V
+	public final fun getLambda$749234107$vim ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$929911605$vim ()Lkotlin/jvm/functions/Function3;
+}
+
 public final class com/monkopedia/kodemirror/vim/ExCommandDefinition {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -918,6 +925,12 @@ public final class com/monkopedia/kodemirror/vim/Vim : com/monkopedia/kodemirror
 	public static synthetic fun unmap$default (Lcom/monkopedia/kodemirror/vim/Vim;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Z
 	public final fun vimKeyFromEvent (Ljava/lang/String;ZZZZLjava/lang/String;Lcom/monkopedia/kodemirror/vim/VimState;)Ljava/lang/String;
 	public static synthetic fun vimKeyFromEvent$default (Lcom/monkopedia/kodemirror/vim/Vim;Ljava/lang/String;ZZZZLjava/lang/String;Lcom/monkopedia/kodemirror/vim/VimState;ILjava/lang/Object;)Ljava/lang/String;
+}
+
+public final class com/monkopedia/kodemirror/vim/VimExtensionKt {
+	public static final fun getCM (Lcom/monkopedia/kodemirror/view/EditorSession;)Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;
+	public static final fun vim (Z)Lcom/monkopedia/kodemirror/state/Extension;
+	public static synthetic fun vim$default (ZILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/Extension;
 }
 
 public abstract class com/monkopedia/kodemirror/vim/VimKeyCommand {
