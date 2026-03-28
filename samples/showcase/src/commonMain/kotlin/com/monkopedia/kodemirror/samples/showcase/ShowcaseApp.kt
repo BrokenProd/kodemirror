@@ -34,6 +34,7 @@ import com.monkopedia.kodemirror.samples.showcase.demos.ConfigDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.DecorationDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.GutterDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.InvertedEffectDemo
+import com.monkopedia.kodemirror.samples.showcase.demos.KeybindingsDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.LangPackageDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.LanguageGalleryDemo
 import com.monkopedia.kodemirror.samples.showcase.demos.LintDemo
@@ -92,6 +93,10 @@ val allDemos: List<DemoItem> = listOf(
         "readonly", "Read-Only Mode", "Toggle editable",
         DemoCategory.CONFIGURATION
     ) { ReadOnlyDemo() },
+    DemoItem(
+        "keybindings", "Keybindings", "Keymap presets & reference",
+        DemoCategory.CONFIGURATION
+    ) { KeybindingsDemo() },
     DemoItem(
         "change", "Document Changes", "Insert / replace / delete",
         DemoCategory.CONTENT
