@@ -39,7 +39,7 @@ internal fun createStatusPanel(): Panel = Panel(top = false) {
     val session = LocalEditorSession.current
     val plugin = session.plugin(vimPlugin)
     val cm = plugin?.cm
-    val vim = cm?.state?.vim
+    val vim = cm?.vim
 
     VimStatusContent(vim)
 }
@@ -51,7 +51,7 @@ internal fun createVimDialogPanel(): Panel = Panel(top = false) {
     val session = LocalEditorSession.current
     val plugin = session.plugin(vimPlugin)
     val cm = plugin?.cm
-    val vim = cm?.state?.vim
+    val vim = cm?.vim
 
     VimStatusContent(vim)
 }

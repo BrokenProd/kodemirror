@@ -126,7 +126,7 @@ private fun vimKeyToKeyName(key: String): String {
 internal fun typeKey(cm: CodeMirrorAdapter, key: String) {
     val handled = Vim.handleKey(cm, key, "user")
     if (!handled) {
-        val vim = cm.state.vim
+        val vim = cm.vim
         if (vim != null && vim.insertMode && key.length == 1) {
             // Simulate text input: insert the character at the cursor
             val cursor = cm.getCursor()

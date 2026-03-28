@@ -131,16 +131,16 @@ internal class VimPluginValue(private val session: EditorSession) : PluginValue 
 
     init {
         Vim.enterVimMode(cm)
-        cm.state.vimPlugin = this
-        vimState = cm.state.vim ?: Vim.maybeInitVimState_(cm)
+        cm.vimPlugin = this
+        vimState = cm.vim ?: Vim.maybeInitVimState_(cm)
 
         cm.on("vim-command-done") {
-            cm.state.vim?.status = ""
+            cm.vim?.status = ""
             rebuildDecorations()
             updateStatus()
         }
         cm.on("vim-mode-change") { args ->
-            val vimSt = cm.state.vim ?: return@on
+            val vimSt = cm.vim ?: return@on
             val eventMap = args.getOrNull(0) as? Map<*, *>
             if (eventMap != null) {
                 vimSt.mode = eventMap["mode"] as? String
@@ -157,13 +157,13 @@ internal class VimPluginValue(private val session: EditorSession) : PluginValue 
         rebuildDecorations()
 
         cm.on("dialog") {
-            if (cm.state.statusbar != null) {
+            if (cm.statusbar != null) {
                 updateStatus()
             } else {
                 session.dispatch(
                     TransactionSpec(
                         effects = listOf(
-                            showVimPanel.of(cm.state.dialog != null)
+                            showVimPanel.of(cm.dialog != null)
                         )
                     )
                 )
@@ -192,7 +192,7 @@ internal class VimPluginValue(private val session: EditorSession) : PluginValue 
     }
 
     fun handleKey(event: KeyEvent): Boolean {
-        val vim = cm.state.vim ?: return false
+        val vim = cm.vim ?: return false
         val key = composeKeyToVimKey(event, vim) ?: return false
 
         // Clear search highlight on Esc in normal mode
@@ -234,7 +234,7 @@ internal class VimPluginValue(private val session: EditorSession) : PluginValue 
     }
 
     private fun updateStatus() {
-        val vim = cm.state.vim ?: return
+        val vim = cm.vim ?: return
         status = vim.status
     }
 

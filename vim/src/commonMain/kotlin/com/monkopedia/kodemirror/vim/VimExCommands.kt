@@ -151,7 +151,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
     // -----------------------------------------------------------------------
     "move" to { cm, params ->
         commandDispatcher.processCommand(
-            cm, cm.state.vim!!,
+            cm, cm.vim!!,
             MotionCommand(
                 keys = "",
                 motion = "moveToLineOrEdgeOfDocument",
@@ -262,7 +262,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
     // -----------------------------------------------------------------------
     "marks" to { cm, params ->
         val filterArgs = params.args
-        val marks = cm.state.vim!!.marks
+        val marks = cm.vim!!.marks
         val regInfo = StringBuilder("-----------Marks-----------\nmark\tline\tcol\n\n")
         if (filterArgs == null) {
             for ((name, marker) in marks) {
@@ -499,13 +499,13 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
             for (i in line..lineEnd) {
                 cm.setCursor(i, 0)
                 doKeyToKey(cm, argString)
-                if (cm.state.vim?.insertMode == true) {
+                if (cm.vim?.insertMode == true) {
                     exitInsertMode(cm, true)
                 }
             }
         } else {
             doKeyToKey(cm, argString)
-            if (cm.state.vim?.insertMode == true) {
+            if (cm.vim?.insertMode == true) {
                 exitInsertMode(cm, true)
             }
         }
@@ -782,7 +782,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
         val line = params.selectionLine
         val lineEnd = params.selectionLineEnd ?: line
         cm.setCursor(LinePos(line, 0))
-        actions["joinLines"]?.invoke(cm, ActionArgs(repeat = lineEnd - line), cm.state.vim!!)
+        actions["joinLines"]?.invoke(cm, ActionArgs(repeat = lineEnd - line), cm.vim!!)
     },
 
     // -----------------------------------------------------------------------
@@ -793,7 +793,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
             showConfirm(cm, "Argument required")
             return@to
         }
-        val state = cm.state.vim!!
+        val state = cm.vim!!
         val argStr = params.argString.trim()
         var i = 0
         while (i < argStr.length) {
@@ -883,5 +883,5 @@ private fun exPutCommand(cm: CodeMirrorAdapter, params: ExParams, matchIndent: B
     }
     val line = params.selectionLine
     cm.setCursor(LinePos(line, 0))
-    actions["continuePaste"]?.invoke(cm, actionArgs, cm.state.vim!!)
+    actions["continuePaste"]?.invoke(cm, actionArgs, cm.vim!!)
 }

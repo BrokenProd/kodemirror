@@ -100,7 +100,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
     // toggleOverwrite
     // -----------------------------------------------------------------------
     "toggleOverwrite" to { cm, _, _ ->
-        if (!cm.state.vim!!.overwrite) {
+        if (!cm.vim!!.overwrite) {
             cm.toggleOverwrite(true)
             cm.setOption("keyMap", "vim-replace")
             cm.signal("vim-mode-change", mapOf("mode" to "replace"))

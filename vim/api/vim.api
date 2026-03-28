@@ -144,27 +144,22 @@ public final class com/monkopedia/kodemirror/vim/ChangeQueue {
 
 public final class com/monkopedia/kodemirror/vim/CodeMirrorAdapter {
 	public fun <init> (Lcom/monkopedia/kodemirror/view/EditorSession;)V
-	public final fun getOpenDialogFn ()Lkotlin/jvm/functions/Function3;
-	public final fun getOpenNotificationFn ()Lkotlin/jvm/functions/Function2;
-	public final fun getSession ()Lcom/monkopedia/kodemirror/view/EditorSession;
-	public final fun getState ()Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$AdapterState;
-	public final fun indexFromPos-Z8n_zFs (Lcom/monkopedia/kodemirror/vim/LinePos;)I
-	public final fun posFromIndex-q6YQIc8 (I)Lcom/monkopedia/kodemirror/vim/LinePos;
-	public final fun setOpenDialogFn (Lkotlin/jvm/functions/Function3;)V
-	public final fun setOpenNotificationFn (Lkotlin/jvm/functions/Function2;)V
-}
-
-public final class com/monkopedia/kodemirror/vim/CodeMirrorAdapter$AdapterState {
-	public fun <init> (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)V
 	public final fun getCloseVimNotification ()Lkotlin/jvm/functions/Function0;
 	public final fun getCurrentNotificationClose ()Lkotlin/jvm/functions/Function0;
 	public final fun getDialog ()Ljava/lang/Object;
+	public final fun getOpenDialogFn ()Lkotlin/jvm/functions/Function3;
+	public final fun getOpenNotificationFn ()Lkotlin/jvm/functions/Function2;
+	public final fun getSession ()Lcom/monkopedia/kodemirror/view/EditorSession;
 	public final fun getStatusbar ()Ljava/lang/Object;
 	public final fun getVim ()Lcom/monkopedia/kodemirror/vim/VimState;
 	public final fun getVimPlugin ()Ljava/lang/Object;
+	public final fun indexFromPos-Z8n_zFs (Lcom/monkopedia/kodemirror/vim/LinePos;)I
+	public final fun posFromIndex-q6YQIc8 (I)Lcom/monkopedia/kodemirror/vim/LinePos;
 	public final fun setCloseVimNotification (Lkotlin/jvm/functions/Function0;)V
 	public final fun setCurrentNotificationClose (Lkotlin/jvm/functions/Function0;)V
 	public final fun setDialog (Ljava/lang/Object;)V
+	public final fun setOpenDialogFn (Lkotlin/jvm/functions/Function3;)V
+	public final fun setOpenNotificationFn (Lkotlin/jvm/functions/Function2;)V
 	public final fun setStatusbar (Ljava/lang/Object;)V
 	public final fun setVim (Lcom/monkopedia/kodemirror/vim/VimState;)V
 	public final fun setVimPlugin (Ljava/lang/Object;)V

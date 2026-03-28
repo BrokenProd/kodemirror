@@ -581,7 +581,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
             // No valid text object, don't move.
             null
         } else {
-            if (!cm.state.vim!!.visualMode) {
+            if (!cm.vim!!.visualMode) {
                 MotionResult.from(tmp.start, tmp.end)
             } else {
                 val expanded = expandSelection(cm, tmp.start, tmp.end, move)

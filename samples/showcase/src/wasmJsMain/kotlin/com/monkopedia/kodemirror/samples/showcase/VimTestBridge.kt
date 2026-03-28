@@ -94,7 +94,7 @@ private fun serializeVimState(session: EditorSession): String {
 
     // Get vim mode info
     val cm = getCM(session)
-    val vimState = cm?.state?.vim
+    val vimState = cm?.vim
     val vimMode = when {
         vimState == null -> "normal"
         vimState.insertMode -> "insert"

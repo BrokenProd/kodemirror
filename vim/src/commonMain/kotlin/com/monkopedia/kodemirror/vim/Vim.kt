@@ -251,7 +251,7 @@ object Vim : VimApiInterface {
 
     fun leaveVimMode(cm: CodeMirrorAdapter) {
         vimStateMap.remove(cm)
-        cm.state.vim = null
+        cm.vim = null
     }
 
     fun exitVisualMode(cm: CodeMirrorAdapter, moveHead: Boolean = true) {
@@ -523,7 +523,7 @@ object Vim : VimApiInterface {
 internal fun maybeInitVimState(cm: CodeMirrorAdapter): VimState {
     return vimStateMap.getOrPut(cm) {
         val state = VimState()
-        cm.state.vim = state
+        cm.vim = state
         state
     }
 }

@@ -269,16 +269,12 @@ class CodeMirrorAdapter(val session: EditorSession) {
     internal var cm6Query: SearchQuery? = null
     internal var lineHandleChanges: MutableList<ViewUpdate>? = null
 
-    val state = AdapterState()
-
-    inner class AdapterState {
-        var statusbar: Any? = null
-        var dialog: Any? = null
-        var vimPlugin: Any? = null
-        var vim: VimState? = null
-        var currentNotificationClose: (() -> Unit)? = null
-        var closeVimNotification: (() -> Unit)? = null
-    }
+    var statusbar: Any? = null
+    var dialog: Any? = null
+    var vimPlugin: Any? = null
+    var vim: VimState? = null
+    var currentNotificationClose: (() -> Unit)? = null
+    var closeVimNotification: (() -> Unit)? = null
 
     fun indexFromPos(pos: LinePos): DocPos = indexFromPos(session.state.doc, pos)
     fun posFromIndex(offset: DocPos): LinePos = posFromIndex(session.state.doc, offset)
@@ -802,8 +798,8 @@ fun <T> CodeMirrorAdapter.operation(fn: () -> T): T {
 
 fun CodeMirrorAdapter.setOption(name: String, value: Any?) {
     when (name) {
-        "keyMap" -> state.vim?.keyMap = value as? String
-        "textwidth" -> state.vim?.textwidth = value as? Int
+        "keyMap" -> vim?.keyMap = value as? String
+        "textwidth" -> vim?.textwidth = value as? Int
     }
 }
 
@@ -813,13 +809,13 @@ fun CodeMirrorAdapter.getOption(name: String): Any? = when (name) {
     "readOnly" -> session.state.readOnly
     "indentWithTabs" -> false
     "indentUnit" -> session.state.facet(indentUnit).coerceAtLeast(2)
-    "textwidth" -> state.vim?.textwidth
-    "keyMap" -> state.vim?.keyMap ?: "vim"
+    "textwidth" -> vim?.textwidth
+    "keyMap" -> vim?.keyMap ?: "vim"
     else -> null
 }
 
 fun CodeMirrorAdapter.toggleOverwrite(on: Boolean) {
-    state.vim!!.overwrite = on
+    vim!!.overwrite = on
 }
 
 fun CodeMirrorAdapter.execCommand(name: String) {

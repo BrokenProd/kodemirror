@@ -40,7 +40,7 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
     "change" to { cm, args, ranges, _oldAnchor, _newHead ->
         var finalHead: LinePos
         var text: String
-        val vim = cm.state.vim!!
+        val vim = cm.vim!!
         var anchor = ranges[0].anchor
         var head = ranges[0].head
         if (!vim.visualMode) {
@@ -93,7 +93,7 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
     "delete" to { cm, args, ranges, _oldAnchor, _newHead ->
         var finalHead: LinePos
         var text: String
-        val vim = cm.state.vim!!
+        val vim = cm.vim!!
         if (!vim.visualBlock) {
             var anchor = ranges[0].anchor
             var head = ranges[0].head
@@ -138,7 +138,7 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
     },
 
     "indent" to { cm, args, ranges, _oldAnchor, _newHead ->
-        val vim = cm.state.vim!!
+        val vim = cm.vim!!
         // In visual mode, n> shifts the selection right n times, instead of
         // shifting n lines right once.
         val repeat = if (vim.visualMode) args.repeat.coerceAtLeast(1) else 1
@@ -199,7 +199,7 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
             cm,
             ranges[0].anchor,
             MotionArgs(),
-            cm.state.vim!!,
+            cm.vim!!,
             InputState()
         )?.toPos()
     },
@@ -251,14 +251,14 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
         cm.replaceSelections(swapped)
         if (args.shouldMoveCursor == true) {
             newHead
-        } else if (!cm.state.vim!!.visualMode && args.linewise == true &&
+        } else if (!cm.vim!!.visualMode && args.linewise == true &&
             ranges[0].anchor.line + 1 == ranges[0].head.line
         ) {
             motions["moveToFirstNonWhiteSpaceCharacter"]?.invoke(
                 cm,
                 oldAnchor,
                 MotionArgs(),
-                cm.state.vim!!,
+                cm.vim!!,
                 InputState()
             )?.toPos()
         } else if (args.linewise == true) {
@@ -269,7 +269,7 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
     },
 
     "yank" to { cm, args, ranges, oldAnchor, _newHead ->
-        val vim = cm.state.vim!!
+        val vim = cm.vim!!
         val text = cm.getSelection()
         val endPos = if (vim.visualMode) {
             // cursorMin of 4 positions
@@ -322,14 +322,14 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
         cm.replaceSelections(swapped)
         if (args.shouldMoveCursor == true) {
             newHead
-        } else if (!cm.state.vim!!.visualMode && args.linewise == true &&
+        } else if (!cm.vim!!.visualMode && args.linewise == true &&
             ranges[0].anchor.line + 1 == ranges[0].head.line
         ) {
             motions["moveToFirstNonWhiteSpaceCharacter"]?.invoke(
                 cm,
                 oldAnchor,
                 MotionArgs(),
-                cm.state.vim!!,
+                cm.vim!!,
                 InputState()
             )?.toPos()
         } else if (args.linewise == true) {

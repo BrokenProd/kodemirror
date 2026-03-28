@@ -110,7 +110,7 @@ internal fun setOption(
             }
         }
         if (scope != "global" && cm != null) {
-            cm.state.vim?.options?.set(name, VimOption(value = effectiveValue))
+            cm.vim?.options?.set(name, VimOption(value = effectiveValue))
         }
     }
     return null
@@ -135,7 +135,7 @@ internal fun getOption(
         return null
     } else {
         val local = if (scope != "global") {
-            cm?.state?.vim?.options?.get(name)
+            cm?.vim?.options?.get(name)
         } else {
             null
         }
@@ -209,7 +209,7 @@ internal fun clipCursorToContent(
     cur: LinePos,
     oldCur: LinePos? = null
 ): LinePos {
-    val vim = cm.state.vim
+    val vim = cm.vim
     val includeLineBreak = vim != null && (vim.insertMode || vim.visualMode)
     val line = min(max(cm.firstLine(), cur.line), cm.lastLine())
     val text = cm.getLine(line)
@@ -463,7 +463,7 @@ internal fun expandSelection(
     end: LinePos,
     move: Boolean = false
 ): Pair<LinePos, LinePos> {
-    val sel = cm.state.vim!!.sel
+    val sel = cm.vim!!.sel
     var headVar = if (move) start else sel.head
     var anchorVar = if (move) start else sel.anchor
 
@@ -497,7 +497,7 @@ internal fun updateCmSelection(
     sel: LinePosRange? = null,
     mode: String? = null
 ) {
-    val vim = cm.state.vim!!
+    val vim = cm.vim!!
     val actualSel = sel ?: vim.sel
     val actualMode = mode ?: when {
         vim.visualLine -> "line"
@@ -582,7 +582,7 @@ internal fun getHead(cm: CodeMirrorAdapter): LinePos {
 // ---------------------------------------------------------------------------
 
 internal fun exitVisualMode(cm: CodeMirrorAdapter, moveHead: Boolean = true) {
-    val vim = cm.state.vim!!
+    val vim = cm.vim!!
     if (moveHead) {
         cm.setCursor(clipCursorToContent(cm, vim.sel.head))
     }
@@ -1165,7 +1165,7 @@ internal fun findParagraph(
         return ParagraphRange(start = LinePos(i, 0), end = head)
     }
 
-    val vim = cm.state.vim!!
+    val vim = cm.vim!!
     if (vim.visualLine && isBoundary(line, 1, true)) {
         val anchor = vim.sel.anchor
         if (isBoundary(anchor.line, -1, true)) {
@@ -1557,7 +1557,7 @@ internal fun findBeginningAndEnd(
 // ---------------------------------------------------------------------------
 
 internal fun getSearchState(cm: CodeMirrorAdapter): SearchState {
-    val vim = cm.state.vim!!
+    val vim = cm.vim!!
     return vim.searchState_ ?: SearchState().also { vim.searchState_ = it }
 }
 
@@ -1920,11 +1920,11 @@ internal fun showConfirm(
     duration: Int? = null
 ) {
     if (long) {
-        if (cm.state.closeVimNotification != null) {
-            cm.state.closeVimNotification!!.invoke()
+        if (cm.closeVimNotification != null) {
+            cm.closeVimNotification!!.invoke()
         }
         val msg = "$template\nPress ENTER or type command to continue"
-        cm.state.closeVimNotification = cm.openNotification(
+        cm.closeVimNotification = cm.openNotification(
             msg,
             mapOf("bottom" to true, "duration" to 0)
         )
@@ -1979,7 +1979,7 @@ internal class ExCommandDispatcher {
         input: String,
         optParams: ExParams? = null
     ) {
-        val vim = cm.state.vim!!
+        val vim = cm.vim!!
         val commandHistoryRegister = vimGlobalState.registerController.getRegister(":")
         val previousCommand = commandHistoryRegister.toString()
         commandHistoryRegister.setText(input)
@@ -2045,7 +2045,7 @@ internal class ExCommandDispatcher {
             result.lineEnd = cm.lastLine()
             pos++
         } else if (pos < input.length && input[pos] == '*') {
-            val lastSelection = cm.state.vim?.lastSelection
+            val lastSelection = cm.vim?.lastSelection
             val anchor = lastSelection?.anchorMark?.find()?.line ?: 0
             val head = lastSelection?.headMark?.find()?.line ?: 0
             result.line = max(anchor, head)
@@ -2064,9 +2064,9 @@ internal class ExCommandDispatcher {
         }
 
         if (result.line == 0 && result.lineEnd == null) {
-            if (cm.state.vim?.visualMode == true) {
-                result.selectionLine = getMarkPos(cm, cm.state.vim!!, "<")?.line ?: 0
-                result.selectionLineEnd = getMarkPos(cm, cm.state.vim!!, ">")?.line
+            if (cm.vim?.visualMode == true) {
+                result.selectionLine = getMarkPos(cm, cm.vim!!, "<")?.line ?: 0
+                result.selectionLineEnd = getMarkPos(cm, cm.vim!!, ">")?.line
             } else {
                 result.selectionLine = cm.getCursor().line
             }
@@ -2129,7 +2129,7 @@ internal class ExCommandDispatcher {
                 pos++
                 val markName = if (pos < input.length) input[pos].toString() else ""
                 pos++
-                val markPos = getMarkPos(cm, cm.state.vim!!, markName)
+                val markPos = getMarkPos(cm, cm.vim!!, markName)
                     ?: throw Error("Mark not set")
                 markPos.line to pos
             }
@@ -2292,7 +2292,7 @@ internal fun onChange(cm: CodeMirrorAdapter, changeObj: Change?) {
     val macroModeState = vimGlobalState.macroModeState
     val lastChange = macroModeState.lastInsertModeChanges
     if (!macroModeState.isPlaying) {
-        val vim = cm.state.vim
+        val vim = cm.vim
         var current = changeObj
         while (current != null) {
             lastChange.expectCursorActivityForChange = true
@@ -2309,7 +2309,7 @@ internal fun onChange(cm: CodeMirrorAdapter, changeObj: Change?) {
                     lastChange.maybeReset = false
                 }
                 if (text.isNotEmpty()) {
-                    if (cm.state.vim!!.overwrite && !text.contains('\n')) {
+                    if (cm.vim!!.overwrite && !text.contains('\n')) {
                         lastChange.changes.add(listOf(text))
                     } else {
                         if (text.length > 1) {
@@ -2334,7 +2334,7 @@ internal fun onChange(cm: CodeMirrorAdapter, changeObj: Change?) {
 }
 
 internal fun onCursorActivity(cm: CodeMirrorAdapter) {
-    val vim = cm.state.vim ?: return
+    val vim = cm.vim ?: return
     if (vim.insertMode) {
         val macroModeState = vimGlobalState.macroModeState
         if (macroModeState.isPlaying) return
@@ -2382,7 +2382,7 @@ internal fun handleExternalSelection(cm: CodeMirrorAdapter, vim: VimState) {
 // ---------------------------------------------------------------------------
 
 internal fun exitInsertMode(cm: CodeMirrorAdapter, keepCursor: Boolean = false) {
-    val vim = cm.state.vim ?: return
+    val vim = cm.vim ?: return
     val macroModeState = vimGlobalState.macroModeState
     val insertModeChangeRegister = vimGlobalState.registerController.getRegister(".")
     val isPlaying = macroModeState.isPlaying
@@ -2521,7 +2521,7 @@ internal fun clearInputState(
         "UNUSED_PARAMETER"
     ) reason: String? = null
 ) {
-    val vim = cm.state.vim ?: return
+    val vim = cm.vim ?: return
     // Create a new InputState rather than resetting the existing one.
     // The old inputState may still be referenced by vim.lastEditInputState.
     vim.inputState = InputState()
@@ -2543,7 +2543,7 @@ internal fun doReplace(
     replaceWith: String,
     callback: (() -> Unit)?
 ) {
-    cm.state.vim!!.exMode = true
+    cm.vim!!.exMode = true
     var done = false
     var matches = 0
     var lastPos: LinePos? = null
@@ -2617,7 +2617,7 @@ internal fun doReplace(
         val pos = lastPos
         if (pos != null) {
             cm.setCursor(pos)
-            val vim = cm.state.vim!!
+            val vim = cm.vim!!
             vim.exMode = false
             vim.lastHPos = pos.ch
             vim.lastHSPos = pos.ch

@@ -44,7 +44,7 @@ private val BLOCK_CURSOR_COLOR = Color(0xFFFF9696)
  * empty set in insert mode.
  */
 internal fun buildBlockCursorDecorations(state: EditorState, cm: CodeMirrorAdapter): DecorationSet {
-    val vim = cm.state.vim ?: return RangeSet.empty()
+    val vim = cm.vim ?: return RangeSet.empty()
 
     // No block cursor in insert mode (unless overwrite)
     if (vim.insertMode && !vim.overwrite) return RangeSet.empty()
