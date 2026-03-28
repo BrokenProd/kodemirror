@@ -217,7 +217,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
             vim.visualBlock = actionArgs.blockwise == true
             val head = clipCursorToContent(cm, LinePos(anchor.line, anchor.ch + repeat - 1))
             val newPosition = updateSelectionForSurrogateCharacters(cm, anchor, head)
-            vim.sel = CM5Range(
+            vim.sel = LinePosRange(
                 anchor = newPosition.start,
                 head = newPosition.end
             )
@@ -268,7 +268,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
             if (anchor == null || head == null) {
                 return@to
             }
-            vim.sel = CM5Range(anchor = anchor, head = head)
+            vim.sel = LinePosRange(anchor = anchor, head = head)
             vim.visualMode = true
             vim.visualLine = lastSelection.visualLine
             vim.visualBlock = lastSelection.visualBlock

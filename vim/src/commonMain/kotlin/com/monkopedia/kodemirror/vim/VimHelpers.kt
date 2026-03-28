@@ -375,9 +375,9 @@ internal fun selectBlock(cm: CodeMirrorAdapter, selectionEnd: LinePos): LinePos 
         baseCh--
         headCh++
     }
-    val selections = mutableListOf<CM5Range>()
+    val selections = mutableListOf<LinePosRange>()
     for (line in firstLine..lastLine) {
-        selections.add(CM5Range(anchor = LinePos(line, baseCh), head = LinePos(line, headCh)))
+        selections.add(LinePosRange(anchor = LinePos(line, baseCh), head = LinePos(line, headCh)))
     }
     cm.setSelections(selections)
     return LinePos(base.line, baseCh)
@@ -388,10 +388,10 @@ internal fun selectBlock(cm: CodeMirrorAdapter, selectionEnd: LinePos): LinePos 
 // ---------------------------------------------------------------------------
 
 internal fun selectForInsert(cm: CodeMirrorAdapter, head: LinePos, height: Int) {
-    val sel = mutableListOf<CM5Range>()
+    val sel = mutableListOf<LinePosRange>()
     for (i in 0 until height) {
         val lineHead = offsetCursor(head, i, 0)
-        sel.add(CM5Range(anchor = lineHead, head = lineHead))
+        sel.add(LinePosRange(anchor = lineHead, head = lineHead))
     }
     cm.setSelections(sel, 0)
 }
@@ -400,7 +400,7 @@ internal fun selectForInsert(cm: CodeMirrorAdapter, head: LinePos, height: Int) 
 // getIndex
 // ---------------------------------------------------------------------------
 
-internal fun getIndex(ranges: List<CM5Range>, cursor: LinePos, end: String? = null): Int {
+internal fun getIndex(ranges: List<LinePosRange>, cursor: LinePos, end: String? = null): Int {
     for (i in ranges.indices) {
         val atAnchor = end != "head" && cursorEqual(ranges[i].anchor, cursor)
         val atHead = end != "anchor" && cursorEqual(ranges[i].head, cursor)
@@ -492,7 +492,11 @@ internal fun expandSelection(
 // updateCmSelection
 // ---------------------------------------------------------------------------
 
-internal fun updateCmSelection(cm: CodeMirrorAdapter, sel: CM5Range? = null, mode: String? = null) {
+internal fun updateCmSelection(
+    cm: CodeMirrorAdapter,
+    sel: LinePosRange? = null,
+    mode: String? = null
+) {
     val vim = cm.state.vim!!
     val actualSel = sel ?: vim.sel
     val actualMode = mode ?: when {
@@ -506,7 +510,7 @@ internal fun updateCmSelection(cm: CodeMirrorAdapter, sel: CM5Range? = null, mod
 
 internal fun makeCmSelection(
     cm: CodeMirrorAdapter,
-    sel: CM5Range,
+    sel: LinePosRange,
     mode: String,
     exclusive: Boolean = false
 ): CmSelectionResult {
@@ -518,7 +522,7 @@ internal fun makeCmSelection(
             val anchorOffset = if (cursorIsBefore(sel.head, sel.anchor)) 1 else 0
             val h = offsetCursor(sel.head, 0, headOffset)
             val a = offsetCursor(sel.anchor, 0, anchorOffset)
-            CmSelectionResult(mutableListOf(CM5Range(anchor = a, head = h)), 0)
+            CmSelectionResult(mutableListOf(LinePosRange(anchor = a, head = h)), 0)
         }
         "line" -> {
             var a = anchor
@@ -535,7 +539,7 @@ internal fun makeCmSelection(
                 h = LinePos(h.line, 0)
                 a = LinePos(a.line, lineLength(cm, a.line))
             }
-            CmSelectionResult(mutableListOf(CM5Range(anchor = a, head = h)), 0)
+            CmSelectionResult(mutableListOf(LinePosRange(anchor = a, head = h)), 0)
         }
         "block" -> {
             val top = min(anchor.line, head.line)
@@ -549,10 +553,10 @@ internal fun makeCmSelection(
             }
             val height = bottom - top + 1
             val primary = if (head.line == top) 0 else height - 1
-            val ranges = mutableListOf<CM5Range>()
+            val ranges = mutableListOf<LinePosRange>()
             for (i in 0 until height) {
                 ranges.add(
-                    CM5Range(anchor = LinePos(top + i, fromCh), head = LinePos(top + i, toCh))
+                    LinePosRange(anchor = LinePos(top + i, fromCh), head = LinePos(top + i, toCh))
                 )
             }
             CmSelectionResult(ranges, primary)
@@ -2365,7 +2369,7 @@ internal fun handleExternalSelection(cm: CodeMirrorAdapter, vim: VimState) {
         val anchorOffset = if (cursorIsBefore(head, anchor)) -1 else 0
         val adjustedHead = offsetCursor(head, 0, headOffset)
         val adjustedAnchor = offsetCursor(anchor, 0, anchorOffset)
-        vim.sel = CM5Range(adjustedAnchor, adjustedHead)
+        vim.sel = LinePosRange(adjustedAnchor, adjustedHead)
         updateMark(cm, vim, "<", cursorMin(adjustedHead, adjustedAnchor))
         updateMark(cm, vim, ">", cursorMax(adjustedHead, adjustedAnchor))
     } else if (!vim.insertMode) {

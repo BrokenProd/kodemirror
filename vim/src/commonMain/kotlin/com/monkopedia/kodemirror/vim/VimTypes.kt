@@ -35,9 +35,9 @@ interface LineHandle {
 }
 
 /**
- * A CM5-style selection range with anchor and head.
+ * A selection range with anchor and head, using [LinePos] coordinates.
  */
-data class CM5Range(
+data class LinePosRange(
     var anchor: LinePos,
     var head: LinePos
 ) {
@@ -350,7 +350,7 @@ data class InsertModeKey(val keyName: String)
 
 class VimState {
     var onPasteFn: (() -> Unit)? = null
-    var sel: CM5Range = CM5Range(LinePos(0, 0), LinePos(0, 0))
+    var sel: LinePosRange = LinePosRange(LinePos(0, 0), LinePos(0, 0))
     var insertModeReturn: Boolean = false
     var visualBlock: Boolean = false
     val marks: MutableMap<String, Marker> = mutableMapOf()
@@ -471,7 +471,7 @@ typealias MotionFn = (
 typealias OperatorFn = (
     cm: CodeMirrorAdapter,
     args: OperatorArgs,
-    ranges: List<CM5Range>,
+    ranges: List<LinePosRange>,
     oldAnchor: LinePos,
     newHead: LinePos?
 ) -> LinePos?

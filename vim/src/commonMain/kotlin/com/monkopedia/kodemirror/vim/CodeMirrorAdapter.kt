@@ -669,10 +669,10 @@ fun CodeMirrorAdapter.getCursor(p: String? = null): LinePos {
     return posFromIndex(session.state.doc, offset)
 }
 
-fun CodeMirrorAdapter.listSelections(): List<CM5Range> {
+fun CodeMirrorAdapter.listSelections(): List<LinePosRange> {
     val doc = session.state.doc
     return session.state.selection.ranges.map { r ->
-        CM5Range(
+        LinePosRange(
             anchor = posFromIndex(doc, r.anchor),
             head = posFromIndex(doc, r.head)
         )
@@ -738,7 +738,7 @@ fun CodeMirrorAdapter.setCursor(line: Int, ch: Int = 0) {
 
 fun CodeMirrorAdapter.setCursor(pos: LinePos) = setCursor(pos.line, pos.ch)
 
-fun CodeMirrorAdapter.setSelections(selections: List<CM5Range>, primIndex: Int? = null) {
+fun CodeMirrorAdapter.setSelections(selections: List<LinePosRange>, primIndex: Int? = null) {
     val doc = session.state.doc
     val ranges = selections.map { x ->
         val head = indexFromPos(doc, x.head)
@@ -763,7 +763,7 @@ fun CodeMirrorAdapter.setSelection(
     head: LinePos,
     options: Map<String, Any?>? = null
 ) {
-    setSelections(listOf(CM5Range(anchor, head)), 0)
+    setSelections(listOf(LinePosRange(anchor, head)), 0)
     if (options?.get("origin") == "*mouse") {
         onBeforeEndOperation()
     }

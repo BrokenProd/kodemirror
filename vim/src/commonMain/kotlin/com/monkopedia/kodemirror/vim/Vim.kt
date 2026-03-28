@@ -942,7 +942,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
                 vim.visualMode = true
                 vim.visualLine = lastSel.visualLine
                 vim.visualBlock = lastSel.visualBlock
-                vim.sel = CM5Range(newAnchor, newHead)
+                vim.sel = LinePosRange(newAnchor, newHead)
                 updateCmSelection(cm)
             } else if (vim.visualMode) {
                 operatorArgs.lastSel = LastSelection(
@@ -971,20 +971,20 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
                 val newPositions = updateSelectionForSurrogateCharacters(cm, curStart, curEnd)
                 cmSel = makeCmSelection(
                     cm,
-                    CM5Range(newPositions.start, newPositions.end),
+                    LinePosRange(newPositions.start, newPositions.end),
                     mode
                 )
                 if (linewise) {
                     val ranges = cmSel.ranges
                     if (mode == "block") {
                         for (i in ranges.indices) {
-                            ranges[i] = CM5Range(
+                            ranges[i] = LinePosRange(
                                 ranges[i].anchor,
                                 LinePos(ranges[i].head.line, lineLength(cm, ranges[i].head.line))
                             )
                         }
                     } else if (mode == "line") {
-                        ranges[0] = CM5Range(
+                        ranges[0] = LinePosRange(
                             ranges[0].anchor,
                             LinePos(ranges[0].head.line + 1, 0)
                         )
@@ -1011,7 +1011,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
                 val newPositions = updateSelectionForSurrogateCharacters(cm, cs, ce)
                 cmSel = makeCmSelection(
                     cm,
-                    CM5Range(newPositions.start, newPositions.end),
+                    LinePosRange(newPositions.start, newPositions.end),
                     mode,
                     exclusive
                 )
@@ -1060,7 +1060,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
 // ---------------------------------------------------------------------------
 
 internal data class CmSelectionResult(
-    val ranges: MutableList<CM5Range>,
+    val ranges: MutableList<LinePosRange>,
     val primary: Int = 0
 )
 
