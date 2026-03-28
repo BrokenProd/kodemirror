@@ -196,7 +196,6 @@ public final class com/monkopedia/kodemirror/vim/CodeMirrorAdapterKt {
 	public static final fun indentLine (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;IZ)V
 	public static synthetic fun indentLine$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;IZILjava/lang/Object;)V
 	public static final fun indentMore (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)Z
-	public static final fun indexFromPos (Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/vim/LinePos;)I
 	public static final fun isMac ()Z
 	public static final fun isWordChar (Ljava/lang/String;)Z
 	public static final fun lastLine (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)I
@@ -212,7 +211,6 @@ public final class com/monkopedia/kodemirror/vim/CodeMirrorAdapterKt {
 	public static synthetic fun openNotification$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lkotlin/jvm/functions/Function0;
 	public static final fun operation (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public static final fun overWriteSelection (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;)V
-	public static final fun posFromIndex-FCwYIAs (Lcom/monkopedia/kodemirror/state/Text;I)Lcom/monkopedia/kodemirror/vim/LinePos;
 	public static final fun releaseLineHandles (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)V
 	public static final fun removeOverlay (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/Object;)V
 	public static synthetic fun removeOverlay$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/Object;ILjava/lang/Object;)V
@@ -520,7 +518,9 @@ public final class com/monkopedia/kodemirror/vim/LinePosKt {
 	public static final fun cursorIsBefore (Lcom/monkopedia/kodemirror/vim/LinePos;Lcom/monkopedia/kodemirror/vim/LinePos;)Z
 	public static final fun cursorMax (Lcom/monkopedia/kodemirror/vim/LinePos;Lcom/monkopedia/kodemirror/vim/LinePos;)Lcom/monkopedia/kodemirror/vim/LinePos;
 	public static final fun cursorMin (Lcom/monkopedia/kodemirror/vim/LinePos;Lcom/monkopedia/kodemirror/vim/LinePos;)Lcom/monkopedia/kodemirror/vim/LinePos;
+	public static final fun indexFromPos (Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/vim/LinePos;)I
 	public static final fun makeCursor (II)Lcom/monkopedia/kodemirror/vim/LinePos;
+	public static final fun posFromIndex-FCwYIAs (Lcom/monkopedia/kodemirror/state/Text;I)Lcom/monkopedia/kodemirror/vim/LinePos;
 }
 
 public final class com/monkopedia/kodemirror/vim/LinePosRange {

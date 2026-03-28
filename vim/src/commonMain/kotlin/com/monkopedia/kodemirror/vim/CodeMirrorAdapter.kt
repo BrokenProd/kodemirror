@@ -50,34 +50,6 @@ import kotlin.math.max
 import kotlin.math.min
 
 // ---------------------------------------------------------------------------
-// Position conversion helpers
-// ---------------------------------------------------------------------------
-
-/** Convert a vim LinePos (0-based line, ch) to an absolute document offset. */
-fun indexFromPos(doc: Text, pos: LinePos): DocPos {
-    var ch = pos.ch
-    var lineNumber = pos.line + 1
-    if (lineNumber < 1) {
-        lineNumber = 1
-        ch = 0
-    }
-    if (lineNumber > doc.lines) {
-        lineNumber = doc.lines
-        ch = Int.MAX_VALUE
-    }
-    val line = doc.line(LineNumber(lineNumber))
-    // Clamp ch to line length to avoid integer overflow when ch is Int.MAX_VALUE
-    val clampedCh = min(max(0, ch).toLong(), (line.to.value - line.from.value).toLong()).toInt()
-    return DocPos(line.from.value + clampedCh)
-}
-
-/** Convert an absolute document offset to a vim LinePos (0-based line, ch). */
-fun posFromIndex(doc: Text, offset: DocPos): LinePos {
-    val line = doc.lineAt(offset)
-    return LinePos(line.number.value - 1, offset.value - line.from.value)
-}
-
-// ---------------------------------------------------------------------------
 // Event system
 // ---------------------------------------------------------------------------
 
