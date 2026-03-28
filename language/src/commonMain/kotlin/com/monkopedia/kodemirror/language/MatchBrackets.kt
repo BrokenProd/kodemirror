@@ -21,7 +21,9 @@ package com.monkopedia.kodemirror.language
 import androidx.compose.ui.text.SpanStyle
 import com.monkopedia.kodemirror.lezer.common.NodeProp
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
+import com.monkopedia.kodemirror.lezer.common.Tree
 import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.RangeSet
@@ -106,7 +108,7 @@ fun matchBrackets(
 
 private fun tryTreeMatch(
     state: EditorState,
-    tree: com.monkopedia.kodemirror.lezer.common.Tree,
+    tree: Tree,
     pos: DocPos,
     dir: Int,
     config: BracketMatchingConfig
@@ -116,42 +118,30 @@ private fun tryTreeMatch(
     val openedBy = node.type.prop(NodeProp.openedBy)
 
     if (closedBy != null) {
-        // This is an opening bracket node -- find its close
-        val matchNode = findMatchingNode(node, closedBy, 1, config.maxScanDistance)
-        return MatchResult(
-            start = com.monkopedia.kodemirror.state.EditorSelection.range(
-                DocPos(node.from),
-                DocPos(node.to)
-            ),
-            end = matchNode?.let {
-                com.monkopedia.kodemirror.state.EditorSelection.range(
-                    DocPos(it.from),
-                    DocPos(it.to)
-                )
-            },
-            matched = matchNode != null
-        )
+        return buildTreeMatchResult(node, closedBy, 1, config.maxScanDistance)
     }
 
     if (openedBy != null) {
-        // This is a closing bracket node -- find its open
-        val matchNode = findMatchingNode(node, openedBy, -1, config.maxScanDistance)
-        return MatchResult(
-            start = com.monkopedia.kodemirror.state.EditorSelection.range(
-                DocPos(node.from),
-                DocPos(node.to)
-            ),
-            end = matchNode?.let {
-                com.monkopedia.kodemirror.state.EditorSelection.range(
-                    DocPos(it.from),
-                    DocPos(it.to)
-                )
-            },
-            matched = matchNode != null
-        )
+        return buildTreeMatchResult(node, openedBy, -1, config.maxScanDistance)
     }
 
     return null
+}
+
+private fun buildTreeMatchResult(
+    node: SyntaxNode,
+    matchingNames: List<String>,
+    dir: Int,
+    maxScanDistance: Int
+): MatchResult {
+    val matchNode = findMatchingNode(node, matchingNames, dir, maxScanDistance)
+    return MatchResult(
+        start = EditorSelection.range(DocPos(node.from), DocPos(node.to)),
+        end = matchNode?.let {
+            EditorSelection.range(DocPos(it.from), DocPos(it.to))
+        },
+        matched = matchNode != null
+    )
 }
 
 private fun findMatchingNode(
@@ -188,7 +178,7 @@ private fun tryScanMatch(
     val isOpen = openingBrackets.contains(ch)
     val scanDir = if (isOpen) 1 else -1
 
-    val start = com.monkopedia.kodemirror.state.EditorSelection.range(pos, pos + 1)
+    val start = EditorSelection.range(pos, pos + 1)
 
     // Scan for the matching bracket
     var depth = 1
@@ -207,7 +197,7 @@ private fun tryScanMatch(
                 if (depth == 0) {
                     return MatchResult(
                         start = start,
-                        end = com.monkopedia.kodemirror.state.EditorSelection.range(
+                        end = EditorSelection.range(
                             DocPos(scanPos),
                             DocPos(scanPos + 1)
                         ),

@@ -25,6 +25,7 @@ import com.monkopedia.kodemirror.autocomplete.CompletionSource
 import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.lezer.common.SyntaxNode
 import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.endPos
 
@@ -293,7 +294,7 @@ private fun openTags(doc: Text, tree: SyntaxNode): List<String> {
 }
 
 private fun completeTag(
-    state: com.monkopedia.kodemirror.state.EditorState,
+    state: EditorState,
     schema: HtmlSchema,
     tree: SyntaxNode,
     from: DocPos,
@@ -325,7 +326,7 @@ private fun completeTag(
 }
 
 private fun completeCloseTag(
-    state: com.monkopedia.kodemirror.state.EditorState,
+    state: EditorState,
     tree: SyntaxNode,
     from: DocPos,
     to: DocPos
@@ -351,7 +352,7 @@ private fun completeCloseTag(
 }
 
 private fun completeStartTag(
-    state: com.monkopedia.kodemirror.state.EditorState,
+    state: EditorState,
     schema: HtmlSchema,
     tree: SyntaxNode,
     pos: DocPos
@@ -373,7 +374,7 @@ private fun completeStartTag(
 }
 
 private fun completeAttrName(
-    state: com.monkopedia.kodemirror.state.EditorState,
+    state: EditorState,
     schema: HtmlSchema,
     tree: SyntaxNode,
     from: DocPos,
@@ -398,7 +399,7 @@ private fun completeAttrName(
 }
 
 private fun completeAttrValue(
-    state: com.monkopedia.kodemirror.state.EditorState,
+    state: EditorState,
     schema: HtmlSchema,
     tree: SyntaxNode,
     from: DocPos,

@@ -28,6 +28,13 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorSelection
+import com.monkopedia.kodemirror.state.LineNumber
+import com.monkopedia.kodemirror.state.SelectionRange
+import com.monkopedia.kodemirror.state.SelectionSpec
+import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asInsert
 
 /**
@@ -257,8 +264,8 @@ fun handleCharacterInput(view: EditorSession, event: KeyEvent): Boolean {
     val char = keyEventCharacter(event) ?: return false
     val sel = view.state.selection.main
     view.dispatch(
-        com.monkopedia.kodemirror.state.TransactionSpec(
-            changes = com.monkopedia.kodemirror.state.ChangeSpec.Single(
+        TransactionSpec(
+            changes = ChangeSpec.Single(
                 from = sel.from,
                 to = sel.to,
                 insert = char.toString().asInsert()
@@ -277,10 +284,8 @@ fun handleCharacterInput(view: EditorSession, event: KeyEvent): Boolean {
 fun handleTap(view: EditorSession, offset: Offset) {
     val pos = view.posAtCoords(offset.x, offset.y) ?: return
     view.dispatch(
-        com.monkopedia.kodemirror.state.TransactionSpec(
-            selection = com.monkopedia.kodemirror.state.SelectionSpec.CursorSpec(
-                com.monkopedia.kodemirror.state.DocPos(pos)
-            )
+        TransactionSpec(
+            selection = SelectionSpec.CursorSpec(DocPos(pos))
         )
     )
 }
@@ -296,12 +301,9 @@ fun handleDrag(view: EditorSession, start: Offset, current: Offset) {
     val anchor = view.posAtCoords(start.x, start.y) ?: return
     val head = view.posAtCoords(current.x, current.y) ?: return
     view.dispatch(
-        com.monkopedia.kodemirror.state.TransactionSpec(
-            selection = com.monkopedia.kodemirror.state.SelectionSpec.EditorSelectionSpec(
-                com.monkopedia.kodemirror.state.EditorSelection.single(
-                    com.monkopedia.kodemirror.state.DocPos(anchor),
-                    com.monkopedia.kodemirror.state.DocPos(head)
-                )
+        TransactionSpec(
+            selection = SelectionSpec.EditorSelectionSpec(
+                EditorSelection.single(DocPos(anchor), DocPos(head))
             )
         )
     )
@@ -322,8 +324,8 @@ fun handleRectangularDrag(view: EditorSession, start: Offset, current: Offset) {
     val startPos = view.posAtCoords(start.x, start.y) ?: return
     val currentPos = view.posAtCoords(current.x, current.y) ?: return
 
-    val startDocPos = com.monkopedia.kodemirror.state.DocPos(startPos)
-    val currentDocPos = com.monkopedia.kodemirror.state.DocPos(currentPos)
+    val startDocPos = DocPos(startPos)
+    val currentDocPos = DocPos(currentPos)
 
     val startLine = doc.lineAt(startDocPos)
     val currentLine = doc.lineAt(currentDocPos)
@@ -336,30 +338,22 @@ fun handleRectangularDrag(view: EditorSession, start: Offset, current: Offset) {
     val minCol = minOf(startCol, currentCol)
     val maxCol = maxOf(startCol, currentCol)
 
-    val ranges = mutableListOf<com.monkopedia.kodemirror.state.SelectionRange>()
+    val ranges = mutableListOf<SelectionRange>()
     for (lineNum in minLineNum.value..maxLineNum.value) {
-        val line = doc.line(com.monkopedia.kodemirror.state.LineNumber(lineNum))
+        val line = doc.line(LineNumber(lineNum))
         val lineLen = line.text.length
         val from = line.from + minOf(minCol, lineLen)
         val to = line.from + minOf(maxCol, lineLen)
-        ranges.add(
-            com.monkopedia.kodemirror.state.EditorSelection.range(
-                from,
-                to
-            )
-        )
+        ranges.add(EditorSelection.range(from, to))
     }
 
     if (ranges.isEmpty()) return
 
     view.dispatch(
-        com.monkopedia.kodemirror.state.TransactionSpec(
-            selection = com.monkopedia.kodemirror.state.SelectionSpec
-                .EditorSelectionSpec(
-                    com.monkopedia.kodemirror.state.EditorSelection.create(
-                        ranges
-                    )
-                )
+        TransactionSpec(
+            selection = SelectionSpec.EditorSelectionSpec(
+                EditorSelection.create(ranges)
+            )
         )
     )
 }

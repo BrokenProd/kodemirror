@@ -23,6 +23,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +33,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
@@ -54,7 +56,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -66,6 +70,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
@@ -259,38 +265,12 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                             }
                         }
                     }
-                    .drawWithContent {
-                        // Editor background
-                        drawRect(theme.background)
-                        // Gutter background strip — only as tall as content
-                        if (hasGutters) {
-                            val w = gutterWidthDp.toPx()
-                            val contentH = contentHeightPx.coerceAtMost(
-                                size.height
-                            )
-                            drawRect(
-                                color = theme.gutterBackground,
-                                topLeft = Offset.Zero,
-                                size = androidx.compose.ui.geometry.Size(
-                                    w,
-                                    contentH
-                                )
-                            )
-                            val bc = theme.gutterBorderColor
-                            if (bc != Color.Transparent) {
-                                drawLine(
-                                    color = bc,
-                                    start = Offset(w - 0.5f, 0f),
-                                    end = Offset(
-                                        w - 0.5f,
-                                        contentH
-                                    ),
-                                    strokeWidth = 1f
-                                )
-                            }
-                        }
-                        drawContent()
-                    }
+                    .drawEditorBackground(
+                        theme = theme,
+                        hasGutters = hasGutters,
+                        gutterWidthDp = gutterWidthDp,
+                        contentHeightPx = contentHeightPx
+                    )
                     .onPreviewKeyEvent { event ->
                         altPressed = event.isAltPressed
                         false
@@ -317,17 +297,14 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                 ?: return@detectTapGestures
                             session.dispatch(
                                 TransactionSpec(
-                                    selection = com.monkopedia.kodemirror.state
-                                        .SelectionSpec.CursorSpec(
-                                            com.monkopedia.kodemirror.state.DocPos(pos)
-                                        )
+                                    selection = SelectionSpec.CursorSpec(DocPos(pos))
                                 )
                             )
                         }
                     }
                     .pointerInput(session) {
-                        var dragStart = androidx.compose.ui.geometry.Offset.Zero
-                        var dragCurrent = androidx.compose.ui.geometry.Offset.Zero
+                        var dragStart = Offset.Zero
+                        var dragCurrent = Offset.Zero
                         detectDragGestures(
                             onDragStart = { offset ->
                                 recentlyDragged = true
@@ -389,202 +366,18 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                         }
                     }
             ) {
-                // Hidden text field for receiving IME/text input and key events
-                var hiddenTextValue by remember {
-                    mutableStateOf(TextFieldValue(""))
-                }
-                BasicTextField(
-                    value = hiddenTextValue,
-                    cursorBrush = androidx.compose.ui.graphics.SolidColor(
-                        Color.Transparent
-                    ),
-                    onValueChange = { newValue ->
-                        // Filter control characters (Tab, etc.) that leak through
-                        // when their key events aren't consumed by the keymap.
-                        // Preserve newlines — they are valid input (e.g. paste).
-                        val inserted = newValue.text.filter {
-                            it == '\n' || !it.isISOControl()
-                        }
-                        if (inserted.isNotEmpty()) {
-                            val sel = session.state.selection.main
-                            val from = sel.from
-                            val to = sel.to
-                            val newCursor = com.monkopedia.kodemirror.state.DocPos(
-                                from.value + inserted.length
-                            )
-                            session.dispatch(
-                                TransactionSpec(
-                                    changes = ChangeSpec.Single(
-                                        from = from,
-                                        to = to,
-                                        insert = inserted.asInsert()
-                                    ),
-                                    selection = com.monkopedia.kodemirror.state.SelectionSpec
-                                        .CursorSpec(newCursor),
-                                    userEvent = "input.type"
-                                )
-                            )
-                        }
-                        // Reset to empty for next input
-                        hiddenTextValue = TextFieldValue("")
-                    },
-                    modifier = Modifier
-                        .testTag("KodeMirror_input")
-                        .size(1.dp)
-                        .alpha(0f)
-                        .focusRequester(focusRequester)
-                        .onFocusChanged { focusState ->
-                            impl.hasFocus = focusState.isFocused
-                        }
-                        .onPreviewKeyEvent { event ->
-                            handleKeyEvent(session, event)
-                        }
+                EditorContent(
+                    lazyState = lazyState,
+                    focusRequester = focusRequester,
+                    columnItems = columnItems,
+                    hasGutters = hasGutters,
+                    gutterWidthDp = gutterWidthDp,
+                    lineHeightDp = lineHeightDp,
+                    lineLayoutCache = lineLayoutCache,
+                    pendingLineLayouts = pendingLineLayouts,
+                    editorCoordinates = editorCoordinates,
+                    textLayoutResults = textLayoutResults
                 )
-
-                LazyColumn(
-                    state = lazyState,
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        top = theme.layout.contentTopPadding,
-                        bottom = theme.layout.contentBottomPadding
-                    )
-                ) {
-                    items(
-                        items = columnItems,
-                        key = { item ->
-                            when (item) {
-                                is ColumnItem.TextLine -> "line-${item.lineNumber}"
-                                is ColumnItem.BlockWidgetItem -> "widget-${item.from}-${item.type}"
-                            }
-                        }
-                    ) { item ->
-                        when (item) {
-                            is ColumnItem.TextLine -> {
-                                val capturedLineNum = item.lineNumber
-                                val capturedFrom = item.from
-                                var textLayout by remember {
-                                    mutableStateOf<TextLayoutResult?>(
-                                        null
-                                    )
-                                }
-
-                                val lineModifier: Modifier = Modifier
-                                    .fillMaxWidth()
-                                    .defaultMinSize(minHeight = lineHeightDp)
-                                var contentExtraModifier: Modifier = Modifier
-                                    .padding(start = 6.dp, end = 2.dp)
-                                for (deco in item.lineDecorations) {
-                                    val bg = deco.spec.style?.background
-                                    if (bg != null && bg != Color.Unspecified) {
-                                        contentExtraModifier = contentExtraModifier.background(bg)
-                                    }
-                                }
-                                Row(
-                                    modifier = lineModifier,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    if (hasGutters) {
-                                        GutterView(
-                                            session = session,
-                                            lineNumber = item.lineNumber.value,
-                                            modifier = Modifier.width(gutterWidthDp)
-                                        )
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .then(contentExtraModifier)
-                                            .drawSelectionOverlay(
-                                                state,
-                                                item.from.value,
-                                                item.to.value,
-                                                theme,
-                                                textLayout
-                                            )
-                                            .onGloballyPositioned { contentCoords ->
-                                                val layout = textLayout
-                                                    ?: return@onGloballyPositioned
-                                                val editorCoords = editorCoordinates
-                                                if (editorCoords != null &&
-                                                    editorCoords.isAttached
-                                                ) {
-                                                    val pos = editorCoords.localPositionOf(
-                                                        contentCoords,
-                                                        Offset.Zero
-                                                    )
-                                                    lineLayoutCache.store(
-                                                        capturedLineNum.value,
-                                                        capturedFrom.value,
-                                                        pos.y,
-                                                        pos.x,
-                                                        layout
-                                                    )
-                                                    pendingLineLayouts
-                                                        .remove(capturedLineNum.value)
-                                                } else {
-                                                    pendingLineLayouts[capturedLineNum.value] =
-                                                        PendingLineLayout(
-                                                            capturedLineNum.value,
-                                                            capturedFrom.value,
-                                                            contentCoords,
-                                                            layout
-                                                        )
-                                                }
-                                            }
-                                    ) {
-                                        BasicText(
-                                            text = item.content,
-                                            style = contentStyle,
-                                            onTextLayout = { result: TextLayoutResult ->
-                                                textLayout = result
-                                                textLayoutResults[capturedLineNum.value] =
-                                                    result
-                                            }
-                                        )
-                                        for (widget in item.inlineWidgets) {
-                                            widget.spec.widget.Content()
-                                        }
-                                    }
-                                }
-                            }
-
-                            is ColumnItem.BlockWidgetItem -> {
-                                item.widget.spec.widget.Content()
-                            }
-                        }
-                    }
-                }
-
-                // Sync viewport/height tracking for ViewUpdate flags.
-                // Evict stale cache entries for scrolled-off lines.
-                // IMPORTANT: lazyState.layoutInfo must NOT be read during
-                // composition — it produces a new object every layout pass,
-                // creating an infinite recomposition/layout cycle. Use
-                // snapshotFlow to observe it outside of composition.
-                val firstVisible = lazyState.firstVisibleItemIndex
-                LaunchedEffect(firstVisible) {
-                    impl.lastFirstVisibleItem = firstVisible
-                }
-                LaunchedEffect(session) {
-                    snapshotFlow {
-                        lazyState.layoutInfo.visibleItemsInfo.let { items ->
-                            items.firstOrNull()?.index to items.size
-                        }
-                    }.collect { (startIdx, count) ->
-                        val startIndex = startIdx ?: 0
-                        val visibleLineNumbers = columnItems
-                            .drop(startIndex)
-                            .take(count.coerceAtLeast(1))
-                            .filterIsInstance<ColumnItem.TextLine>()
-                            .map { it.lineNumber.value }
-                            .toSet()
-                        if (visibleLineNumbers.isNotEmpty()) {
-                            lineLayoutCache.evict(visibleLineNumbers)
-                        }
-                    }
-                }
-
-                // Tooltip layer
-                TooltipLayer(session = session)
             }
             for (panel in bottomPanels) {
                 Box(
@@ -597,6 +390,246 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
             }
         }
     }
+}
+
+/** Inner content of the editor: hidden text field, line list, and tooltip layer. */
+@Composable
+private fun EditorContent(
+    lazyState: LazyListState,
+    focusRequester: FocusRequester,
+    columnItems: List<ColumnItem>,
+    hasGutters: Boolean,
+    gutterWidthDp: Dp,
+    lineHeightDp: Dp,
+    lineLayoutCache: LineLayoutCache,
+    pendingLineLayouts: MutableMap<Int, PendingLineLayout>,
+    editorCoordinates: LayoutCoordinates?,
+    textLayoutResults: MutableMap<Int, TextLayoutResult>
+) {
+    val session = LocalEditorSession.current
+    val impl = session as EditorSessionImpl
+    val state by session::state
+    val theme = LocalEditorTheme.current
+    val contentStyle = LocalContentTextStyle.current
+
+    // Hidden text field for receiving IME/text input and key events
+    var hiddenTextValue by remember {
+        mutableStateOf(TextFieldValue(""))
+    }
+    BasicTextField(
+        value = hiddenTextValue,
+        cursorBrush = SolidColor(Color.Transparent),
+        onValueChange = { newValue ->
+            // Filter control characters (Tab, etc.) that leak through
+            // when their key events aren't consumed by the keymap.
+            // Preserve newlines — they are valid input (e.g. paste).
+            val inserted = newValue.text.filter {
+                it == '\n' || !it.isISOControl()
+            }
+            if (inserted.isNotEmpty()) {
+                val sel = session.state.selection.main
+                val from = sel.from
+                val to = sel.to
+                val newCursor = DocPos(from.value + inserted.length)
+                session.dispatch(
+                    TransactionSpec(
+                        changes = ChangeSpec.Single(
+                            from = from,
+                            to = to,
+                            insert = inserted.asInsert()
+                        ),
+                        selection = SelectionSpec.CursorSpec(newCursor),
+                        userEvent = "input.type"
+                    )
+                )
+            }
+            // Reset to empty for next input
+            hiddenTextValue = TextFieldValue("")
+        },
+        modifier = Modifier
+            .testTag("KodeMirror_input")
+            .size(1.dp)
+            .alpha(0f)
+            .focusRequester(focusRequester)
+            .onFocusChanged { focusState ->
+                impl.hasFocus = focusState.isFocused
+            }
+            .onPreviewKeyEvent { event ->
+                handleKeyEvent(session, event)
+            }
+    )
+
+    LazyColumn(
+        state = lazyState,
+        contentPadding = PaddingValues(
+            top = theme.layout.contentTopPadding,
+            bottom = theme.layout.contentBottomPadding
+        )
+    ) {
+        items(
+            items = columnItems,
+            key = { item ->
+                when (item) {
+                    is ColumnItem.TextLine -> "line-${item.lineNumber}"
+                    is ColumnItem.BlockWidgetItem -> "widget-${item.from}-${item.type}"
+                }
+            }
+        ) { item ->
+            when (item) {
+                is ColumnItem.TextLine -> {
+                    val capturedLineNum = item.lineNumber
+                    val capturedFrom = item.from
+                    var textLayout by remember {
+                        mutableStateOf<TextLayoutResult?>(null)
+                    }
+
+                    val lineModifier: Modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = lineHeightDp)
+                    var contentExtraModifier: Modifier = Modifier
+                        .padding(start = 6.dp, end = 2.dp)
+                    for (deco in item.lineDecorations) {
+                        val bg = deco.spec.style?.background
+                        if (bg != null && bg != Color.Unspecified) {
+                            contentExtraModifier = contentExtraModifier.background(bg)
+                        }
+                    }
+                    Row(
+                        modifier = lineModifier,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (hasGutters) {
+                            GutterView(
+                                session = session,
+                                lineNumber = item.lineNumber.value,
+                                modifier = Modifier.width(gutterWidthDp)
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .then(contentExtraModifier)
+                                .drawSelectionOverlay(
+                                    state,
+                                    item.from.value,
+                                    item.to.value,
+                                    theme,
+                                    textLayout
+                                )
+                                .onGloballyPositioned { contentCoords ->
+                                    val layout = textLayout
+                                        ?: return@onGloballyPositioned
+                                    val editorCoords = editorCoordinates
+                                    if (editorCoords != null &&
+                                        editorCoords.isAttached
+                                    ) {
+                                        val pos = editorCoords.localPositionOf(
+                                            contentCoords,
+                                            Offset.Zero
+                                        )
+                                        lineLayoutCache.store(
+                                            capturedLineNum.value,
+                                            capturedFrom.value,
+                                            pos.y,
+                                            pos.x,
+                                            layout
+                                        )
+                                        pendingLineLayouts
+                                            .remove(capturedLineNum.value)
+                                    } else {
+                                        pendingLineLayouts[capturedLineNum.value] =
+                                            PendingLineLayout(
+                                                capturedLineNum.value,
+                                                capturedFrom.value,
+                                                contentCoords,
+                                                layout
+                                            )
+                                    }
+                                }
+                        ) {
+                            BasicText(
+                                text = item.content,
+                                style = contentStyle,
+                                onTextLayout = { result: TextLayoutResult ->
+                                    textLayout = result
+                                    textLayoutResults[capturedLineNum.value] =
+                                        result
+                                }
+                            )
+                            for (widget in item.inlineWidgets) {
+                                widget.spec.widget.Content()
+                            }
+                        }
+                    }
+                }
+
+                is ColumnItem.BlockWidgetItem -> {
+                    item.widget.spec.widget.Content()
+                }
+            }
+        }
+    }
+
+    // Sync viewport/height tracking for ViewUpdate flags.
+    // Evict stale cache entries for scrolled-off lines.
+    // IMPORTANT: lazyState.layoutInfo must NOT be read during
+    // composition — it produces a new object every layout pass,
+    // creating an infinite recomposition/layout cycle. Use
+    // snapshotFlow to observe it outside of composition.
+    val firstVisible = lazyState.firstVisibleItemIndex
+    LaunchedEffect(firstVisible) {
+        impl.lastFirstVisibleItem = firstVisible
+    }
+    LaunchedEffect(session) {
+        snapshotFlow {
+            lazyState.layoutInfo.visibleItemsInfo.let { items ->
+                items.firstOrNull()?.index to items.size
+            }
+        }.collect { (startIdx, count) ->
+            val startIndex = startIdx ?: 0
+            val visibleLineNumbers = columnItems
+                .drop(startIndex)
+                .take(count.coerceAtLeast(1))
+                .filterIsInstance<ColumnItem.TextLine>()
+                .map { it.lineNumber.value }
+                .toSet()
+            if (visibleLineNumbers.isNotEmpty()) {
+                lineLayoutCache.evict(visibleLineNumbers)
+            }
+        }
+    }
+
+    // Tooltip layer
+    TooltipLayer(session = session)
+}
+
+/** Draw editor and gutter backgrounds behind content. */
+private fun Modifier.drawEditorBackground(
+    theme: EditorTheme,
+    hasGutters: Boolean,
+    gutterWidthDp: Dp,
+    contentHeightPx: Float
+): Modifier = drawWithContent {
+    drawRect(theme.background)
+    if (hasGutters) {
+        val w = gutterWidthDp.toPx()
+        val contentH = contentHeightPx.coerceAtMost(size.height)
+        drawRect(
+            color = theme.gutterBackground,
+            topLeft = Offset.Zero,
+            size = Size(w, contentH)
+        )
+        val bc = theme.gutterBorderColor
+        if (bc != Color.Transparent) {
+            drawLine(
+                color = bc,
+                start = Offset(w - 0.5f, 0f),
+                end = Offset(w - 0.5f, contentH),
+                strokeWidth = 1f
+            )
+        }
+    }
+    drawContent()
 }
 
 /**
@@ -643,12 +676,12 @@ private class PendingLineLayout(
  */
 private fun posFromVisibleItems(
     offset: Offset,
-    lazyState: androidx.compose.foundation.lazy.LazyListState,
+    lazyState: LazyListState,
     columnItems: List<ColumnItem>,
     textLayoutResults: Map<Int, TextLayoutResult>,
     hasGutters: Boolean,
-    gutterWidthDp: androidx.compose.ui.unit.Dp,
-    density: androidx.compose.ui.unit.Density
+    gutterWidthDp: Dp,
+    density: Density
 ): Int? {
     val contentStartPx = with(density) {
         (if (hasGutters) gutterWidthDp.toPx() else 0f) + 6.dp.toPx()
