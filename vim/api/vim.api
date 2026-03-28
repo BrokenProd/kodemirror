@@ -139,26 +139,21 @@ public final class com/monkopedia/kodemirror/vim/CodeMirrorAdapter {
 	public static final field Companion Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$Companion;
 	public fun <init> (Lcom/monkopedia/kodemirror/view/EditorSession;)V
 	public final fun addOverlay (Lcom/monkopedia/kodemirror/vim/SearchOverlay;)Lcom/monkopedia/kodemirror/search/SearchQuery;
-	public final fun clipPos (Lcom/monkopedia/kodemirror/vim/Pos;)Lcom/monkopedia/kodemirror/vim/Pos;
 	public final fun execCommand (Ljava/lang/String;)V
 	public final fun findMatchingBracket (Lcom/monkopedia/kodemirror/vim/Pos;)Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$BracketMatch;
 	public final fun getCursor (Ljava/lang/String;)Lcom/monkopedia/kodemirror/vim/Pos;
 	public static synthetic fun getCursor$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/vim/Pos;
 	public final fun getLastEditEnd ()Lcom/monkopedia/kodemirror/vim/Pos;
-	public final fun getLine (I)Ljava/lang/String;
 	public final fun getLineHandle (I)Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$LineHandleImpl;
 	public final fun getLineNumber (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$LineHandleImpl;)Ljava/lang/Integer;
 	public final fun getOpenDialogFn ()Lkotlin/jvm/functions/Function3;
 	public final fun getOpenNotificationFn ()Lkotlin/jvm/functions/Function2;
 	public final fun getOption (Ljava/lang/String;)Ljava/lang/Object;
-	public final fun getRange (Lcom/monkopedia/kodemirror/vim/Pos;Lcom/monkopedia/kodemirror/vim/Pos;)Ljava/lang/String;
 	public final fun getSearchCursor (Lkotlin/text/Regex;Lcom/monkopedia/kodemirror/vim/Pos;)Lcom/monkopedia/kodemirror/vim/VimSearchCursor;
 	public final fun getSelection ()Ljava/lang/String;
 	public final fun getSelections ()Ljava/util/List;
 	public final fun getSession ()Lcom/monkopedia/kodemirror/view/EditorSession;
 	public final fun getState ()Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$AdapterState;
-	public final fun getTokenTypeAt (Lcom/monkopedia/kodemirror/vim/Pos;)Ljava/lang/String;
-	public final fun getValue ()Ljava/lang/String;
 	public final fun hardWrap (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$HardWrapOptions;)I
 	public final fun indentLess ()Z
 	public final fun indentLine (IZ)V
@@ -305,9 +300,14 @@ public final class com/monkopedia/kodemirror/vim/CodeMirrorAdapter$ScanResult {
 }
 
 public final class com/monkopedia/kodemirror/vim/CodeMirrorAdapterKt {
+	public static final fun clipPos (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/Pos;)Lcom/monkopedia/kodemirror/vim/Pos;
 	public static final fun defaultTextHeight (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)F
 	public static final fun firstLine (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)I
 	public static final fun focus (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)V
+	public static final fun getLine (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;I)Ljava/lang/String;
+	public static final fun getRange (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/Pos;Lcom/monkopedia/kodemirror/vim/Pos;)Ljava/lang/String;
+	public static final fun getTokenTypeAt (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/Pos;)Ljava/lang/String;
+	public static final fun getValue (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)Ljava/lang/String;
 	public static final fun indexFromPos (Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/vim/Pos;)I
 	public static final fun isWordChar (Ljava/lang/String;)Z
 	public static final fun lastLine (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)I

@@ -320,32 +320,11 @@ class CodeMirrorAdapter(val session: EditorSession) {
     fun signal(type: String, vararg args: Any?) = events.signal(type, *args)
 
     // ---------------------------------------------------------------------------
-    // Position methods
+    // Position methods (used internally by other adapter methods and BookmarkMarker)
     // ---------------------------------------------------------------------------
 
     fun indexFromPos(pos: Pos): DocPos = indexFromPos(session.state.doc, pos)
     fun posFromIndex(offset: DocPos): Pos = posFromIndex(session.state.doc, offset)
-
-    // ---------------------------------------------------------------------------
-    // Document methods
-    // ---------------------------------------------------------------------------
-
-    fun getLine(row: Int): String {
-        val doc = session.state.doc
-        if (row < 0 || row >= doc.lines) return ""
-        return doc.line(LineNumber(row + 1)).text
-    }
-
-    fun getValue(): String = session.state.doc.toString()
-
-    fun getRange(s: Pos, e: Pos): String {
-        val doc = session.state.doc
-        val from = indexFromPos(doc, s)
-        val to = indexFromPos(doc, e)
-        val lo = if (from <= to) from else to
-        val hi = if (from <= to) to else from
-        return session.state.sliceDoc(lo, hi)
-    }
 
     fun replaceRange(text: String, s: Pos, e: Pos? = null) {
         val end = e ?: s
@@ -449,27 +428,6 @@ class CodeMirrorAdapter(val session: EditorSession) {
         if (options?.get("origin") == "*mouse") {
             onBeforeEndOperation()
         }
-    }
-
-    // ---------------------------------------------------------------------------
-    // Clipboard
-    // ---------------------------------------------------------------------------
-
-    fun clipPos(p: Pos): Pos {
-        val doc = session.state.doc
-        var ch = p.ch
-        var lineNumber = p.line + 1
-        if (lineNumber < 1) {
-            lineNumber = 1
-            ch = 0
-        }
-        if (lineNumber > doc.lines) {
-            lineNumber = doc.lines
-            ch = Int.MAX_VALUE
-        }
-        val line = doc.line(LineNumber(lineNumber))
-        ch = min(max(0, ch), line.to.value - line.from.value)
-        return Pos(lineNumber - 1, ch)
     }
 
     // ---------------------------------------------------------------------------
@@ -718,22 +676,6 @@ class CodeMirrorAdapter(val session: EditorSession) {
             )
         )
         replaceSelection(text)
-    }
-
-    // ---------------------------------------------------------------------------
-    // Token type
-    // ---------------------------------------------------------------------------
-
-    fun getTokenTypeAt(pos: Pos): String {
-        val offset = indexFromPos(pos)
-        val tree = ensureSyntaxTree(session.state, offset.value)
-        val node = tree?.resolve(offset.value)
-        val type = node?.type?.name ?: ""
-        return when {
-            type.contains("comment", ignoreCase = true) -> "comment"
-            type.contains("string", ignoreCase = true) -> "string"
-            else -> ""
-        }
     }
 
     // ---------------------------------------------------------------------------
@@ -1014,6 +956,52 @@ fun CodeMirrorAdapter.defaultTextHeight(): Float = 20f
 
 fun CodeMirrorAdapter.focus() {
     // In Compose, focus is managed differently. This is a no-op for now.
+}
+
+fun CodeMirrorAdapter.getLine(row: Int): String {
+    val doc = session.state.doc
+    if (row < 0 || row >= doc.lines) return ""
+    return doc.line(LineNumber(row + 1)).text
+}
+
+fun CodeMirrorAdapter.getValue(): String = session.state.doc.toString()
+
+fun CodeMirrorAdapter.getRange(s: Pos, e: Pos): String {
+    val doc = session.state.doc
+    val from = indexFromPos(doc, s)
+    val to = indexFromPos(doc, e)
+    val lo = if (from <= to) from else to
+    val hi = if (from <= to) to else from
+    return session.state.sliceDoc(lo, hi)
+}
+
+fun CodeMirrorAdapter.clipPos(p: Pos): Pos {
+    val doc = session.state.doc
+    var ch = p.ch
+    var lineNumber = p.line + 1
+    if (lineNumber < 1) {
+        lineNumber = 1
+        ch = 0
+    }
+    if (lineNumber > doc.lines) {
+        lineNumber = doc.lines
+        ch = Int.MAX_VALUE
+    }
+    val line = doc.line(LineNumber(lineNumber))
+    ch = min(max(0, ch), line.to.value - line.from.value)
+    return Pos(lineNumber - 1, ch)
+}
+
+fun CodeMirrorAdapter.getTokenTypeAt(pos: Pos): String {
+    val offset = indexFromPos(pos)
+    val tree = ensureSyntaxTree(session.state, offset.value)
+    val node = tree?.resolve(offset.value)
+    val type = node?.type?.name ?: ""
+    return when {
+        type.contains("comment", ignoreCase = true) -> "comment"
+        type.contains("string", ignoreCase = true) -> "string"
+        else -> ""
+    }
 }
 
 // ---------------------------------------------------------------------------
