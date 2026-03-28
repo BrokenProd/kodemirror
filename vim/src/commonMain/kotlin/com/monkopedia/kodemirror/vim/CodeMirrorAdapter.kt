@@ -291,7 +291,7 @@ class CodeMirrorAdapter(val session: EditorSession) {
     internal val events = EventHandlers()
     internal var curOp: Operation? = null
     internal val marks: MutableMap<Int, BookmarkMarker> = mutableMapOf()
-    private var markIdCounter = 0
+    internal var markIdCounter = 0
     internal var virtualSelection: EditorSelection? = null
     internal var lastChangeEndOffset: DocPos = DocPos.ZERO
     private var cm6Query: SearchQuery? = null
@@ -475,68 +475,6 @@ class CodeMirrorAdapter(val session: EditorSession) {
 
     data class ScanResult(val pos: Pos, val ch: String)
 
-    // ---------------------------------------------------------------------------
-    // Indentation
-    // ---------------------------------------------------------------------------
-
-    fun indentLine(line: Int, more: Boolean = false) {
-        if (more) indentMore(session) else indentLess(session)
-    }
-
-    fun indentMore() = indentMore(session)
-    fun indentLess() = indentLess(session)
-
-    // ---------------------------------------------------------------------------
-    // Command execution
-    // ---------------------------------------------------------------------------
-
-    fun execCommand(name: String) {
-        when (name) {
-            "cursorCharLeft" -> cursorCharLeft(session)
-            "redo" -> runHistoryCommand(false)
-            "undo" -> runHistoryCommand(true)
-            "newlineAndIndent" -> {
-                insertNewlineAndIndent(session)
-            }
-            "indentAuto" -> indentMore(session)
-            "goLineLeft" -> cursorLineBoundaryBackward(session)
-            "goLineRight" -> {
-                cursorLineBoundaryForward(session)
-                val st = session.state
-                val cur = st.selection.main.head
-                if (cur < st.doc.endPos && st.sliceDoc(cur, cur + 1) != "\n") {
-                    cursorCharBackward(session)
-                }
-            }
-        }
-    }
-
-    private fun runHistoryCommand(revert: Boolean) {
-        if (curOp != null) {
-            curOp!!.changeStart = null
-        }
-        if (revert) undo(session) else redo(session)
-        val changeStartIndex = curOp?.changeStart
-        if (changeStartIndex != null) {
-            session.dispatch(
-                TransactionSpec(selection = SelectionSpec.CursorSpec(changeStartIndex))
-            )
-        }
-    }
-
-    // ---------------------------------------------------------------------------
-    // Bookmarks
-    // ---------------------------------------------------------------------------
-
-    fun setBookmark(cursor: Pos, options: BookmarkOptions? = null): Marker {
-        val assoc = if (options?.insertLeft == true) 1 else -1
-        val offset = indexFromPos(cursor)
-        val bm = BookmarkMarker(this, offset, assoc)
-        bm.id = markIdCounter++
-        marks[bm.id] = bm
-        return bm
-    }
-
     data class BookmarkOptions(val insertLeft: Boolean = false)
 
     // ---------------------------------------------------------------------------
@@ -589,36 +527,6 @@ class CodeMirrorAdapter(val session: EditorSession) {
         } else {
             session.dispatch(TransactionSpec(scrollIntoView = true))
         }
-    }
-
-    // ---------------------------------------------------------------------------
-    // Options
-    // ---------------------------------------------------------------------------
-
-    fun setOption(name: String, value: Any?) {
-        when (name) {
-            "keyMap" -> state.keyMap = value as? String
-            "textwidth" -> state.textwidth = value as? Int
-        }
-    }
-
-    fun getOption(name: String): Any? = when (name) {
-        "firstLineNumber" -> 1
-        "tabSize" -> session.state.tabSize
-        "readOnly" -> session.state.readOnly
-        "indentWithTabs" -> false // Kodemirror's indentUnit is Int-based, no tab mode
-        "indentUnit" -> session.state.facet(indentUnit).coerceAtLeast(2)
-        "textwidth" -> state.textwidth
-        "keyMap" -> state.keyMap ?: "vim"
-        else -> null
-    }
-
-    // ---------------------------------------------------------------------------
-    // Overwrite
-    // ---------------------------------------------------------------------------
-
-    fun toggleOverwrite(on: Boolean) {
-        state.overwrite = on
     }
 
     fun overWriteSelection(text: String) {
@@ -992,6 +900,79 @@ fun CodeMirrorAdapter.somethingSelected(): Boolean =
     session.state.selection.ranges.any { !it.empty }
 
 fun CodeMirrorAdapter.getLastEditEnd(): Pos = posFromIndex(lastChangeEndOffset)
+
+fun CodeMirrorAdapter.setOption(name: String, value: Any?) {
+    when (name) {
+        "keyMap" -> state.keyMap = value as? String
+        "textwidth" -> state.textwidth = value as? Int
+    }
+}
+
+fun CodeMirrorAdapter.getOption(name: String): Any? = when (name) {
+    "firstLineNumber" -> 1
+    "tabSize" -> session.state.tabSize
+    "readOnly" -> session.state.readOnly
+    "indentWithTabs" -> false
+    "indentUnit" -> session.state.facet(indentUnit).coerceAtLeast(2)
+    "textwidth" -> state.textwidth
+    "keyMap" -> state.keyMap ?: "vim"
+    else -> null
+}
+
+fun CodeMirrorAdapter.toggleOverwrite(on: Boolean) {
+    state.overwrite = on
+}
+
+fun CodeMirrorAdapter.execCommand(name: String) {
+    when (name) {
+        "cursorCharLeft" -> cursorCharLeft(session)
+        "redo" -> runHistoryCommand(false)
+        "undo" -> runHistoryCommand(true)
+        "newlineAndIndent" -> insertNewlineAndIndent(session)
+        "indentAuto" -> indentMore(session)
+        "goLineLeft" -> cursorLineBoundaryBackward(session)
+        "goLineRight" -> {
+            cursorLineBoundaryForward(session)
+            val st = session.state
+            val cur = st.selection.main.head
+            if (cur < st.doc.endPos && st.sliceDoc(cur, cur + 1) != "\n") {
+                cursorCharBackward(session)
+            }
+        }
+    }
+}
+
+private fun CodeMirrorAdapter.runHistoryCommand(revert: Boolean) {
+    if (curOp != null) {
+        curOp!!.changeStart = null
+    }
+    if (revert) undo(session) else redo(session)
+    val changeStartIndex = curOp?.changeStart
+    if (changeStartIndex != null) {
+        session.dispatch(
+            TransactionSpec(selection = SelectionSpec.CursorSpec(changeStartIndex))
+        )
+    }
+}
+
+fun CodeMirrorAdapter.indentLine(line: Int, more: Boolean = false) {
+    if (more) indentMore(session) else indentLess(session)
+}
+
+fun CodeMirrorAdapter.indentMore() = indentMore(session)
+fun CodeMirrorAdapter.indentLess() = indentLess(session)
+
+fun CodeMirrorAdapter.setBookmark(
+    cursor: Pos,
+    options: CodeMirrorAdapter.BookmarkOptions? = null
+): Marker {
+    val assoc = if (options?.insertLeft == true) 1 else -1
+    val offset = indexFromPos(cursor)
+    val bm = BookmarkMarker(this, offset, assoc)
+    bm.id = markIdCounter++
+    marks[bm.id] = bm
+    return bm
+}
 
 fun CodeMirrorAdapter.getTokenTypeAt(pos: Pos): String {
     val offset = indexFromPos(pos)
