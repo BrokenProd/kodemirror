@@ -294,8 +294,8 @@ class CodeMirrorAdapter(val session: EditorSession) {
     internal var markIdCounter = 0
     internal var virtualSelection: EditorSelection? = null
     internal var lastChangeEndOffset: DocPos = DocPos.ZERO
-    private var cm6Query: SearchQuery? = null
-    private var lineHandleChanges: MutableList<ViewUpdate>? = null
+    internal var cm6Query: SearchQuery? = null
+    internal var lineHandleChanges: MutableList<ViewUpdate>? = null
 
     val state = AdapterState()
 
@@ -311,349 +311,24 @@ class CodeMirrorAdapter(val session: EditorSession) {
         var textwidth: Int? = null
     }
 
-    // ---------------------------------------------------------------------------
-    // Event methods
-    // ---------------------------------------------------------------------------
-
-    fun on(type: String, f: (Array<out Any?>) -> Unit) = events.on(type, f)
-    fun off(type: String, f: (Array<out Any?>) -> Unit) = events.off(type, f)
-    fun signal(type: String, vararg args: Any?) = events.signal(type, *args)
-
-    // ---------------------------------------------------------------------------
-    // Position methods (used internally by other adapter methods and BookmarkMarker)
-    // ---------------------------------------------------------------------------
-
     fun indexFromPos(pos: Pos): DocPos = indexFromPos(session.state.doc, pos)
     fun posFromIndex(offset: DocPos): Pos = posFromIndex(session.state.doc, offset)
 
-    // ---------------------------------------------------------------------------
-    // Bracket matching
-    // ---------------------------------------------------------------------------
-
-    fun findMatchingBracket(pos: Pos): BracketMatch {
-        val state = session.state
-        val offset = indexFromPos(state.doc, pos)
-        var m = matchBrackets(state, offset + 1, -1)
-        if (m?.end != null) {
-            return BracketMatch(posFromIndex(state.doc, m.end!!.from))
-        }
-        m = matchBrackets(state, offset, 1)
-        if (m?.end != null) {
-            return BracketMatch(posFromIndex(state.doc, m.end!!.from))
-        }
-        return BracketMatch(null)
-    }
+    var openDialogFn: (
+        (prefix: String, callback: (String) -> Unit, options: Map<String, Any?>) -> (() -> Unit)
+    )? = null
+    var openNotificationFn: ((text: String, options: Map<String, Any?>) -> (() -> Unit))? = null
 
     data class BracketMatch(val to: Pos?)
-
-    fun scanForBracket(
-        where: Pos,
-        dir: Int,
-        @Suppress("UNUSED_PARAMETER") style: Any? = null,
-        config: Map<String, Any?>? = null
-    ): ScanResult? {
-        val maxScanLen = (config?.get("maxScanLineLength") as? Int) ?: 10000
-        val maxScanLines = (config?.get("maxScanLines") as? Int) ?: 1000
-        val re = Regex("[(){}\\[\\]]")
-
-        val stack = mutableListOf<String>()
-        val lineEnd = if (dir > 0) {
-            min(where.line + maxScanLines, lastLine() + 1)
-        } else {
-            max(firstLine() - 1, where.line - maxScanLines)
-        }
-        var lineNo = where.line
-        while (lineNo != lineEnd) {
-            val line = getLine(lineNo)
-            if (line.isEmpty()) {
-                lineNo += dir
-                continue
-            }
-            if (line.length > maxScanLen) {
-                lineNo += dir
-                continue
-            }
-
-            val end = if (dir > 0) line.length else -1
-            var pos = if (dir > 0) 0 else line.length - 1
-            if (lineNo == where.line) pos = where.ch - if (dir < 0) 1 else 0
-
-            while (pos != end) {
-                val ch = line[pos].toString()
-                if (re.containsMatchIn(ch)) {
-                    val match = BRACKET_MATCHING[ch[0]]
-                    if (match != null && (match[1] == '>') == (dir > 0)) {
-                        stack.add(ch)
-                    } else if (stack.isEmpty()) {
-                        return ScanResult(Pos(lineNo, pos), ch)
-                    } else {
-                        stack.removeLastOrNull()
-                    }
-                }
-                pos += dir
-            }
-            lineNo += dir
-        }
-        return if (lineNo - dir == (if (dir > 0) lastLine() else firstLine())) {
-            null // false case
-        } else {
-            null // null case (exceeded scan range)
-        }
-    }
-
     data class ScanResult(val pos: Pos, val ch: String)
-
     data class BookmarkOptions(val insertLeft: Boolean = false)
-
-    // ---------------------------------------------------------------------------
-    // Search overlay
-    // ---------------------------------------------------------------------------
-
-    fun addOverlay(overlay: SearchOverlay): SearchQuery? {
-        val query = overlay.query
-        val cm6Query = SearchQuery(
-            regexp = true,
-            search = query.pattern,
-            caseSensitive = !query.options.contains(RegexOption.IGNORE_CASE)
-        )
-        if (cm6Query.valid) {
-            this.cm6Query = cm6Query
-            session.dispatch(
-                TransactionSpec(effects = listOf(setSearchQuery.of(cm6Query)))
-            )
-            return cm6Query
-        }
-        return null
-    }
-
-    fun removeOverlay(@Suppress("UNUSED_PARAMETER") overlay: Any? = null) {
-        val q = cm6Query ?: return
-        session.dispatch(
-            TransactionSpec(effects = listOf(setSearchQuery.of(q)))
-        )
-    }
-
-    // ---------------------------------------------------------------------------
-    // Search cursor
-    // ---------------------------------------------------------------------------
-
-    fun getSearchCursor(query: Regex, pos: Pos): VimSearchCursor = VimSearchCursor(this, query, pos)
-
-    // ---------------------------------------------------------------------------
-    // Line handles
-    // ---------------------------------------------------------------------------
-
-    fun getLineHandle(row: Int): LineHandleImpl {
-        if (lineHandleChanges == null) lineHandleChanges = mutableListOf()
-        return LineHandleImpl(row, indexFromPos(Pos(row, 0)))
-    }
-
     data class LineHandleImpl(val row: Int, val index: DocPos)
-
-    fun getLineNumber(handle: LineHandleImpl): Int? {
-        val updates = lineHandleChanges ?: return null
-        var offset: DocPos? = handle.index
-        for (update in updates) {
-            offset = update.changes.mapPos(offset!!, 1, MapMode.TrackAfter)
-            if (offset == null) return null
-        }
-        val pos = posFromIndex(session.state.doc, offset!!)
-        return if (pos.ch == 0) pos.line else null
-    }
-
-    fun releaseLineHandles() {
-        lineHandleChanges = null
-    }
-
-    // ---------------------------------------------------------------------------
-    // Hard wrap
-    // ---------------------------------------------------------------------------
-
-    fun hardWrap(options: HardWrapOptions): Int {
-        val max = options.column ?: (getOption("textwidth") as? Int) ?: 80
-        val allowMerge = options.allowMerge
-
-        var row = min(options.from, options.to)
-        val endRow = intArrayOf(max(options.from, options.to))
-
-        while (row <= endRow[0]) {
-            val line = getLine(row)
-            if (line.length > max) {
-                val space = findSpace(line, max, 5)
-                if (space != null) {
-                    val indentation = Regex("^\\s*").find(line)?.value ?: ""
-                    replaceRange(
-                        "\n$indentation",
-                        Pos(row, space.start),
-                        Pos(row, space.end)
-                    )
-                }
-                endRow[0]++
-            } else if (allowMerge && Regex("\\S").containsMatchIn(line) && row != endRow[0]) {
-                val nextLine = getLine(row + 1)
-                if (nextLine.isNotEmpty() && Regex("\\S").containsMatchIn(nextLine)) {
-                    val trimmedLine = line.trimEnd()
-                    val trimmedNextLine = nextLine.trimStart()
-                    val mergedLine = "$trimmedLine $trimmedNextLine"
-
-                    val space = findSpace(mergedLine, max, 5)
-                    if ((space != null && space.start > trimmedLine.length) ||
-                        mergedLine.length < max
-                    ) {
-                        replaceRange(
-                            " ",
-                            Pos(row, trimmedLine.length),
-                            Pos(row + 1, nextLine.length - trimmedNextLine.length)
-                        )
-                        row--
-                        endRow[0]--
-                    } else if (trimmedLine.length < line.length) {
-                        replaceRange(
-                            "",
-                            Pos(row, trimmedLine.length),
-                            Pos(row, line.length)
-                        )
-                    }
-                }
-            }
-            row++
-        }
-        return row
-    }
-
     data class HardWrapOptions(
         val from: Int,
         val to: Int,
         val column: Int? = null,
         val allowMerge: Boolean = true
     )
-
-    private fun findSpace(line: String, max: Int, min: Int): SpaceResult? {
-        if (line.length < max) return null
-        val before = line.substring(0, max)
-        val after = line.substring(max)
-
-        val spaceAfter = Regex("^(?:(\\s+)|(\\S+)(\\s+))").find(after)
-        val spaceBefore = Regex("(?:(\\s+)|(\\s+)(\\S+))$").find(before)
-
-        var start = 0
-        var end = 0
-
-        if (spaceBefore != null && spaceBefore.groupValues[2].isEmpty()) {
-            start = max - spaceBefore.groupValues[1].length
-            end = max
-        }
-        if (spaceAfter != null && spaceAfter.groupValues[2].isEmpty()) {
-            if (start == 0) start = max
-            end = max + spaceAfter.groupValues[1].length
-        }
-        if (start != 0) return SpaceResult(start, end)
-
-        if (spaceBefore != null && spaceBefore.groupValues[2].isNotEmpty() &&
-            spaceBefore.range.first > min
-        ) {
-            return SpaceResult(
-                spaceBefore.range.first,
-                spaceBefore.range.first + spaceBefore.groupValues[2].length
-            )
-        }
-
-        if (spaceAfter != null && spaceAfter.groupValues[2].isNotEmpty()) {
-            val s = max + spaceAfter.groupValues[2].length
-            return SpaceResult(s, s + spaceAfter.groupValues[3].length)
-        }
-        return null
-    }
-
-    private data class SpaceResult(val start: Int, val end: Int)
-
-    // ---------------------------------------------------------------------------
-    // Update handlers (called by the vim plugin on ViewUpdate)
-    // ---------------------------------------------------------------------------
-
-    fun onChange(update: ViewUpdate) {
-        lineHandleChanges?.add(update)
-        for ((_, m) in marks) {
-            m.update(update.changes)
-        }
-        virtualSelection?.let { vs ->
-            virtualSelection = EditorSelection.create(
-                vs.ranges.map { it.map(update.changes) },
-                vs.mainIndex
-            )
-        }
-        val op = curOp ?: Operation().also { curOp = it }
-        update.changes.iterChanges(
-            f = { _: DocPos, _: DocPos, fromB: DocPos, toB: DocPos, text: Text ->
-                if (op.changeStart == null || op.changeStart!! > fromB) {
-                    op.changeStart = fromB
-                }
-                lastChangeEndOffset = toB
-                val change = Change(text.lineSequence().map { line -> line.text }.toList())
-                if (op.lastChange == null) {
-                    op.change = change
-                    op.lastChange = change
-                } else {
-                    op.lastChange!!.next = change
-                    op.lastChange = change
-                }
-            },
-            individual = true
-        )
-        if (op.changeHandlers == null) {
-            op.changeHandlers = events.getHandlers("change")
-        }
-    }
-
-    fun onSelectionChange() {
-        val op = curOp ?: Operation().also { curOp = it }
-        if (op.cursorActivityHandlers == null) {
-            op.cursorActivityHandlers = events.getHandlers("cursorActivity")
-        }
-        op.cursorActivity = true
-    }
-
-    internal fun onBeforeEndOperation() {
-        val op = curOp ?: return
-        var scrollIntoView = false
-        if (op.change != null) {
-            op.changeHandlers?.forEach { it(arrayOf(this, op.change)) }
-        }
-        if (op.cursorActivity) {
-            op.cursorActivityHandlers?.forEach { it(arrayOf(this, null)) }
-            if (op.isVimOp) scrollIntoView = true
-        }
-        curOp = null
-        if (scrollIntoView) {
-            this.scrollIntoView()
-        }
-    }
-
-    // ---------------------------------------------------------------------------
-    // Dialog support (for ex command line input)
-    // ---------------------------------------------------------------------------
-
-    var openDialogFn: (
-        (prefix: String, callback: (String) -> Unit, options: Map<String, Any?>) -> (() -> Unit)
-    )? =
-        null
-    var openNotificationFn: ((text: String, options: Map<String, Any?>) -> (() -> Unit))? = null
-
-    fun openDialog(
-        template: String,
-        callback: ((String) -> Unit)?,
-        options: Map<String, Any?> = emptyMap()
-    ): () -> Unit {
-        return openDialogFn?.invoke(template, callback ?: {}, options) ?: {}
-    }
-
-    fun openNotification(template: String, options: Map<String, Any?> = emptyMap()): () -> Unit {
-        return openNotificationFn?.invoke(template, options) ?: {}
-    }
-
-    // ---------------------------------------------------------------------------
-    // Companion: static-like members matching CodeMirror.xxx
-    // ---------------------------------------------------------------------------
 
     companion object {
         var isMac: Boolean = false
@@ -681,6 +356,286 @@ class CodeMirrorAdapter(val session: EditorSession) {
 // ---------------------------------------------------------------------------
 // Extension functions (extracted from CodeMirrorAdapter methods)
 // ---------------------------------------------------------------------------
+
+fun CodeMirrorAdapter.on(type: String, f: (Array<out Any?>) -> Unit) = events.on(type, f)
+fun CodeMirrorAdapter.off(type: String, f: (Array<out Any?>) -> Unit) = events.off(type, f)
+fun CodeMirrorAdapter.signal(type: String, vararg args: Any?) = events.signal(type, *args)
+
+fun CodeMirrorAdapter.findMatchingBracket(pos: Pos): CodeMirrorAdapter.BracketMatch {
+    val state = session.state
+    val offset = indexFromPos(state.doc, pos)
+    var m = matchBrackets(state, offset + 1, -1)
+    if (m?.end != null) {
+        return CodeMirrorAdapter.BracketMatch(posFromIndex(state.doc, m.end!!.from))
+    }
+    m = matchBrackets(state, offset, 1)
+    if (m?.end != null) {
+        return CodeMirrorAdapter.BracketMatch(posFromIndex(state.doc, m.end!!.from))
+    }
+    return CodeMirrorAdapter.BracketMatch(null)
+}
+
+fun CodeMirrorAdapter.scanForBracket(
+    where: Pos,
+    dir: Int,
+    @Suppress("UNUSED_PARAMETER") style: Any? = null,
+    config: Map<String, Any?>? = null
+): CodeMirrorAdapter.ScanResult? {
+    val maxScanLen = (config?.get("maxScanLineLength") as? Int) ?: 10000
+    val maxScanLines = (config?.get("maxScanLines") as? Int) ?: 1000
+    val re = Regex("[(){}\\[\\]]")
+
+    val stack = mutableListOf<String>()
+    val lineEnd = if (dir > 0) {
+        min(where.line + maxScanLines, lastLine() + 1)
+    } else {
+        max(firstLine() - 1, where.line - maxScanLines)
+    }
+    var lineNo = where.line
+    while (lineNo != lineEnd) {
+        val line = getLine(lineNo)
+        if (line.isEmpty()) {
+            lineNo += dir
+            continue
+        }
+        if (line.length > maxScanLen) {
+            lineNo += dir
+            continue
+        }
+
+        val end = if (dir > 0) line.length else -1
+        var pos = if (dir > 0) 0 else line.length - 1
+        if (lineNo == where.line) pos = where.ch - if (dir < 0) 1 else 0
+
+        while (pos != end) {
+            val ch = line[pos].toString()
+            if (re.containsMatchIn(ch)) {
+                val match = BRACKET_MATCHING[ch[0]]
+                if (match != null && (match[1] == '>') == (dir > 0)) {
+                    stack.add(ch)
+                } else if (stack.isEmpty()) {
+                    return CodeMirrorAdapter.ScanResult(Pos(lineNo, pos), ch)
+                } else {
+                    stack.removeLastOrNull()
+                }
+            }
+            pos += dir
+        }
+        lineNo += dir
+    }
+    return null
+}
+
+fun CodeMirrorAdapter.addOverlay(overlay: SearchOverlay): SearchQuery? {
+    val query = overlay.query
+    val cm6Query = SearchQuery(
+        regexp = true,
+        search = query.pattern,
+        caseSensitive = !query.options.contains(RegexOption.IGNORE_CASE)
+    )
+    if (cm6Query.valid) {
+        this.cm6Query = cm6Query
+        session.dispatch(
+            TransactionSpec(effects = listOf(setSearchQuery.of(cm6Query)))
+        )
+        return cm6Query
+    }
+    return null
+}
+
+fun CodeMirrorAdapter.removeOverlay(@Suppress("UNUSED_PARAMETER") overlay: Any? = null) {
+    val q = cm6Query ?: return
+    session.dispatch(
+        TransactionSpec(effects = listOf(setSearchQuery.of(q)))
+    )
+}
+
+fun CodeMirrorAdapter.getSearchCursor(query: Regex, pos: Pos): VimSearchCursor =
+    VimSearchCursor(this, query, pos)
+
+fun CodeMirrorAdapter.getLineHandle(row: Int): CodeMirrorAdapter.LineHandleImpl {
+    if (lineHandleChanges == null) lineHandleChanges = mutableListOf()
+    return CodeMirrorAdapter.LineHandleImpl(row, indexFromPos(Pos(row, 0)))
+}
+
+fun CodeMirrorAdapter.getLineNumber(handle: CodeMirrorAdapter.LineHandleImpl): Int? {
+    val updates = lineHandleChanges ?: return null
+    var offset: DocPos? = handle.index
+    for (update in updates) {
+        offset = update.changes.mapPos(offset!!, 1, MapMode.TrackAfter)
+        if (offset == null) return null
+    }
+    val pos = posFromIndex(session.state.doc, offset!!)
+    return if (pos.ch == 0) pos.line else null
+}
+
+fun CodeMirrorAdapter.releaseLineHandles() {
+    lineHandleChanges = null
+}
+
+fun CodeMirrorAdapter.hardWrap(options: CodeMirrorAdapter.HardWrapOptions): Int {
+    val max = options.column ?: (getOption("textwidth") as? Int) ?: 80
+    val allowMerge = options.allowMerge
+
+    var row = min(options.from, options.to)
+    val endRow = intArrayOf(max(options.from, options.to))
+
+    while (row <= endRow[0]) {
+        val line = getLine(row)
+        if (line.length > max) {
+            val space = findSpace(line, max, 5)
+            if (space != null) {
+                val indentation = Regex("^\\s*").find(line)?.value ?: ""
+                replaceRange(
+                    "\n$indentation",
+                    Pos(row, space.start),
+                    Pos(row, space.end)
+                )
+            }
+            endRow[0]++
+        } else if (allowMerge && Regex("\\S").containsMatchIn(line) && row != endRow[0]) {
+            val nextLine = getLine(row + 1)
+            if (nextLine.isNotEmpty() && Regex("\\S").containsMatchIn(nextLine)) {
+                val trimmedLine = line.trimEnd()
+                val trimmedNextLine = nextLine.trimStart()
+                val mergedLine = "$trimmedLine $trimmedNextLine"
+
+                val space = findSpace(mergedLine, max, 5)
+                if ((space != null && space.start > trimmedLine.length) ||
+                    mergedLine.length < max
+                ) {
+                    replaceRange(
+                        " ",
+                        Pos(row, trimmedLine.length),
+                        Pos(row + 1, nextLine.length - trimmedNextLine.length)
+                    )
+                    row--
+                    endRow[0]--
+                } else if (trimmedLine.length < line.length) {
+                    replaceRange(
+                        "",
+                        Pos(row, trimmedLine.length),
+                        Pos(row, line.length)
+                    )
+                }
+            }
+        }
+        row++
+    }
+    return row
+}
+
+private data class SpaceResult(val start: Int, val end: Int)
+
+private fun findSpace(line: String, max: Int, min: Int): SpaceResult? {
+    if (line.length < max) return null
+    val before = line.substring(0, max)
+    val after = line.substring(max)
+
+    val spaceAfter = Regex("^(?:(\\s+)|(\\S+)(\\s+))").find(after)
+    val spaceBefore = Regex("(?:(\\s+)|(\\s+)(\\S+))$").find(before)
+
+    var start = 0
+    var end = 0
+
+    if (spaceBefore != null && spaceBefore.groupValues[2].isEmpty()) {
+        start = max - spaceBefore.groupValues[1].length
+        end = max
+    }
+    if (spaceAfter != null && spaceAfter.groupValues[2].isEmpty()) {
+        if (start == 0) start = max
+        end = max + spaceAfter.groupValues[1].length
+    }
+    if (start != 0) return SpaceResult(start, end)
+
+    if (spaceBefore != null && spaceBefore.groupValues[2].isNotEmpty() &&
+        spaceBefore.range.first > min
+    ) {
+        return SpaceResult(
+            spaceBefore.range.first,
+            spaceBefore.range.first + spaceBefore.groupValues[2].length
+        )
+    }
+
+    if (spaceAfter != null && spaceAfter.groupValues[2].isNotEmpty()) {
+        val s = max + spaceAfter.groupValues[2].length
+        return SpaceResult(s, s + spaceAfter.groupValues[3].length)
+    }
+    return null
+}
+
+fun CodeMirrorAdapter.onChange(update: ViewUpdate) {
+    lineHandleChanges?.add(update)
+    for ((_, m) in marks) {
+        m.update(update.changes)
+    }
+    virtualSelection?.let { vs ->
+        virtualSelection = EditorSelection.create(
+            vs.ranges.map { it.map(update.changes) },
+            vs.mainIndex
+        )
+    }
+    val op = curOp ?: Operation().also { curOp = it }
+    update.changes.iterChanges(
+        f = { _: DocPos, _: DocPos, fromB: DocPos, toB: DocPos, text: Text ->
+            if (op.changeStart == null || op.changeStart!! > fromB) {
+                op.changeStart = fromB
+            }
+            lastChangeEndOffset = toB
+            val change = Change(text.lineSequence().map { line -> line.text }.toList())
+            if (op.lastChange == null) {
+                op.change = change
+                op.lastChange = change
+            } else {
+                op.lastChange!!.next = change
+                op.lastChange = change
+            }
+        },
+        individual = true
+    )
+    if (op.changeHandlers == null) {
+        op.changeHandlers = events.getHandlers("change")
+    }
+}
+
+fun CodeMirrorAdapter.onSelectionChange() {
+    val op = curOp ?: Operation().also { curOp = it }
+    if (op.cursorActivityHandlers == null) {
+        op.cursorActivityHandlers = events.getHandlers("cursorActivity")
+    }
+    op.cursorActivity = true
+}
+
+internal fun CodeMirrorAdapter.onBeforeEndOperation() {
+    val op = curOp ?: return
+    var scrollIntoView = false
+    if (op.change != null) {
+        op.changeHandlers?.forEach { it(arrayOf(this, op.change)) }
+    }
+    if (op.cursorActivity) {
+        op.cursorActivityHandlers?.forEach { it(arrayOf(this, null)) }
+        if (op.isVimOp) scrollIntoView = true
+    }
+    curOp = null
+    if (scrollIntoView) {
+        this.scrollIntoView()
+    }
+}
+
+fun CodeMirrorAdapter.openDialog(
+    template: String,
+    callback: ((String) -> Unit)?,
+    options: Map<String, Any?> = emptyMap()
+): () -> Unit {
+    return openDialogFn?.invoke(template, callback ?: {}, options) ?: {}
+}
+
+fun CodeMirrorAdapter.openNotification(
+    template: String,
+    options: Map<String, Any?> = emptyMap()
+): () -> Unit {
+    return openNotificationFn?.invoke(template, options) ?: {}
+}
 
 fun CodeMirrorAdapter.firstLine(): Int = 0
 fun CodeMirrorAdapter.lastLine(): Int = session.state.doc.lines - 1

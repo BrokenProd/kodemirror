@@ -138,34 +138,14 @@ public final class com/monkopedia/kodemirror/vim/ChangeQueue {
 public final class com/monkopedia/kodemirror/vim/CodeMirrorAdapter {
 	public static final field Companion Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$Companion;
 	public fun <init> (Lcom/monkopedia/kodemirror/view/EditorSession;)V
-	public final fun addOverlay (Lcom/monkopedia/kodemirror/vim/SearchOverlay;)Lcom/monkopedia/kodemirror/search/SearchQuery;
-	public final fun findMatchingBracket (Lcom/monkopedia/kodemirror/vim/Pos;)Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$BracketMatch;
-	public final fun getLineHandle (I)Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$LineHandleImpl;
-	public final fun getLineNumber (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$LineHandleImpl;)Ljava/lang/Integer;
 	public final fun getOpenDialogFn ()Lkotlin/jvm/functions/Function3;
 	public final fun getOpenNotificationFn ()Lkotlin/jvm/functions/Function2;
-	public final fun getSearchCursor (Lkotlin/text/Regex;Lcom/monkopedia/kodemirror/vim/Pos;)Lcom/monkopedia/kodemirror/vim/VimSearchCursor;
 	public final fun getSession ()Lcom/monkopedia/kodemirror/view/EditorSession;
 	public final fun getState ()Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$AdapterState;
-	public final fun hardWrap (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$HardWrapOptions;)I
 	public final fun indexFromPos-Z8n_zFs (Lcom/monkopedia/kodemirror/vim/Pos;)I
-	public final fun off (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public final fun on (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public final fun onChange (Lcom/monkopedia/kodemirror/view/ViewUpdate;)V
-	public final fun onSelectionChange ()V
-	public final fun openDialog (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Ljava/util/Map;)Lkotlin/jvm/functions/Function0;
-	public static synthetic fun openDialog$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Ljava/util/Map;ILjava/lang/Object;)Lkotlin/jvm/functions/Function0;
-	public final fun openNotification (Ljava/lang/String;Ljava/util/Map;)Lkotlin/jvm/functions/Function0;
-	public static synthetic fun openNotification$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lkotlin/jvm/functions/Function0;
 	public final fun posFromIndex-q6YQIc8 (I)Lcom/monkopedia/kodemirror/vim/Pos;
-	public final fun releaseLineHandles ()V
-	public final fun removeOverlay (Ljava/lang/Object;)V
-	public static synthetic fun removeOverlay$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/Object;ILjava/lang/Object;)V
-	public final fun scanForBracket (Lcom/monkopedia/kodemirror/vim/Pos;ILjava/lang/Object;Ljava/util/Map;)Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$ScanResult;
-	public static synthetic fun scanForBracket$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/Pos;ILjava/lang/Object;Ljava/util/Map;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$ScanResult;
 	public final fun setOpenDialogFn (Lkotlin/jvm/functions/Function3;)V
 	public final fun setOpenNotificationFn (Lkotlin/jvm/functions/Function2;)V
-	public final fun signal (Ljava/lang/String;[Ljava/lang/Object;)V
 }
 
 public final class com/monkopedia/kodemirror/vim/CodeMirrorAdapter$AdapterState {
@@ -268,21 +248,27 @@ public final class com/monkopedia/kodemirror/vim/CodeMirrorAdapter$ScanResult {
 }
 
 public final class com/monkopedia/kodemirror/vim/CodeMirrorAdapterKt {
+	public static final fun addOverlay (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/SearchOverlay;)Lcom/monkopedia/kodemirror/search/SearchQuery;
 	public static final fun clipPos (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/Pos;)Lcom/monkopedia/kodemirror/vim/Pos;
 	public static final fun defaultTextHeight (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)F
 	public static final fun execCommand (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;)V
+	public static final fun findMatchingBracket (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/Pos;)Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$BracketMatch;
 	public static final fun firstLine (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)I
 	public static final fun focus (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)V
 	public static final fun getCursor (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;)Lcom/monkopedia/kodemirror/vim/Pos;
 	public static synthetic fun getCursor$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/vim/Pos;
 	public static final fun getLastEditEnd (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)Lcom/monkopedia/kodemirror/vim/Pos;
 	public static final fun getLine (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;I)Ljava/lang/String;
+	public static final fun getLineHandle (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;I)Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$LineHandleImpl;
+	public static final fun getLineNumber (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$LineHandleImpl;)Ljava/lang/Integer;
 	public static final fun getOption (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;)Ljava/lang/Object;
 	public static final fun getRange (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/Pos;Lcom/monkopedia/kodemirror/vim/Pos;)Ljava/lang/String;
+	public static final fun getSearchCursor (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lkotlin/text/Regex;Lcom/monkopedia/kodemirror/vim/Pos;)Lcom/monkopedia/kodemirror/vim/VimSearchCursor;
 	public static final fun getSelection (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)Ljava/lang/String;
 	public static final fun getSelections (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)Ljava/util/List;
 	public static final fun getTokenTypeAt (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/Pos;)Ljava/lang/String;
 	public static final fun getValue (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)Ljava/lang/String;
+	public static final fun hardWrap (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$HardWrapOptions;)I
 	public static final fun indentLess (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)Z
 	public static final fun indentLine (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;IZ)V
 	public static synthetic fun indentLine$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;IZILjava/lang/Object;)V
@@ -292,13 +278,26 @@ public final class com/monkopedia/kodemirror/vim/CodeMirrorAdapterKt {
 	public static final fun lastLine (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)I
 	public static final fun lineCount (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)I
 	public static final fun listSelections (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)Ljava/util/List;
+	public static final fun off (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static final fun on (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static final fun onChange (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/view/ViewUpdate;)V
+	public static final fun onSelectionChange (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)V
+	public static final fun openDialog (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Ljava/util/Map;)Lkotlin/jvm/functions/Function0;
+	public static synthetic fun openDialog$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Ljava/util/Map;ILjava/lang/Object;)Lkotlin/jvm/functions/Function0;
+	public static final fun openNotification (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;Ljava/util/Map;)Lkotlin/jvm/functions/Function0;
+	public static synthetic fun openNotification$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lkotlin/jvm/functions/Function0;
 	public static final fun operation (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public static final fun overWriteSelection (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;)V
 	public static final fun posFromIndex-FCwYIAs (Lcom/monkopedia/kodemirror/state/Text;I)Lcom/monkopedia/kodemirror/vim/Pos;
+	public static final fun releaseLineHandles (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)V
+	public static final fun removeOverlay (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/Object;)V
+	public static synthetic fun removeOverlay$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/Object;ILjava/lang/Object;)V
 	public static final fun replaceRange (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;Lcom/monkopedia/kodemirror/vim/Pos;Lcom/monkopedia/kodemirror/vim/Pos;)V
 	public static synthetic fun replaceRange$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;Lcom/monkopedia/kodemirror/vim/Pos;Lcom/monkopedia/kodemirror/vim/Pos;ILjava/lang/Object;)V
 	public static final fun replaceSelection (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;)V
 	public static final fun replaceSelections (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/util/List;)V
+	public static final fun scanForBracket (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/Pos;ILjava/lang/Object;Ljava/util/Map;)Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$ScanResult;
+	public static synthetic fun scanForBracket$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/Pos;ILjava/lang/Object;Ljava/util/Map;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$ScanResult;
 	public static final fun scrollIntoView (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/Pos;Ljava/lang/Integer;)V
 	public static synthetic fun scrollIntoView$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/Pos;Ljava/lang/Integer;ILjava/lang/Object;)V
 	public static final fun setBookmark (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/Pos;Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter$BookmarkOptions;)Lcom/monkopedia/kodemirror/vim/Marker;
@@ -311,6 +310,7 @@ public final class com/monkopedia/kodemirror/vim/CodeMirrorAdapterKt {
 	public static synthetic fun setSelection$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Lcom/monkopedia/kodemirror/vim/Pos;Lcom/monkopedia/kodemirror/vim/Pos;Ljava/util/Map;ILjava/lang/Object;)V
 	public static final fun setSelections (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/util/List;Ljava/lang/Integer;)V
 	public static synthetic fun setSelections$default (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/util/List;Ljava/lang/Integer;ILjava/lang/Object;)V
+	public static final fun signal (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;[Ljava/lang/Object;)V
 	public static final fun somethingSelected (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)Z
 	public static final fun toggleOverwrite (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Z)V
 }
