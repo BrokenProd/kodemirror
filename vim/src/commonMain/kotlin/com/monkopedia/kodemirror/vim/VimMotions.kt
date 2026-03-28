@@ -111,8 +111,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
                         if (vim.visualLine || vim.visualBlock) {
                             vim.visualLine = false
                             vim.visualBlock = false
-                            CodeMirrorAdapter.signal(
-                                cm,
+                            cm.signal(
                                 "vim-mode-change",
                                 mapOf("mode" to "visual", "subMode" to "")
                             )
@@ -137,8 +136,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
                         vim.visualMode = true
                         vim.visualLine = false
                         vim.visualBlock = false
-                        CodeMirrorAdapter.signal(
-                            cm,
+                        cm.signal(
                             "vim-mode-change",
                             mapOf("mode" to "visual", "subMode" to "")
                         )

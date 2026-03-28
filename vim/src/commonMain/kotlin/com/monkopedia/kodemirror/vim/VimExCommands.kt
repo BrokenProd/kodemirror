@@ -560,7 +560,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
             showConfirm(cm, matchedLines.joinToString("\n"))
         } else {
             // Execute command on matching lines
-            val matchedHandles = mutableListOf<CodeMirrorAdapter.LineHandleImpl>()
+            val matchedHandles = mutableListOf<LineHandleImpl>()
             for (i in lineStart..lineEnd) {
                 val line = cm.getLine(i)
                 val matched = query.containsMatchIn(line)
@@ -711,7 +711,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
     // -----------------------------------------------------------------------
     "write" to { cm, _ ->
         // Save is not available in Compose. This is a no-op.
-        CodeMirrorAdapter.signal(cm, "vim-write")
+        cm.signal("vim-write")
     },
 
     // -----------------------------------------------------------------------

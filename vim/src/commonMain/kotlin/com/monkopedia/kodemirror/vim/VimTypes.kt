@@ -377,6 +377,9 @@ class VimState {
     var exMode: Boolean = false
     var mode: String? = null
     var expectLiteralNext: Boolean = false
+    var overwrite: Boolean = false
+    var keyMap: String? = null
+    var textwidth: Int? = null
 }
 
 data class VimLastSelection(

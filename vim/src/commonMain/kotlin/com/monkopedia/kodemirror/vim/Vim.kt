@@ -245,7 +245,7 @@ object Vim : VimApiInterface {
     }
 
     fun enterVimMode(cm: CodeMirrorAdapter) {
-        CodeMirrorAdapter.signal(cm, "vim-mode-change", mapOf("mode" to "normal"))
+        cm.signal("vim-mode-change", mapOf("mode" to "normal"))
         maybeInitVimState(cm)
     }
 

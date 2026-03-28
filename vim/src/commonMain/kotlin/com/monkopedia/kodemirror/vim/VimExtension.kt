@@ -210,7 +210,7 @@ internal class VimPluginValue(private val session: EditorSession) : PluginValue 
         val currentVim = Vim.maybeInitVimState_(cm)
 
         // Overwrite mode handling
-        if (!result && currentVim.insertMode && cm.state.overwrite) {
+        if (!result && currentVim.insertMode && currentVim.overwrite) {
             val charKey = extractCharFromEvent(event)
             if (charKey != null && charKey.length == 1 && !charKey.contains('\n')) {
                 cm.overWriteSelection(charKey)

@@ -306,9 +306,6 @@ class CodeMirrorAdapter(val session: EditorSession) {
         var vim: VimState? = null
         var currentNotificationClose: (() -> Unit)? = null
         var closeVimNotification: (() -> Unit)? = null
-        var keyMap: String? = null
-        var overwrite: Boolean = false
-        var textwidth: Int? = null
     }
 
     fun indexFromPos(pos: Pos): DocPos = indexFromPos(session.state.doc, pos)
@@ -318,40 +315,20 @@ class CodeMirrorAdapter(val session: EditorSession) {
         (prefix: String, callback: (String) -> Unit, options: Map<String, Any?>) -> (() -> Unit)
     )? = null
     var openNotificationFn: ((text: String, options: Map<String, Any?>) -> (() -> Unit))? = null
-
-    data class BracketMatch(val to: Pos?)
-    data class ScanResult(val pos: Pos, val ch: String)
-    data class BookmarkOptions(val insertLeft: Boolean = false)
-    data class LineHandleImpl(val row: Int, val index: DocPos)
-    data class HardWrapOptions(
-        val from: Int,
-        val to: Int,
-        val column: Int? = null,
-        val allowMerge: Boolean = true
-    )
-
-    companion object {
-        var isMac: Boolean = false
-
-        fun isWordChar(ch: String): Boolean = com.monkopedia.kodemirror.vim.isWordChar(ch)
-
-        fun signal(cm: CodeMirrorAdapter, type: String, vararg args: Any?) {
-            cm.events.signal(type, *args)
-        }
-
-        fun on(emitter: Any, type: String, f: (Array<out Any?>) -> Unit) {
-            if (emitter is CodeMirrorAdapter) {
-                emitter.events.on(type, f)
-            }
-        }
-
-        fun off(emitter: Any, type: String, f: (Array<out Any?>) -> Unit) {
-            if (emitter is CodeMirrorAdapter) {
-                emitter.events.off(type, f)
-            }
-        }
-    }
 }
+
+var isMac: Boolean = false
+
+data class BracketMatch(val to: Pos?)
+data class ScanResult(val pos: Pos, val ch: String)
+data class BookmarkOptions(val insertLeft: Boolean = false)
+data class LineHandleImpl(val row: Int, val index: DocPos)
+data class HardWrapOptions(
+    val from: Int,
+    val to: Int,
+    val column: Int? = null,
+    val allowMerge: Boolean = true
+)
 
 // ---------------------------------------------------------------------------
 // Extension functions (extracted from CodeMirrorAdapter methods)
@@ -361,18 +338,18 @@ fun CodeMirrorAdapter.on(type: String, f: (Array<out Any?>) -> Unit) = events.on
 fun CodeMirrorAdapter.off(type: String, f: (Array<out Any?>) -> Unit) = events.off(type, f)
 fun CodeMirrorAdapter.signal(type: String, vararg args: Any?) = events.signal(type, *args)
 
-fun CodeMirrorAdapter.findMatchingBracket(pos: Pos): CodeMirrorAdapter.BracketMatch {
+fun CodeMirrorAdapter.findMatchingBracket(pos: Pos): BracketMatch {
     val state = session.state
     val offset = indexFromPos(state.doc, pos)
     var m = matchBrackets(state, offset + 1, -1)
     if (m?.end != null) {
-        return CodeMirrorAdapter.BracketMatch(posFromIndex(state.doc, m.end!!.from))
+        return BracketMatch(posFromIndex(state.doc, m.end!!.from))
     }
     m = matchBrackets(state, offset, 1)
     if (m?.end != null) {
-        return CodeMirrorAdapter.BracketMatch(posFromIndex(state.doc, m.end!!.from))
+        return BracketMatch(posFromIndex(state.doc, m.end!!.from))
     }
-    return CodeMirrorAdapter.BracketMatch(null)
+    return BracketMatch(null)
 }
 
 fun CodeMirrorAdapter.scanForBracket(
@@ -380,7 +357,7 @@ fun CodeMirrorAdapter.scanForBracket(
     dir: Int,
     @Suppress("UNUSED_PARAMETER") style: Any? = null,
     config: Map<String, Any?>? = null
-): CodeMirrorAdapter.ScanResult? {
+): ScanResult? {
     val maxScanLen = (config?.get("maxScanLineLength") as? Int) ?: 10000
     val maxScanLines = (config?.get("maxScanLines") as? Int) ?: 1000
     val re = Regex("[(){}\\[\\]]")
@@ -414,7 +391,7 @@ fun CodeMirrorAdapter.scanForBracket(
                 if (match != null && (match[1] == '>') == (dir > 0)) {
                     stack.add(ch)
                 } else if (stack.isEmpty()) {
-                    return CodeMirrorAdapter.ScanResult(Pos(lineNo, pos), ch)
+                    return ScanResult(Pos(lineNo, pos), ch)
                 } else {
                     stack.removeLastOrNull()
                 }
@@ -453,12 +430,12 @@ fun CodeMirrorAdapter.removeOverlay(@Suppress("UNUSED_PARAMETER") overlay: Any? 
 fun CodeMirrorAdapter.getSearchCursor(query: Regex, pos: Pos): VimSearchCursor =
     VimSearchCursor(this, query, pos)
 
-fun CodeMirrorAdapter.getLineHandle(row: Int): CodeMirrorAdapter.LineHandleImpl {
+fun CodeMirrorAdapter.getLineHandle(row: Int): LineHandleImpl {
     if (lineHandleChanges == null) lineHandleChanges = mutableListOf()
-    return CodeMirrorAdapter.LineHandleImpl(row, indexFromPos(Pos(row, 0)))
+    return LineHandleImpl(row, indexFromPos(Pos(row, 0)))
 }
 
-fun CodeMirrorAdapter.getLineNumber(handle: CodeMirrorAdapter.LineHandleImpl): Int? {
+fun CodeMirrorAdapter.getLineNumber(handle: LineHandleImpl): Int? {
     val updates = lineHandleChanges ?: return null
     var offset: DocPos? = handle.index
     for (update in updates) {
@@ -473,7 +450,7 @@ fun CodeMirrorAdapter.releaseLineHandles() {
     lineHandleChanges = null
 }
 
-fun CodeMirrorAdapter.hardWrap(options: CodeMirrorAdapter.HardWrapOptions): Int {
+fun CodeMirrorAdapter.hardWrap(options: HardWrapOptions): Int {
     val max = options.column ?: (getOption("textwidth") as? Int) ?: 80
     val allowMerge = options.allowMerge
 
@@ -849,8 +826,8 @@ fun <T> CodeMirrorAdapter.operation(fn: () -> T): T {
 
 fun CodeMirrorAdapter.setOption(name: String, value: Any?) {
     when (name) {
-        "keyMap" -> state.keyMap = value as? String
-        "textwidth" -> state.textwidth = value as? Int
+        "keyMap" -> state.vim?.keyMap = value as? String
+        "textwidth" -> state.vim?.textwidth = value as? Int
     }
 }
 
@@ -860,13 +837,13 @@ fun CodeMirrorAdapter.getOption(name: String): Any? = when (name) {
     "readOnly" -> session.state.readOnly
     "indentWithTabs" -> false
     "indentUnit" -> session.state.facet(indentUnit).coerceAtLeast(2)
-    "textwidth" -> state.textwidth
-    "keyMap" -> state.keyMap ?: "vim"
+    "textwidth" -> state.vim?.textwidth
+    "keyMap" -> state.vim?.keyMap ?: "vim"
     else -> null
 }
 
 fun CodeMirrorAdapter.toggleOverwrite(on: Boolean) {
-    state.overwrite = on
+    state.vim!!.overwrite = on
 }
 
 fun CodeMirrorAdapter.execCommand(name: String) {
@@ -908,10 +885,7 @@ fun CodeMirrorAdapter.indentLine(line: Int, more: Boolean = false) {
 fun CodeMirrorAdapter.indentMore() = indentMore(session)
 fun CodeMirrorAdapter.indentLess() = indentLess(session)
 
-fun CodeMirrorAdapter.setBookmark(
-    cursor: Pos,
-    options: CodeMirrorAdapter.BookmarkOptions? = null
-): Marker {
+fun CodeMirrorAdapter.setBookmark(cursor: Pos, options: BookmarkOptions? = null): Marker {
     val assoc = if (options?.insertLeft == true) 1 else -1
     val offset = indexFromPos(cursor)
     val bm = BookmarkMarker(this, offset, assoc)

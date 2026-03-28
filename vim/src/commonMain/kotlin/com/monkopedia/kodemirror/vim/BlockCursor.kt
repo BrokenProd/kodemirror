@@ -47,7 +47,7 @@ internal fun buildBlockCursorDecorations(state: EditorState, cm: CodeMirrorAdapt
     val vim = cm.state.vim ?: return RangeSet.empty()
 
     // No block cursor in insert mode (unless overwrite)
-    if (vim.insertMode && !cm.state.overwrite) return RangeSet.empty()
+    if (vim.insertMode && !vim.overwrite) return RangeSet.empty()
 
     val builder = RangeSetBuilder<Decoration>()
     val doc = state.doc
@@ -106,7 +106,7 @@ private fun measureBlockCursor(
 
     // Determine cursor opacity/size factor
     val hCoeff = when {
-        cm.state.overwrite -> 0.2f
+        vim.overwrite -> 0.2f
         vim.status.isNotEmpty() -> 0.5f
         else -> 1.0f
     }

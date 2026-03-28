@@ -209,7 +209,7 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
         var to = ranges[0].head.line
         if (operatorArgs.linewise == true) to--
         var endRow = cm.hardWrap(
-            CodeMirrorAdapter.HardWrapOptions(from = from, to = to)
+            HardWrapOptions(from = from, to = to)
         )
         if (endRow > from && operatorArgs.linewise == true) endRow--
         if (operatorArgs.keepCursor == true) oldAnchor else Pos(endRow, 0)

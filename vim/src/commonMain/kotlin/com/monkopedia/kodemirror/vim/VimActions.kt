@@ -100,14 +100,14 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
     // toggleOverwrite
     // -----------------------------------------------------------------------
     "toggleOverwrite" to { cm, _, _ ->
-        if (!cm.state.overwrite) {
+        if (!cm.state.vim!!.overwrite) {
             cm.toggleOverwrite(true)
             cm.setOption("keyMap", "vim-replace")
-            CodeMirrorAdapter.signal(cm, "vim-mode-change", mapOf("mode" to "replace"))
+            cm.signal("vim-mode-change", mapOf("mode" to "replace"))
         } else {
             cm.toggleOverwrite(false)
             cm.setOption("keyMap", "vim-insert")
-            CodeMirrorAdapter.signal(cm, "vim-mode-change", mapOf("mode" to "insert"))
+            cm.signal("vim-mode-change", mapOf("mode" to "insert"))
         }
     },
 
@@ -184,17 +184,17 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
             if (actionArgs.replace == true) {
                 cm.toggleOverwrite(true)
                 cm.setOption("keyMap", "vim-replace")
-                CodeMirrorAdapter.signal(cm, "vim-mode-change", mapOf("mode" to "replace"))
+                cm.signal("vim-mode-change", mapOf("mode" to "replace"))
             } else {
                 cm.toggleOverwrite(false)
                 cm.setOption("keyMap", "vim-insert")
-                CodeMirrorAdapter.signal(cm, "vim-mode-change", mapOf("mode" to "insert"))
+                cm.signal("vim-mode-change", mapOf("mode" to "insert"))
             }
             if (!vimGlobalState.macroModeState.isPlaying) {
                 if (vim.insertEnd != null) vim.insertEnd!!.clear()
                 vim.insertEnd = cm.setBookmark(
                     head,
-                    CodeMirrorAdapter.BookmarkOptions(insertLeft = true)
+                    BookmarkOptions(insertLeft = true)
                 )
             }
             if (vim.visualMode) {
@@ -226,8 +226,8 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
                 vim.visualBlock -> "blockwise"
                 else -> ""
             }
-            CodeMirrorAdapter.signal(
-                cm, "vim-mode-change",
+            cm.signal(
+                "vim-mode-change",
                 mapOf("mode" to "visual", "subMode" to subMode)
             )
             updateCmSelection(cm)
@@ -244,8 +244,8 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
                 vim.visualBlock -> "blockwise"
                 else -> ""
             }
-            CodeMirrorAdapter.signal(
-                cm, "vim-mode-change",
+            cm.signal(
+                "vim-mode-change",
                 mapOf("mode" to "visual", "subMode" to subMode)
             )
             updateCmSelection(cm)
@@ -280,8 +280,8 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
                 vim.visualBlock -> "blockwise"
                 else -> ""
             }
-            CodeMirrorAdapter.signal(
-                cm, "vim-mode-change",
+            cm.signal(
+                "vim-mode-change",
                 mapOf("mode" to "visual", "subMode" to subMode)
             )
         }
@@ -552,7 +552,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
     "oneNormalCommand" to { cm, _, vim ->
         exitInsertMode(cm, true)
         vim.insertModeReturn = true
-        CodeMirrorAdapter.on(cm, "vim-command-done") { _ ->
+        cm.on("vim-command-done") { _ ->
             if (vim.visualMode) return@on
             if (vim.insertModeReturn) {
                 vim.insertModeReturn = false

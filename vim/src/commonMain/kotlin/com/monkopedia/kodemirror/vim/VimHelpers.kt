@@ -581,7 +581,7 @@ internal fun exitVisualMode(cm: CodeMirrorAdapter, moveHead: Boolean = true) {
     vim.visualLine = false
     vim.visualBlock = false
     if (!vim.insertMode) {
-        CodeMirrorAdapter.signal(cm, "vim-mode-change", mapOf("mode" to "normal"))
+        cm.signal("vim-mode-change", mapOf("mode" to "normal"))
     }
 }
 
@@ -2294,7 +2294,7 @@ internal fun onChange(cm: CodeMirrorAdapter, changeObj: Change?) {
                     lastChange.maybeReset = false
                 }
                 if (text.isNotEmpty()) {
-                    if (cm.state.overwrite && !text.contains('\n')) {
+                    if (cm.state.vim!!.overwrite && !text.contains('\n')) {
                         lastChange.changes.add(listOf(text))
                     } else {
                         if (text.length > 1) {
@@ -2331,7 +2331,7 @@ internal fun onCursorActivity(cm: CodeMirrorAdapter) {
             if (vim.insertEnd != null) vim.insertEnd!!.clear()
             vim.insertEnd = cm.setBookmark(
                 cm.getCursor(),
-                CodeMirrorAdapter.BookmarkOptions(insertLeft = true)
+                BookmarkOptions(insertLeft = true)
             )
         }
     } else if (cm.curOp?.isVimOp != true) {
@@ -2347,7 +2347,7 @@ internal fun handleExternalSelection(cm: CodeMirrorAdapter, vim: VimState) {
     } else if (!vim.visualMode && !vim.insertMode && cm.somethingSelected()) {
         vim.visualMode = true
         vim.visualLine = false
-        CodeMirrorAdapter.signal(cm, "vim-mode-change", mapOf("mode" to "visual"))
+        cm.signal("vim-mode-change", mapOf("mode" to "visual"))
     }
     if (vim.visualMode) {
         val headOffset = if (!cursorIsBefore(head, anchor)) -1 else 0
@@ -2389,7 +2389,7 @@ internal fun exitInsertMode(cm: CodeMirrorAdapter, keepCursor: Boolean = false) 
     cm.toggleOverwrite(false)
     // Update the "." register
     insertModeChangeRegister.setText(lastChange.changes.joinToString(""))
-    CodeMirrorAdapter.signal(cm, "vim-mode-change", mapOf("mode" to "normal"))
+    cm.signal("vim-mode-change", mapOf("mode" to "normal"))
     if (macroModeState.isRecording) {
         logInsertModeChange(macroModeState)
     }
