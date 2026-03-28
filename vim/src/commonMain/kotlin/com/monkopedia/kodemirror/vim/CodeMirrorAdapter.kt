@@ -326,78 +326,6 @@ class CodeMirrorAdapter(val session: EditorSession) {
     fun indexFromPos(pos: Pos): DocPos = indexFromPos(session.state.doc, pos)
     fun posFromIndex(offset: DocPos): Pos = posFromIndex(session.state.doc, offset)
 
-    fun replaceRange(text: String, s: Pos, e: Pos? = null) {
-        val end = e ?: s
-        val doc = session.state.doc
-        val from = indexFromPos(doc, s)
-        val to = indexFromPos(doc, end)
-        val lo = if (from <= to) from else to
-        val hi = if (from <= to) to else from
-        dispatchChange(
-            TransactionSpec(changes = ChangeSpec.Single(lo, hi, text.asInsert()))
-        )
-    }
-
-    fun replaceSelection(text: String) {
-        dispatchChange(session.state.replaceSelection(text))
-    }
-
-    fun replaceSelections(replacements: List<String>) {
-        val ranges = session.state.selection.ranges
-        val changes = ranges.mapIndexed { i, r ->
-            ChangeSpec.Single(r.from, r.to, (replacements.getOrElse(i) { "" }).asInsert())
-        }
-        dispatchChange(
-            TransactionSpec(changes = ChangeSpec.Multi(changes))
-        )
-    }
-
-    // ---------------------------------------------------------------------------
-    // Cursor / Selection write methods
-    // ---------------------------------------------------------------------------
-
-    fun setCursor(line: Int, ch: Int = 0) {
-        val offset = indexFromPos(session.state.doc, Pos(line, ch))
-        session.dispatch(
-            TransactionSpec(
-                selection = SelectionSpec.CursorSpec(offset),
-                scrollIntoView = curOp == null
-            )
-        )
-        if (curOp != null && curOp?.isVimOp != true) {
-            onBeforeEndOperation()
-        }
-    }
-
-    fun setCursor(pos: Pos) = setCursor(pos.line, pos.ch)
-
-    fun setSelections(selections: List<CM5Range>, primIndex: Int? = null) {
-        val doc = session.state.doc
-        val ranges = selections.map { x ->
-            val head = indexFromPos(doc, x.head)
-            val anchor = indexFromPos(doc, x.anchor)
-            if (head == anchor) {
-                EditorSelection.cursor(head, 1)
-            } else {
-                EditorSelection.range(anchor, head)
-            }
-        }
-        session.dispatch(
-            TransactionSpec(
-                selection = SelectionSpec.EditorSelectionSpec(
-                    EditorSelection.create(ranges, primIndex ?: 0)
-                )
-            )
-        )
-    }
-
-    fun setSelection(anchor: Pos, head: Pos, options: Map<String, Any?>? = null) {
-        setSelections(listOf(CM5Range(anchor, head)), 0)
-        if (options?.get("origin") == "*mouse") {
-            onBeforeEndOperation()
-        }
-    }
-
     // ---------------------------------------------------------------------------
     // Bracket matching
     // ---------------------------------------------------------------------------
@@ -510,49 +438,6 @@ class CodeMirrorAdapter(val session: EditorSession) {
     // ---------------------------------------------------------------------------
 
     fun getSearchCursor(query: Regex, pos: Pos): VimSearchCursor = VimSearchCursor(this, query, pos)
-
-    // ---------------------------------------------------------------------------
-    // Scrolling
-    // ---------------------------------------------------------------------------
-
-    fun scrollIntoView(pos: Pos? = null, @Suppress("UNUSED_PARAMETER") margin: Int? = null) {
-        if (pos != null) {
-            val offset = indexFromPos(pos)
-            session.dispatch(
-                TransactionSpec(
-                    selection = SelectionSpec.CursorSpec(offset),
-                    scrollIntoView = true
-                )
-            )
-        } else {
-            session.dispatch(TransactionSpec(scrollIntoView = true))
-        }
-    }
-
-    fun overWriteSelection(text: String) {
-        val doc = session.state.doc
-        val sel = session.state.selection
-        val ranges = sel.ranges.map { x ->
-            if (x.empty) {
-                val ch = if (x.to < doc.endPos) doc.sliceString(x.from, x.to + 1) else ""
-                if (ch.isNotEmpty() && !ch.contains('\n')) {
-                    EditorSelection.range(x.from, x.to + 1)
-                } else {
-                    x
-                }
-            } else {
-                x
-            }
-        }
-        session.dispatch(
-            TransactionSpec(
-                selection = SelectionSpec.EditorSelectionSpec(
-                    EditorSelection.create(ranges, sel.mainIndex)
-                )
-            )
-        )
-        replaceSelection(text)
-    }
 
     // ---------------------------------------------------------------------------
     // Line handles
@@ -681,32 +566,6 @@ class CodeMirrorAdapter(val session: EditorSession) {
     }
 
     private data class SpaceResult(val start: Int, val end: Int)
-
-    // ---------------------------------------------------------------------------
-    // Operation batching
-    // ---------------------------------------------------------------------------
-
-    fun <T> operation(fn: () -> T): T {
-        if (curOp == null) {
-            curOp = Operation()
-        }
-        curOp!!.depth++
-        try {
-            return fn()
-        } finally {
-            curOp?.let {
-                it.depth--
-                if (it.depth == 0) {
-                    onBeforeEndOperation()
-                }
-            }
-        }
-    }
-
-    internal fun dispatchChange(spec: TransactionSpec) {
-        if (session.state.readOnly) return
-        session.dispatch(spec)
-    }
 
     // ---------------------------------------------------------------------------
     // Update handlers (called by the vim plugin on ViewUpdate)
@@ -900,6 +759,138 @@ fun CodeMirrorAdapter.somethingSelected(): Boolean =
     session.state.selection.ranges.any { !it.empty }
 
 fun CodeMirrorAdapter.getLastEditEnd(): Pos = posFromIndex(lastChangeEndOffset)
+
+internal fun CodeMirrorAdapter.dispatchChange(spec: TransactionSpec) {
+    if (session.state.readOnly) return
+    session.dispatch(spec)
+}
+
+fun CodeMirrorAdapter.replaceRange(text: String, s: Pos, e: Pos? = null) {
+    val end = e ?: s
+    val doc = session.state.doc
+    val from = indexFromPos(doc, s)
+    val to = indexFromPos(doc, end)
+    val lo = if (from <= to) from else to
+    val hi = if (from <= to) to else from
+    dispatchChange(
+        TransactionSpec(changes = ChangeSpec.Single(lo, hi, text.asInsert()))
+    )
+}
+
+fun CodeMirrorAdapter.replaceSelection(text: String) {
+    dispatchChange(session.state.replaceSelection(text))
+}
+
+fun CodeMirrorAdapter.replaceSelections(replacements: List<String>) {
+    val ranges = session.state.selection.ranges
+    val changes = ranges.mapIndexed { i, r ->
+        ChangeSpec.Single(r.from, r.to, (replacements.getOrElse(i) { "" }).asInsert())
+    }
+    dispatchChange(
+        TransactionSpec(changes = ChangeSpec.Multi(changes))
+    )
+}
+
+fun CodeMirrorAdapter.setCursor(line: Int, ch: Int = 0) {
+    val offset = indexFromPos(session.state.doc, Pos(line, ch))
+    session.dispatch(
+        TransactionSpec(
+            selection = SelectionSpec.CursorSpec(offset),
+            scrollIntoView = curOp == null
+        )
+    )
+    if (curOp != null && curOp?.isVimOp != true) {
+        onBeforeEndOperation()
+    }
+}
+
+fun CodeMirrorAdapter.setCursor(pos: Pos) = setCursor(pos.line, pos.ch)
+
+fun CodeMirrorAdapter.setSelections(selections: List<CM5Range>, primIndex: Int? = null) {
+    val doc = session.state.doc
+    val ranges = selections.map { x ->
+        val head = indexFromPos(doc, x.head)
+        val anchor = indexFromPos(doc, x.anchor)
+        if (head == anchor) {
+            EditorSelection.cursor(head, 1)
+        } else {
+            EditorSelection.range(anchor, head)
+        }
+    }
+    session.dispatch(
+        TransactionSpec(
+            selection = SelectionSpec.EditorSelectionSpec(
+                EditorSelection.create(ranges, primIndex ?: 0)
+            )
+        )
+    )
+}
+
+fun CodeMirrorAdapter.setSelection(anchor: Pos, head: Pos, options: Map<String, Any?>? = null) {
+    setSelections(listOf(CM5Range(anchor, head)), 0)
+    if (options?.get("origin") == "*mouse") {
+        onBeforeEndOperation()
+    }
+}
+
+fun CodeMirrorAdapter.scrollIntoView(
+    pos: Pos? = null,
+    @Suppress("UNUSED_PARAMETER") margin: Int? = null
+) {
+    if (pos != null) {
+        val offset = indexFromPos(pos)
+        session.dispatch(
+            TransactionSpec(
+                selection = SelectionSpec.CursorSpec(offset),
+                scrollIntoView = true
+            )
+        )
+    } else {
+        session.dispatch(TransactionSpec(scrollIntoView = true))
+    }
+}
+
+fun CodeMirrorAdapter.overWriteSelection(text: String) {
+    val doc = session.state.doc
+    val sel = session.state.selection
+    val ranges = sel.ranges.map { x ->
+        if (x.empty) {
+            val ch = if (x.to < doc.endPos) doc.sliceString(x.from, x.to + 1) else ""
+            if (ch.isNotEmpty() && !ch.contains('\n')) {
+                EditorSelection.range(x.from, x.to + 1)
+            } else {
+                x
+            }
+        } else {
+            x
+        }
+    }
+    session.dispatch(
+        TransactionSpec(
+            selection = SelectionSpec.EditorSelectionSpec(
+                EditorSelection.create(ranges, sel.mainIndex)
+            )
+        )
+    )
+    replaceSelection(text)
+}
+
+fun <T> CodeMirrorAdapter.operation(fn: () -> T): T {
+    if (curOp == null) {
+        curOp = Operation()
+    }
+    curOp!!.depth++
+    try {
+        return fn()
+    } finally {
+        curOp?.let {
+            it.depth--
+            if (it.depth == 0) {
+                onBeforeEndOperation()
+            }
+        }
+    }
+}
 
 fun CodeMirrorAdapter.setOption(name: String, value: Any?) {
     when (name) {
