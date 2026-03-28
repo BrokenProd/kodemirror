@@ -293,7 +293,7 @@ class CodeMirrorAdapter(val session: EditorSession) {
     internal val marks: MutableMap<Int, BookmarkMarker> = mutableMapOf()
     private var markIdCounter = 0
     internal var virtualSelection: EditorSelection? = null
-    private var lastChangeEndOffset: DocPos = DocPos.ZERO
+    internal var lastChangeEndOffset: DocPos = DocPos.ZERO
     private var cm6Query: SearchQuery? = null
     private var lineHandleChanges: MutableList<ViewUpdate>? = null
 
@@ -352,18 +352,8 @@ class CodeMirrorAdapter(val session: EditorSession) {
         )
     }
 
-    fun getSelection(): String = getSelections().joinToString("\n")
-
-    fun getSelections(): List<String> {
-        return session.state.selection.ranges.map { r ->
-            session.state.sliceDoc(r.from, r.to)
-        }
-    }
-
-    fun somethingSelected(): Boolean = session.state.selection.ranges.any { !it.empty }
-
     // ---------------------------------------------------------------------------
-    // Cursor / Selection methods
+    // Cursor / Selection write methods
     // ---------------------------------------------------------------------------
 
     fun setCursor(line: Int, ch: Int = 0) {
@@ -380,28 +370,6 @@ class CodeMirrorAdapter(val session: EditorSession) {
     }
 
     fun setCursor(pos: Pos) = setCursor(pos.line, pos.ch)
-
-    fun getCursor(p: String? = null): Pos {
-        val sel = session.state.selection.main
-        val offset = when (p) {
-            "head", null -> sel.head
-            "anchor" -> sel.anchor
-            "start" -> sel.from
-            "end" -> sel.to
-            else -> error("Invalid cursor type: $p")
-        }
-        return posFromIndex(session.state.doc, offset)
-    }
-
-    fun listSelections(): List<CM5Range> {
-        val doc = session.state.doc
-        return session.state.selection.ranges.map { r ->
-            CM5Range(
-                anchor = posFromIndex(doc, r.anchor),
-                head = posFromIndex(doc, r.head)
-            )
-        }
-    }
 
     fun setSelections(selections: List<CM5Range>, primIndex: Int? = null) {
         val doc = session.state.doc
@@ -704,8 +672,6 @@ class CodeMirrorAdapter(val session: EditorSession) {
         lineHandleChanges = null
     }
 
-    fun getLastEditEnd(): Pos = posFromIndex(lastChangeEndOffset)
-
     // ---------------------------------------------------------------------------
     // Hard wrap
     // ---------------------------------------------------------------------------
@@ -991,6 +957,41 @@ fun CodeMirrorAdapter.clipPos(p: Pos): Pos {
     ch = min(max(0, ch), line.to.value - line.from.value)
     return Pos(lineNumber - 1, ch)
 }
+
+fun CodeMirrorAdapter.getCursor(p: String? = null): Pos {
+    val sel = session.state.selection.main
+    val offset = when (p) {
+        "head", null -> sel.head
+        "anchor" -> sel.anchor
+        "start" -> sel.from
+        "end" -> sel.to
+        else -> error("Invalid cursor type: $p")
+    }
+    return posFromIndex(session.state.doc, offset)
+}
+
+fun CodeMirrorAdapter.listSelections(): List<CM5Range> {
+    val doc = session.state.doc
+    return session.state.selection.ranges.map { r ->
+        CM5Range(
+            anchor = posFromIndex(doc, r.anchor),
+            head = posFromIndex(doc, r.head)
+        )
+    }
+}
+
+fun CodeMirrorAdapter.getSelection(): String = getSelections().joinToString("\n")
+
+fun CodeMirrorAdapter.getSelections(): List<String> {
+    return session.state.selection.ranges.map { r ->
+        session.state.sliceDoc(r.from, r.to)
+    }
+}
+
+fun CodeMirrorAdapter.somethingSelected(): Boolean =
+    session.state.selection.ranges.any { !it.empty }
+
+fun CodeMirrorAdapter.getLastEditEnd(): Pos = posFromIndex(lastChangeEndOffset)
 
 fun CodeMirrorAdapter.getTokenTypeAt(pos: Pos): String {
     val offset = indexFromPos(pos)
