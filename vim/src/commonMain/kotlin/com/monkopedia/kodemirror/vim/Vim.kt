@@ -49,12 +49,6 @@ private val vimToCmKeyMap: Map<String, String> = buildMap {
     }
 }
 
-// ---------------------------------------------------------------------------
-// State tracking
-// ---------------------------------------------------------------------------
-
-private val vimStateMap = mutableMapOf<CodeMirrorAdapter, VimState>()
-
 private var noremap = false
 private val keyToKeyStack = mutableListOf<VimKeyCommand>()
 internal var virtualPrompt: PromptOptions? = null
@@ -250,7 +244,6 @@ object Vim : VimApiInterface {
     }
 
     fun leaveVimMode(cm: CodeMirrorAdapter) {
-        vimStateMap.remove(cm)
         cm.vim = null
     }
 
@@ -445,7 +438,7 @@ object Vim : VimApiInterface {
                             VimCommandDispatcher.processCommand(cm, vim, command)
                         }
                     } catch (e: Exception) {
-                        vimStateMap.remove(cm)
+                        cm.vim = null
                         maybeInitVimState(cm)
                         throw e
                     }
@@ -521,15 +514,11 @@ object Vim : VimApiInterface {
 // ---------------------------------------------------------------------------
 
 internal fun maybeInitVimState(cm: CodeMirrorAdapter): VimState {
-    return vimStateMap.getOrPut(cm) {
-        val state = VimState()
-        cm.vim = state
-        state
-    }
+    return cm.vim ?: VimState().also { cm.vim = it }
 }
 
 internal fun getVimState(cm: CodeMirrorAdapter): VimState? {
-    return vimStateMap[cm]
+    return cm.vim
 }
 
 // ---------------------------------------------------------------------------
