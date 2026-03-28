@@ -1,0 +1,1091 @@
+/*
+ * Copyright 2026 Jason Monk
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Originally based on CodeMirror 6 by Marijn Haverbeke, licensed under MIT.
+ * See NOTICE file for details.
+ */
+package com.monkopedia.kodemirror.vim
+
+import com.monkopedia.kodemirror.commands.cursorCharBackward
+import com.monkopedia.kodemirror.commands.cursorCharLeft
+import com.monkopedia.kodemirror.commands.cursorLineBoundaryBackward
+import com.monkopedia.kodemirror.commands.cursorLineBoundaryForward
+import com.monkopedia.kodemirror.commands.indentLess
+import com.monkopedia.kodemirror.commands.indentMore
+import com.monkopedia.kodemirror.commands.insertNewlineAndIndent
+import com.monkopedia.kodemirror.commands.redo
+import com.monkopedia.kodemirror.commands.undo
+import com.monkopedia.kodemirror.language.ensureSyntaxTree
+import com.monkopedia.kodemirror.language.indentUnit
+import com.monkopedia.kodemirror.language.matchBrackets
+import com.monkopedia.kodemirror.search.RegExpCursor
+import com.monkopedia.kodemirror.search.SearchQuery
+import com.monkopedia.kodemirror.search.setSearchQuery
+import com.monkopedia.kodemirror.state.ChangeDesc
+import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorSelection
+import com.monkopedia.kodemirror.state.LineNumber
+import com.monkopedia.kodemirror.state.MapMode
+import com.monkopedia.kodemirror.state.SelectionSpec
+import com.monkopedia.kodemirror.state.Text
+import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.asInsert
+import com.monkopedia.kodemirror.state.endPos
+import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.ViewUpdate
+import kotlin.math.max
+import kotlin.math.min
+
+// ---------------------------------------------------------------------------
+// Position conversion helpers
+// ---------------------------------------------------------------------------
+
+/** Convert a vim Pos (0-based line, ch) to an absolute document offset. */
+fun indexFromPos(doc: Text, pos: Pos): DocPos {
+    var ch = pos.ch
+    var lineNumber = pos.line + 1
+    if (lineNumber < 1) {
+        lineNumber = 1
+        ch = 0
+    }
+    if (lineNumber > doc.lines) {
+        lineNumber = doc.lines
+        ch = Int.MAX_VALUE
+    }
+    val line = doc.line(LineNumber(lineNumber))
+    return DocPos(min(line.from.value + max(0, ch), line.to.value))
+}
+
+/** Convert an absolute document offset to a vim Pos (0-based line, ch). */
+fun posFromIndex(doc: Text, offset: DocPos): Pos {
+    val line = doc.lineAt(offset)
+    return Pos(line.number.value - 1, offset.value - line.from.value)
+}
+
+// ---------------------------------------------------------------------------
+// Event system
+// ---------------------------------------------------------------------------
+
+internal class EventHandlers {
+    private val handlers: MutableMap<
+        String,
+        MutableList<
+            (
+                Array<out Any?>
+            ) -> Unit
+            >
+        > = mutableMapOf()
+
+    fun on(type: String, f: (Array<out Any?>) -> Unit) {
+        handlers.getOrPut(type) { mutableListOf() }.add(f)
+    }
+
+    fun off(type: String, f: (Array<out Any?>) -> Unit) {
+        handlers[type]?.remove(f)
+    }
+
+    fun signal(type: String, vararg args: Any?) {
+        handlers[type]?.toList()?.forEach { it(args) }
+    }
+
+    fun getHandlers(type: String): List<(Array<out Any?>) -> Unit>? = handlers[type]?.toList()
+}
+
+// ---------------------------------------------------------------------------
+// Word character test
+// ---------------------------------------------------------------------------
+
+private val wordCharRegex = Regex("[\\w\\p{L}\\p{N}_]")
+
+fun isWordChar(ch: String): Boolean = wordCharRegex.containsMatchIn(ch)
+
+// ---------------------------------------------------------------------------
+// Operation tracking
+// ---------------------------------------------------------------------------
+
+internal class Operation {
+    var depth: Int = 0
+    var isVimOp: Boolean = false
+    var cursorActivityHandlers: List<(Array<out Any?>) -> Unit>? = null
+    var cursorActivity: Boolean = false
+    var lastChange: Change? = null
+    var change: Change? = null
+    var changeHandlers: List<(Array<out Any?>) -> Unit>? = null
+    var changeStart: DocPos? = null
+}
+
+internal class Change(
+    val text: List<String>
+) {
+    var next: Change? = null
+}
+
+// ---------------------------------------------------------------------------
+// Bracket matching
+// ---------------------------------------------------------------------------
+
+private val BRACKET_MATCHING = mapOf(
+    '(' to ")>",
+    ')' to "(<",
+    '[' to "]>",
+    ']' to "[<",
+    '{' to "}>",
+    '}' to "{<",
+    '<' to ">>",
+    '>' to "<<"
+)
+
+// ---------------------------------------------------------------------------
+// Search cursor wrapper
+// ---------------------------------------------------------------------------
+
+class VimSearchCursor(
+    private val cm: CodeMirrorAdapter,
+    query: Regex,
+    pos: Pos
+) {
+    private var last: SearchMatch? = null
+    private var lastCM5Result: CM5SearchMatch? = null
+    private var afterEmptyMatch = false
+    private val firstOffset: DocPos
+    private val source: String
+
+    init {
+        val ch = pos.ch
+        firstOffset = indexFromPos(cm.session.state.doc, if (ch == Int.MAX_VALUE) pos else pos)
+
+        // Escape unmatched braces for RegExpCursor compatibility
+        val braceRe =
+            Regex("""(\\.|(\{(?:\d+(?:,\d*)?|,\d+)\}))|([{}])""")
+        source = query.pattern.replace(braceRe) { mr ->
+            if (mr.groupValues[1].isNotEmpty()) {
+                mr.groupValues[1]
+            } else {
+                "\\" + mr.value
+            }
+        }
+    }
+
+    data class SearchMatch(val from: DocPos, val to: DocPos, val match: List<String?>)
+    data class CM5SearchMatch(val from: Pos, val to: Pos, val match: List<String?>)
+
+    private fun rCursor(
+        doc: Text,
+        from: DocPos = DocPos.ZERO,
+        to: DocPos = doc.endPos
+    ): RegExpCursor {
+        val options = mutableSetOf<RegexOption>()
+        return RegExpCursor(doc, source, options, from, to)
+    }
+
+    private fun nextMatch(from: DocPos): SearchMatch? {
+        val doc = cm.session.state.doc
+        if (from.value > doc.length) return null
+        val cursor = rCursor(doc, from)
+        if (!cursor.hasNext()) return null
+        val res = cursor.next()
+        return SearchMatch(res.from, res.to, cursor.matchGroups)
+    }
+
+    private val chunkSize = 10000
+
+    private fun prevMatchInRange(from: DocPos, to: DocPos): SearchMatch? {
+        val doc = cm.session.state.doc
+        var size = 1
+        while (true) {
+            val start = DocPos(max(from.value, to.value - size * chunkSize))
+            val cursor = rCursor(doc, start, to)
+            var range: SearchMatch? = null
+            for (m in cursor) {
+                range = SearchMatch(m.from, m.to, cursor.matchGroups)
+            }
+            val farEnough = start == from ||
+                (range != null && range.from.value > start.value + 10)
+            if (range != null && farEnough) return range
+            if (start == from) return null
+            size++
+        }
+    }
+
+    fun findNext(): List<String?>? = find(false)
+    fun findPrevious(): List<String?>? = find(true)
+
+    fun find(back: Boolean = false): List<String?>? {
+        val doc = cm.session.state.doc
+        if (back) {
+            val endAt = if (last != null) {
+                if (afterEmptyMatch) DocPos(last!!.to.value - 1) else last!!.from
+            } else {
+                firstOffset
+            }
+            last = prevMatchInRange(DocPos.ZERO, endAt)
+        } else {
+            val startFrom = if (last != null) {
+                if (afterEmptyMatch) DocPos(last!!.to.value + 1) else last!!.to
+            } else {
+                firstOffset
+            }
+            last = nextMatch(startFrom)
+        }
+        lastCM5Result = last?.let {
+            CM5SearchMatch(
+                posFromIndex(doc, it.from),
+                posFromIndex(doc, it.to),
+                it.match
+            )
+        }
+        afterEmptyMatch = last?.let { it.from == it.to } ?: false
+        return last?.match
+    }
+
+    fun from(): Pos? = lastCM5Result?.from
+    fun to(): Pos? = lastCM5Result?.to
+
+    fun replace(text: String) {
+        val l = last ?: return
+        cm.dispatchChange(
+            TransactionSpec(
+                changes = ChangeSpec.Single(l.from, l.to, text.asInsert())
+            )
+        )
+        last = last?.copy(to = DocPos(l.from.value + text.length))
+        if (lastCM5Result != null) {
+            lastCM5Result = lastCM5Result?.copy(
+                to = posFromIndex(cm.session.state.doc, last!!.to)
+            )
+        }
+    }
+
+    val match: List<String?>? get() = lastCM5Result?.match
+}
+
+// ---------------------------------------------------------------------------
+// CodeMirrorAdapter — the CM5-compatible wrapper around EditorSession
+// ---------------------------------------------------------------------------
+
+class CodeMirrorAdapter(val session: EditorSession) {
+
+    internal val events = EventHandlers()
+    internal var curOp: Operation? = null
+    internal val marks: MutableMap<Int, BookmarkMarker> = mutableMapOf()
+    private var markIdCounter = 0
+    internal var virtualSelection: EditorSelection? = null
+    private var lastChangeEndOffset: DocPos = DocPos.ZERO
+    private var cm6Query: SearchQuery? = null
+    private var lineHandleChanges: MutableList<ViewUpdate>? = null
+
+    val state = AdapterState()
+
+    inner class AdapterState {
+        var statusbar: Any? = null
+        var dialog: Any? = null
+        var vimPlugin: Any? = null
+        var vim: VimState? = null
+        var currentNotificationClose: (() -> Unit)? = null
+        var closeVimNotification: (() -> Unit)? = null
+        var keyMap: String? = null
+        var overwrite: Boolean = false
+        var textwidth: Int? = null
+    }
+
+    // ---------------------------------------------------------------------------
+    // Event methods
+    // ---------------------------------------------------------------------------
+
+    fun on(type: String, f: (Array<out Any?>) -> Unit) = events.on(type, f)
+    fun off(type: String, f: (Array<out Any?>) -> Unit) = events.off(type, f)
+    fun signal(type: String, vararg args: Any?) = events.signal(type, *args)
+
+    // ---------------------------------------------------------------------------
+    // Position methods
+    // ---------------------------------------------------------------------------
+
+    fun indexFromPos(pos: Pos): DocPos = indexFromPos(session.state.doc, pos)
+    fun posFromIndex(offset: DocPos): Pos = posFromIndex(session.state.doc, offset)
+
+    // ---------------------------------------------------------------------------
+    // Document methods
+    // ---------------------------------------------------------------------------
+
+    fun firstLine(): Int = 0
+    fun lastLine(): Int = session.state.doc.lines - 1
+    fun lineCount(): Int = session.state.doc.lines
+
+    fun getLine(row: Int): String {
+        val doc = session.state.doc
+        if (row < 0 || row >= doc.lines) return ""
+        return doc.line(LineNumber(row + 1)).text
+    }
+
+    fun getValue(): String = session.state.doc.toString()
+
+    fun setValue(text: String) {
+        val doc = session.state.doc
+        session.dispatch(
+            TransactionSpec(
+                changes = ChangeSpec.Single(
+                    DocPos.ZERO,
+                    DocPos(doc.length),
+                    text.asInsert()
+                ),
+                selection = SelectionSpec.CursorSpec(DocPos.ZERO)
+            )
+        )
+    }
+
+    fun getRange(s: Pos, e: Pos): String {
+        val doc = session.state.doc
+        return session.state.sliceDoc(indexFromPos(doc, s), indexFromPos(doc, e))
+    }
+
+    fun replaceRange(text: String, s: Pos, e: Pos? = null) {
+        val end = e ?: s
+        val doc = session.state.doc
+        val from = indexFromPos(doc, s)
+        val to = indexFromPos(doc, end)
+        dispatchChange(
+            TransactionSpec(changes = ChangeSpec.Single(from, to, text.asInsert()))
+        )
+    }
+
+    fun replaceSelection(text: String) {
+        dispatchChange(session.state.replaceSelection(text))
+    }
+
+    fun replaceSelections(replacements: List<String>) {
+        val ranges = session.state.selection.ranges
+        val changes = ranges.mapIndexed { i, r ->
+            ChangeSpec.Single(r.from, r.to, (replacements.getOrElse(i) { "" }).asInsert())
+        }
+        dispatchChange(
+            TransactionSpec(changes = ChangeSpec.Multi(changes))
+        )
+    }
+
+    fun getSelection(): String = getSelections().joinToString("\n")
+
+    fun getSelections(): List<String> {
+        return session.state.selection.ranges.map { r ->
+            session.state.sliceDoc(r.from, r.to)
+        }
+    }
+
+    fun somethingSelected(): Boolean = session.state.selection.ranges.any { !it.empty }
+
+    // ---------------------------------------------------------------------------
+    // Cursor / Selection methods
+    // ---------------------------------------------------------------------------
+
+    fun setCursor(line: Int, ch: Int = 0) {
+        val offset = indexFromPos(session.state.doc, Pos(line, ch))
+        session.dispatch(
+            TransactionSpec(
+                selection = SelectionSpec.CursorSpec(offset),
+                scrollIntoView = curOp == null
+            )
+        )
+        if (curOp != null && curOp?.isVimOp != true) {
+            onBeforeEndOperation()
+        }
+    }
+
+    fun setCursor(pos: Pos) = setCursor(pos.line, pos.ch)
+
+    fun getCursor(p: String? = null): Pos {
+        val sel = session.state.selection.main
+        val offset = when (p) {
+            "head", null -> sel.head
+            "anchor" -> sel.anchor
+            "start" -> sel.from
+            "end" -> sel.to
+            else -> error("Invalid cursor type: $p")
+        }
+        return posFromIndex(session.state.doc, offset)
+    }
+
+    fun listSelections(): List<CM5Range> {
+        val doc = session.state.doc
+        return session.state.selection.ranges.map { r ->
+            CM5Range(
+                anchor = posFromIndex(doc, r.anchor),
+                head = posFromIndex(doc, r.head)
+            )
+        }
+    }
+
+    fun setSelections(selections: List<CM5Range>, primIndex: Int? = null) {
+        val doc = session.state.doc
+        val ranges = selections.map { x ->
+            val head = indexFromPos(doc, x.head)
+            val anchor = indexFromPos(doc, x.anchor)
+            if (head == anchor) {
+                EditorSelection.cursor(head, 1)
+            } else {
+                EditorSelection.range(anchor, head)
+            }
+        }
+        session.dispatch(
+            TransactionSpec(
+                selection = SelectionSpec.EditorSelectionSpec(
+                    EditorSelection.create(ranges, primIndex ?: 0)
+                )
+            )
+        )
+    }
+
+    fun setSelection(anchor: Pos, head: Pos, options: Map<String, Any?>? = null) {
+        setSelections(listOf(CM5Range(anchor, head)), 0)
+        if (options?.get("origin") == "*mouse") {
+            onBeforeEndOperation()
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Clipboard
+    // ---------------------------------------------------------------------------
+
+    fun clipPos(p: Pos): Pos {
+        val doc = session.state.doc
+        var ch = p.ch
+        var lineNumber = p.line + 1
+        if (lineNumber < 1) {
+            lineNumber = 1
+            ch = 0
+        }
+        if (lineNumber > doc.lines) {
+            lineNumber = doc.lines
+            ch = Int.MAX_VALUE
+        }
+        val line = doc.line(LineNumber(lineNumber))
+        ch = min(max(0, ch), line.to.value - line.from.value)
+        return Pos(lineNumber - 1, ch)
+    }
+
+    // ---------------------------------------------------------------------------
+    // Bracket matching
+    // ---------------------------------------------------------------------------
+
+    fun findMatchingBracket(pos: Pos): BracketMatch {
+        val state = session.state
+        val offset = indexFromPos(state.doc, pos)
+        var m = matchBrackets(state, offset + 1, -1)
+        if (m?.end != null) {
+            return BracketMatch(posFromIndex(state.doc, m.end!!.from))
+        }
+        m = matchBrackets(state, offset, 1)
+        if (m?.end != null) {
+            return BracketMatch(posFromIndex(state.doc, m.end!!.from))
+        }
+        return BracketMatch(null)
+    }
+
+    data class BracketMatch(val to: Pos?)
+
+    fun scanForBracket(
+        where: Pos,
+        dir: Int,
+        @Suppress("UNUSED_PARAMETER") style: Any? = null,
+        config: Map<String, Any?>? = null
+    ): ScanResult? {
+        val maxScanLen = (config?.get("maxScanLineLength") as? Int) ?: 10000
+        val maxScanLines = (config?.get("maxScanLines") as? Int) ?: 1000
+        val re = Regex("[(){}\\[\\]]")
+
+        val stack = mutableListOf<String>()
+        val lineEnd = if (dir > 0) {
+            min(where.line + maxScanLines, lastLine() + 1)
+        } else {
+            max(firstLine() - 1, where.line - maxScanLines)
+        }
+        var lineNo = where.line
+        while (lineNo != lineEnd) {
+            val line = getLine(lineNo)
+            if (line.isEmpty()) {
+                lineNo += dir
+                continue
+            }
+            if (line.length > maxScanLen) {
+                lineNo += dir
+                continue
+            }
+
+            val end = if (dir > 0) line.length else -1
+            var pos = if (dir > 0) 0 else line.length - 1
+            if (lineNo == where.line) pos = where.ch - if (dir < 0) 1 else 0
+
+            while (pos != end) {
+                val ch = line[pos].toString()
+                if (re.containsMatchIn(ch)) {
+                    val match = BRACKET_MATCHING[ch[0]]
+                    if (match != null && (match[1] == '>') == (dir > 0)) {
+                        stack.add(ch)
+                    } else if (stack.isEmpty()) {
+                        return ScanResult(Pos(lineNo, pos), ch)
+                    } else {
+                        stack.removeLastOrNull()
+                    }
+                }
+                pos += dir
+            }
+            lineNo += dir
+        }
+        return if (lineNo - dir == (if (dir > 0) lastLine() else firstLine())) {
+            null // false case
+        } else {
+            null // null case (exceeded scan range)
+        }
+    }
+
+    data class ScanResult(val pos: Pos, val ch: String)
+
+    // ---------------------------------------------------------------------------
+    // Indentation
+    // ---------------------------------------------------------------------------
+
+    fun indentLine(line: Int, more: Boolean = false) {
+        if (more) indentMore(session) else indentLess(session)
+    }
+
+    fun indentMore() = indentMore(session)
+    fun indentLess() = indentLess(session)
+
+    // ---------------------------------------------------------------------------
+    // Command execution
+    // ---------------------------------------------------------------------------
+
+    fun execCommand(name: String) {
+        when (name) {
+            "cursorCharLeft" -> cursorCharLeft(session)
+            "redo" -> runHistoryCommand(false)
+            "undo" -> runHistoryCommand(true)
+            "newlineAndIndent" -> {
+                insertNewlineAndIndent(session)
+            }
+            "indentAuto" -> indentMore(session)
+            "goLineLeft" -> cursorLineBoundaryBackward(session)
+            "goLineRight" -> {
+                cursorLineBoundaryForward(session)
+                val st = session.state
+                val cur = st.selection.main.head
+                if (cur < st.doc.endPos && st.sliceDoc(cur, cur + 1) != "\n") {
+                    cursorCharBackward(session)
+                }
+            }
+        }
+    }
+
+    private fun runHistoryCommand(revert: Boolean) {
+        if (curOp != null) {
+            curOp!!.changeStart = null
+        }
+        if (revert) undo(session) else redo(session)
+        val changeStartIndex = curOp?.changeStart
+        if (changeStartIndex != null) {
+            session.dispatch(
+                TransactionSpec(selection = SelectionSpec.CursorSpec(changeStartIndex))
+            )
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Bookmarks
+    // ---------------------------------------------------------------------------
+
+    fun setBookmark(cursor: Pos, options: BookmarkOptions? = null): Marker {
+        val assoc = if (options?.insertLeft == true) 1 else -1
+        val offset = indexFromPos(cursor)
+        val bm = BookmarkMarker(this, offset, assoc)
+        bm.id = markIdCounter++
+        marks[bm.id] = bm
+        return bm
+    }
+
+    data class BookmarkOptions(val insertLeft: Boolean = false)
+
+    // ---------------------------------------------------------------------------
+    // Search overlay
+    // ---------------------------------------------------------------------------
+
+    fun addOverlay(overlay: SearchOverlay): SearchQuery? {
+        val query = overlay.query
+        val cm6Query = SearchQuery(
+            regexp = true,
+            search = query.pattern,
+            caseSensitive = !query.options.contains(RegexOption.IGNORE_CASE)
+        )
+        if (cm6Query.valid) {
+            this.cm6Query = cm6Query
+            session.dispatch(
+                TransactionSpec(effects = listOf(setSearchQuery.of(cm6Query)))
+            )
+            return cm6Query
+        }
+        return null
+    }
+
+    fun removeOverlay(@Suppress("UNUSED_PARAMETER") overlay: Any? = null) {
+        val q = cm6Query ?: return
+        session.dispatch(
+            TransactionSpec(effects = listOf(setSearchQuery.of(q)))
+        )
+    }
+
+    // ---------------------------------------------------------------------------
+    // Search cursor
+    // ---------------------------------------------------------------------------
+
+    fun getSearchCursor(query: Regex, pos: Pos): VimSearchCursor = VimSearchCursor(this, query, pos)
+
+    // ---------------------------------------------------------------------------
+    // Scrolling
+    // ---------------------------------------------------------------------------
+
+    fun scrollIntoView(pos: Pos? = null, @Suppress("UNUSED_PARAMETER") margin: Int? = null) {
+        if (pos != null) {
+            val offset = indexFromPos(pos)
+            session.dispatch(
+                TransactionSpec(
+                    selection = SelectionSpec.CursorSpec(offset),
+                    scrollIntoView = true
+                )
+            )
+        } else {
+            session.dispatch(TransactionSpec(scrollIntoView = true))
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Options
+    // ---------------------------------------------------------------------------
+
+    fun setOption(name: String, value: Any?) {
+        when (name) {
+            "keyMap" -> state.keyMap = value as? String
+            "textwidth" -> state.textwidth = value as? Int
+        }
+    }
+
+    fun getOption(name: String): Any? = when (name) {
+        "firstLineNumber" -> 1
+        "tabSize" -> session.state.tabSize
+        "readOnly" -> session.state.readOnly
+        "indentWithTabs" -> false // Kodemirror's indentUnit is Int-based, no tab mode
+        "indentUnit" -> session.state.facet(indentUnit).coerceAtLeast(2)
+        "textwidth" -> state.textwidth
+        "keyMap" -> state.keyMap ?: "vim"
+        else -> null
+    }
+
+    // ---------------------------------------------------------------------------
+    // Overwrite
+    // ---------------------------------------------------------------------------
+
+    fun toggleOverwrite(on: Boolean) {
+        state.overwrite = on
+    }
+
+    fun overWriteSelection(text: String) {
+        val doc = session.state.doc
+        val sel = session.state.selection
+        val ranges = sel.ranges.map { x ->
+            if (x.empty) {
+                val ch = if (x.to < doc.endPos) doc.sliceString(x.from, x.to + 1) else ""
+                if (ch.isNotEmpty() && !ch.contains('\n')) {
+                    EditorSelection.range(x.from, x.to + 1)
+                } else {
+                    x
+                }
+            } else {
+                x
+            }
+        }
+        session.dispatch(
+            TransactionSpec(
+                selection = SelectionSpec.EditorSelectionSpec(
+                    EditorSelection.create(ranges, sel.mainIndex)
+                )
+            )
+        )
+        replaceSelection(text)
+    }
+
+    // ---------------------------------------------------------------------------
+    // Token type
+    // ---------------------------------------------------------------------------
+
+    fun getTokenTypeAt(pos: Pos): String {
+        val offset = indexFromPos(pos)
+        val tree = ensureSyntaxTree(session.state, offset.value)
+        val node = tree?.resolve(offset.value)
+        val type = node?.type?.name ?: ""
+        return when {
+            type.contains("comment", ignoreCase = true) -> "comment"
+            type.contains("string", ignoreCase = true) -> "string"
+            else -> ""
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Line handles
+    // ---------------------------------------------------------------------------
+
+    fun getLineHandle(row: Int): LineHandleImpl {
+        if (lineHandleChanges == null) lineHandleChanges = mutableListOf()
+        return LineHandleImpl(row, indexFromPos(Pos(row, 0)))
+    }
+
+    data class LineHandleImpl(val row: Int, val index: DocPos)
+
+    fun getLineNumber(handle: LineHandleImpl): Int? {
+        val updates = lineHandleChanges ?: return null
+        var offset: DocPos? = handle.index
+        for (update in updates) {
+            offset = update.changes.mapPos(offset!!, 1, MapMode.TrackAfter)
+            if (offset == null) return null
+        }
+        val pos = posFromIndex(session.state.doc, offset!!)
+        return if (pos.ch == 0) pos.line else null
+    }
+
+    fun releaseLineHandles() {
+        lineHandleChanges = null
+    }
+
+    // ---------------------------------------------------------------------------
+    // Multi-select
+    // ---------------------------------------------------------------------------
+
+    fun isInMultiSelectMode(): Boolean = session.state.selection.ranges.size > 1
+
+    fun virtualSelectionMode(): Boolean = virtualSelection != null
+
+    fun forEachSelection(command: () -> Unit) {
+        val selection = session.state.selection
+        virtualSelection = EditorSelection.create(selection.ranges, selection.mainIndex)
+        for (i in virtualSelection!!.ranges.indices) {
+            val range = virtualSelection!!.ranges[i]
+            session.dispatch(
+                TransactionSpec(
+                    selection = SelectionSpec.EditorSelectionSpec(
+                        EditorSelection.create(listOf(range))
+                    )
+                )
+            )
+            command()
+            // Update the virtual selection range with the current state
+            virtualSelection = virtualSelection!!.replaceRange(
+                session.state.selection.ranges[0], i
+            )
+        }
+        session.dispatch(
+            TransactionSpec(
+                selection = SelectionSpec.EditorSelectionSpec(virtualSelection!!)
+            )
+        )
+        virtualSelection = null
+    }
+
+    // ---------------------------------------------------------------------------
+    // Misc
+    // ---------------------------------------------------------------------------
+
+    fun defaultTextHeight(): Float = 20f // Placeholder for Compose rendering
+
+    fun focus() {
+        // In Compose, focus is managed differently. This is a no-op for now.
+    }
+
+    fun blur() {
+        // No-op in Compose
+    }
+
+    fun getLastEditEnd(): Pos = posFromIndex(lastChangeEndOffset)
+
+    fun getMode(): Map<String, Any?> = mapOf("name" to getOption("mode"))
+
+    fun setSize(@Suppress("UNUSED_PARAMETER") w: Int, @Suppress("UNUSED_PARAMETER") h: Int) {
+        // No-op in Compose - layout is handled by the composable
+    }
+
+    fun refresh() {
+        // No-op in Compose
+    }
+
+    // ---------------------------------------------------------------------------
+    // Hard wrap
+    // ---------------------------------------------------------------------------
+
+    fun hardWrap(options: HardWrapOptions): Int {
+        val max = options.column ?: (getOption("textwidth") as? Int) ?: 80
+        val allowMerge = options.allowMerge
+
+        var row = min(options.from, options.to)
+        val endRow = intArrayOf(max(options.from, options.to))
+
+        while (row <= endRow[0]) {
+            val line = getLine(row)
+            if (line.length > max) {
+                val space = findSpace(line, max, 5)
+                if (space != null) {
+                    val indentation = Regex("^\\s*").find(line)?.value ?: ""
+                    replaceRange(
+                        "\n$indentation",
+                        Pos(row, space.start),
+                        Pos(row, space.end)
+                    )
+                }
+                endRow[0]++
+            } else if (allowMerge && Regex("\\S").containsMatchIn(line) && row != endRow[0]) {
+                val nextLine = getLine(row + 1)
+                if (nextLine.isNotEmpty() && Regex("\\S").containsMatchIn(nextLine)) {
+                    val trimmedLine = line.trimEnd()
+                    val trimmedNextLine = nextLine.trimStart()
+                    val mergedLine = "$trimmedLine $trimmedNextLine"
+
+                    val space = findSpace(mergedLine, max, 5)
+                    if ((space != null && space.start > trimmedLine.length) ||
+                        mergedLine.length < max
+                    ) {
+                        replaceRange(
+                            " ",
+                            Pos(row, trimmedLine.length),
+                            Pos(row + 1, nextLine.length - trimmedNextLine.length)
+                        )
+                        row--
+                        endRow[0]--
+                    } else if (trimmedLine.length < line.length) {
+                        replaceRange(
+                            "",
+                            Pos(row, trimmedLine.length),
+                            Pos(row, line.length)
+                        )
+                    }
+                }
+            }
+            row++
+        }
+        return row
+    }
+
+    data class HardWrapOptions(
+        val from: Int,
+        val to: Int,
+        val column: Int? = null,
+        val allowMerge: Boolean = true
+    )
+
+    private fun findSpace(line: String, max: Int, min: Int): SpaceResult? {
+        if (line.length < max) return null
+        val before = line.substring(0, max)
+        val after = line.substring(max)
+
+        val spaceAfter = Regex("^(?:(\\s+)|(\\S+)(\\s+))").find(after)
+        val spaceBefore = Regex("(?:(\\s+)|(\\s+)(\\S+))$").find(before)
+
+        var start = 0
+        var end = 0
+
+        if (spaceBefore != null && spaceBefore.groupValues[2].isEmpty()) {
+            start = max - spaceBefore.groupValues[1].length
+            end = max
+        }
+        if (spaceAfter != null && spaceAfter.groupValues[2].isEmpty()) {
+            if (start == 0) start = max
+            end = max + spaceAfter.groupValues[1].length
+        }
+        if (start != 0) return SpaceResult(start, end)
+
+        if (spaceBefore != null && spaceBefore.groupValues[2].isNotEmpty() &&
+            spaceBefore.range.first > min
+        ) {
+            return SpaceResult(
+                spaceBefore.range.first,
+                spaceBefore.range.first + spaceBefore.groupValues[2].length
+            )
+        }
+
+        if (spaceAfter != null && spaceAfter.groupValues[2].isNotEmpty()) {
+            val s = max + spaceAfter.groupValues[2].length
+            return SpaceResult(s, s + spaceAfter.groupValues[3].length)
+        }
+        return null
+    }
+
+    private data class SpaceResult(val start: Int, val end: Int)
+
+    // ---------------------------------------------------------------------------
+    // Operation batching
+    // ---------------------------------------------------------------------------
+
+    fun <T> operation(fn: () -> T): T {
+        if (curOp == null) {
+            curOp = Operation()
+        }
+        curOp!!.depth++
+        try {
+            return fn()
+        } finally {
+            curOp?.let {
+                it.depth--
+                if (it.depth == 0) {
+                    onBeforeEndOperation()
+                }
+            }
+        }
+    }
+
+    internal fun dispatchChange(spec: TransactionSpec) {
+        if (session.state.readOnly) return
+        session.dispatch(spec)
+    }
+
+    // ---------------------------------------------------------------------------
+    // Update handlers (called by the vim plugin on ViewUpdate)
+    // ---------------------------------------------------------------------------
+
+    fun onChange(update: ViewUpdate) {
+        lineHandleChanges?.add(update)
+        for ((_, m) in marks) {
+            m.update(update.changes)
+        }
+        virtualSelection?.let { vs ->
+            virtualSelection = EditorSelection.create(
+                vs.ranges.map { it.map(update.changes) },
+                vs.mainIndex
+            )
+        }
+        val op = curOp ?: Operation().also { curOp = it }
+        update.changes.iterChanges(
+            f = { _: DocPos, _: DocPos, fromB: DocPos, toB: DocPos, text: Text ->
+                if (op.changeStart == null || op.changeStart!! > fromB) {
+                    op.changeStart = fromB
+                }
+                lastChangeEndOffset = toB
+                val change = Change(text.lineSequence().map { line -> line.text }.toList())
+                if (op.lastChange == null) {
+                    op.change = change
+                    op.lastChange = change
+                } else {
+                    op.lastChange!!.next = change
+                    op.lastChange = change
+                }
+            },
+            individual = true
+        )
+        if (op.changeHandlers == null) {
+            op.changeHandlers = events.getHandlers("change")
+        }
+    }
+
+    fun onSelectionChange() {
+        val op = curOp ?: Operation().also { curOp = it }
+        if (op.cursorActivityHandlers == null) {
+            op.cursorActivityHandlers = events.getHandlers("cursorActivity")
+        }
+        op.cursorActivity = true
+    }
+
+    internal fun onBeforeEndOperation() {
+        val op = curOp ?: return
+        var scrollIntoView = false
+        if (op.change != null) {
+            op.changeHandlers?.forEach { it(arrayOf(this, op.change)) }
+        }
+        if (op.cursorActivity) {
+            op.cursorActivityHandlers?.forEach { it(arrayOf(this, null)) }
+            if (op.isVimOp) scrollIntoView = true
+        }
+        curOp = null
+        if (scrollIntoView) {
+            this.scrollIntoView()
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Dialog support (for ex command line input)
+    // ---------------------------------------------------------------------------
+
+    var openDialogFn: (
+        (prefix: String, callback: (String) -> Unit, options: Map<String, Any?>) -> (() -> Unit)
+    )? =
+        null
+    var openNotificationFn: ((text: String, options: Map<String, Any?>) -> (() -> Unit))? = null
+
+    fun openDialog(
+        template: String,
+        callback: ((String) -> Unit)?,
+        options: Map<String, Any?> = emptyMap()
+    ): () -> Unit {
+        return openDialogFn?.invoke(template, callback ?: {}, options) ?: {}
+    }
+
+    fun openNotification(template: String, options: Map<String, Any?> = emptyMap()): () -> Unit {
+        return openNotificationFn?.invoke(template, options) ?: {}
+    }
+
+    // ---------------------------------------------------------------------------
+    // Companion: static-like members matching CodeMirror.xxx
+    // ---------------------------------------------------------------------------
+
+    companion object {
+        var isMac: Boolean = false
+
+        fun isWordChar(ch: String): Boolean = com.monkopedia.kodemirror.vim.isWordChar(ch)
+
+        fun signal(cm: CodeMirrorAdapter, type: String, vararg args: Any?) {
+            cm.events.signal(type, *args)
+        }
+
+        fun on(emitter: Any, type: String, f: (Array<out Any?>) -> Unit) {
+            if (emitter is CodeMirrorAdapter) {
+                emitter.events.on(type, f)
+            }
+        }
+
+        fun off(emitter: Any, type: String, f: (Array<out Any?>) -> Unit) {
+            if (emitter is CodeMirrorAdapter) {
+                emitter.events.off(type, f)
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// BookmarkMarker: tracks a position through document changes
+// ---------------------------------------------------------------------------
+
+class BookmarkMarker(
+    private val cm: CodeMirrorAdapter,
+    private var offset: DocPos?,
+    private val assoc: Int
+) : Marker {
+    internal var id: Int = 0
+
+    override fun find(): Pos? {
+        val off = offset ?: return null
+        return cm.posFromIndex(off)
+    }
+
+    override fun clear() {
+        cm.marks.remove(id)
+    }
+
+    internal fun update(changes: ChangeDesc) {
+        offset?.let {
+            offset = changes.mapPos(it, assoc, MapMode.TrackDel)
+        }
+    }
+}

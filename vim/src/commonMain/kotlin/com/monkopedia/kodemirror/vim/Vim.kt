@@ -1,0 +1,1052 @@
+/*
+ * Copyright 2026 Jason Monk
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Originally based on CodeMirror 6 by Marijn Haverbeke, licensed under MIT.
+ * See NOTICE file for details.
+ */
+package com.monkopedia.kodemirror.vim
+
+import kotlin.math.abs
+
+// ---------------------------------------------------------------------------
+// Vim key-to-CM key mapping
+// ---------------------------------------------------------------------------
+
+private val specialKey = mapOf(
+    "Return" to "CR",
+    "Backspace" to "BS",
+    "Delete" to "Del",
+    "Escape" to "Esc",
+    "Insert" to "Ins",
+    "ArrowLeft" to "Left",
+    "ArrowRight" to "Right",
+    "ArrowUp" to "Up",
+    "ArrowDown" to "Down",
+    "Enter" to "CR",
+    " " to "Space"
+)
+
+private val vimToCmKeyMap: Map<String, String> = buildMap {
+    val directKeys = listOf("Left", "Right", "Up", "Down", "End", "Home")
+    for (key in directKeys) {
+        put(key.lowercase(), key)
+    }
+    for ((cmKey, vimKey) in specialKey) {
+        put(vimKey.lowercase(), cmKey)
+        put(cmKey.lowercase(), cmKey)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// State tracking
+// ---------------------------------------------------------------------------
+
+private val vimStateMap = mutableMapOf<CodeMirrorAdapter, VimState>()
+
+private var noremap = false
+private val keyToKeyStack = mutableListOf<VimKeyCommand>()
+private var virtualPrompt: PromptOptions? = null
+
+// ---------------------------------------------------------------------------
+// Default keymap length tracking (for mapclear)
+// ---------------------------------------------------------------------------
+
+private val defaultKeymapLength = defaultKeymap.size
+
+// ---------------------------------------------------------------------------
+// The Vim API object
+// ---------------------------------------------------------------------------
+
+object Vim : VimApiInterface {
+
+    init {
+        vimApi = this
+        commandDispatcher = VimCommandDispatcher
+        initOptions()
+    }
+
+    // -- Public API ----------------------------------------------------------
+
+    internal fun getRegisterController(): RegisterController = vimGlobalState.registerController
+
+    @Suppress("ktlint:standard:function-naming")
+    fun resetVimGlobalState_() {
+        resetVimGlobalState()
+    }
+
+    @Suppress("ktlint:standard:function-naming")
+    internal fun getVimGlobalState_(): VimGlobalState = vimGlobalState
+
+    @Suppress("ktlint:standard:function-naming")
+    fun maybeInitVimState_(cm: CodeMirrorAdapter): VimState {
+        return maybeInitVimState(cm)
+    }
+
+    override fun handleKey(cm: CodeMirrorAdapter, key: String, origin: String): Boolean {
+        val command = findKey(cm, key, origin)
+        if (command != null) {
+            return command()
+        }
+        return false
+    }
+
+    fun handleEx(cm: CodeMirrorAdapter, input: String) {
+        exCommandDispatcher.processCommand(cm, input)
+    }
+
+    fun defineMotion(name: String, fn: MotionFn) {
+        motions[name] = fn
+    }
+
+    fun defineAction(name: String, fn: ActionFn) {
+        actions[name] = fn
+    }
+
+    fun defineOperator(name: String, fn: OperatorFn) {
+        operators[name] = fn
+    }
+
+    fun defineEx(name: String, prefix: String?, func: ExFn) {
+        val effectivePrefix = prefix ?: name
+        if (!name.startsWith(effectivePrefix)) {
+            error("\"$effectivePrefix\" is not a prefix of \"$name\", command not registered")
+        }
+        exCommands[name] = func
+        exCommandDispatcher.commandMap[effectivePrefix] = ExCommandDefinition(
+            name = name,
+            shortName = effectivePrefix,
+            type = "api"
+        )
+    }
+
+    fun map(lhs: String, rhs: String, ctx: String? = null) {
+        exCommandDispatcher.map(lhs, rhs, ctx)
+    }
+
+    fun unmap(lhs: String, ctx: String? = null): Boolean {
+        return exCommandDispatcher.unmap(lhs, ctx)
+    }
+
+    fun noremap(lhs: String, rhs: String, ctx: String? = null) {
+        exCommandDispatcher.map(lhs, rhs, ctx, noremap = true)
+    }
+
+    override fun mapclear(ctx: String?) {
+        val actualLength = defaultKeymap.size
+        val origLength = defaultKeymapLength
+        val userKeymap = if (actualLength > origLength) {
+            defaultKeymap.subList(0, actualLength - origLength).toList()
+        } else {
+            emptyList()
+        }
+        // Remove user-defined mappings
+        while (defaultKeymap.size > origLength) {
+            (defaultKeymap as MutableList).removeAt(0)
+        }
+        if (ctx != null) {
+            for (i in userKeymap.indices.reversed()) {
+                val mapping = userKeymap[i]
+                if (ctx != mapping.context) {
+                    if (mapping.context != null) {
+                        mapCommand(mapping)
+                    } else {
+                        val contexts = listOf("normal", "insert", "visual")
+                        for (c in contexts) {
+                            if (c != ctx) {
+                                mapCommand(mapping, contextOverride = c)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun enterVimMode(cm: CodeMirrorAdapter) {
+        CodeMirrorAdapter.signal(cm, "vim-mode-change", mapOf("mode" to "normal"))
+        maybeInitVimState(cm)
+    }
+
+    fun leaveVimMode(cm: CodeMirrorAdapter) {
+        vimStateMap.remove(cm)
+        cm.state.vim = null
+    }
+
+    fun exitVisualMode(cm: CodeMirrorAdapter, moveHead: Boolean = true) {
+        com.monkopedia.kodemirror.vim.exitVisualMode(cm, moveHead)
+    }
+
+    fun exitInsertMode(cm: CodeMirrorAdapter, keepCursor: Boolean = false) {
+        com.monkopedia.kodemirror.vim.exitInsertMode(cm, keepCursor)
+    }
+
+    // -- Key finding / dispatch -----------------------------------------------
+
+    fun findKey(cm: CodeMirrorAdapter, key: String, origin: String? = null): (() -> Boolean)? {
+        val vim = maybeInitVimState(cm)
+
+        fun handleMacroRecording(): Boolean {
+            val macroModeState = vimGlobalState.macroModeState
+            if (macroModeState.isRecording) {
+                if (key == "q") {
+                    macroModeState.exitMacroRecordMode()
+                    clearInputState(cm)
+                    return true
+                }
+                if (origin != "mapping") {
+                    logKey(macroModeState, key)
+                }
+            }
+            return false
+        }
+
+        fun handleEsc(): Boolean {
+            if (key == "<Esc>" || key == "Esc" || key == "Escape") {
+                if (vim.visualMode) {
+                    exitVisualMode(cm)
+                } else if (vim.insertMode) {
+                    exitInsertMode(cm)
+                } else {
+                    return false
+                }
+                clearInputState(cm)
+                return true
+            }
+            return false
+        }
+
+        fun handleKeyInsertMode(): Any? {
+            if (handleEsc()) return true
+            vim.inputState.keyBuffer.add(key)
+            val keys = vim.inputState.keyBuffer.joinToString("")
+            val keysAreChars = key.length == 1
+            val match = VimCommandDispatcher.matchCommand(
+                keys,
+                defaultKeymap,
+                vim.inputState,
+                "insert"
+            )
+            val changeQueue = vim.inputState.changeQueue
+
+            return when (match.type) {
+                "none" -> {
+                    clearInputState(cm)
+                    false
+                }
+                "partial" -> {
+                    if (match.expectLiteralNext) vim.expectLiteralNext = true
+                    if (keysAreChars) {
+                        val selections = cm.listSelections()
+                        val cq = if (
+                            changeQueue == null ||
+                            changeQueue.removed.size != selections.size
+                        ) {
+                            val newCq = ChangeQueue()
+                            vim.inputState.changeQueue = newCq
+                            newCq
+                        } else {
+                            changeQueue
+                        }
+                        cq.inserted += key
+                        for (i in selections.indices) {
+                            val from = cursorMin(selections[i].anchor, selections[i].head)
+                            val to = cursorMax(selections[i].anchor, selections[i].head)
+                            val text = cm.getRange(from, to)
+                            while (cq.removed.size <= i) cq.removed.add("")
+                            cq.removed[i] = (cq.removed[i]) + text
+                        }
+                    }
+                    !keysAreChars
+                }
+                "full" -> {
+                    vim.inputState.keyBuffer.clear()
+                    vim.expectLiteralNext = false
+                    if (match.command != null && changeQueue != null) {
+                        val selections = cm.listSelections()
+                        for (i in selections.indices) {
+                            val here = selections[i].head
+                            val removeLen = changeQueue.inserted.length
+                            cm.replaceRange(
+                                changeQueue.removed.getOrElse(i) { "" },
+                                offsetCursor(here, 0, -removeLen),
+                                here
+                            )
+                        }
+                        vimGlobalState.macroModeState
+                            .lastInsertModeChanges.changes.removeLastOrNull()
+                    }
+                    if (match.command == null) clearInputState(cm)
+                    match.command
+                }
+                else -> {
+                    clearInputState(cm)
+                    false
+                }
+            }
+        }
+
+        fun handleKeyNonInsertMode(): Any? {
+            if (handleMacroRecording() || handleEsc()) return true
+
+            vim.inputState.keyBuffer.add(key)
+            val keys = vim.inputState.keyBuffer.joinToString("")
+            if (Regex("^[1-9]\\d*$").matches(keys)) return true
+
+            val keysMatcher = Regex("^(\\d*)(.*)$").find(keys)
+            if (keysMatcher == null) {
+                clearInputState(cm)
+                return false
+            }
+            val context = if (vim.visualMode) "visual" else "normal"
+            var mainKey = keysMatcher.groupValues[2].ifEmpty { keysMatcher.groupValues[1] }
+            val opShortcut = vim.inputState.operatorShortcut
+            if (opShortcut != null && opShortcut.isNotEmpty() &&
+                opShortcut.last().toString() == mainKey
+            ) {
+                mainKey = opShortcut
+            }
+            val match = VimCommandDispatcher.matchCommand(
+                mainKey,
+                defaultKeymap,
+                vim.inputState,
+                context
+            )
+            return when (match.type) {
+                "none" -> {
+                    clearInputState(cm)
+                    false
+                }
+                "partial" -> {
+                    if (match.expectLiteralNext) vim.expectLiteralNext = true
+                    true
+                }
+                "clear" -> {
+                    clearInputState(cm)
+                    true
+                }
+                else -> {
+                    vim.expectLiteralNext = false
+                    vim.inputState.keyBuffer.clear()
+                    val keysMatcher2 = Regex("^(\\d*)(.*)$").find(keys)
+                    if (keysMatcher2 != null) {
+                        val digits = keysMatcher2.groupValues[1]
+                        if (digits.isNotEmpty() && digits != "0") {
+                            vim.inputState.pushRepeatDigit(digits)
+                        }
+                    }
+                    match.command
+                }
+            }
+        }
+
+        val command: Any? = if (vim.insertMode) {
+            handleKeyInsertMode()
+        } else {
+            handleKeyNonInsertMode()
+        }
+
+        if (command == false || command == null) {
+            return if (!vim.insertMode && (key.length == 1)) {
+                { true }
+            } else {
+                null
+            }
+        } else if (command == true) {
+            return { true }
+        } else if (command is VimKeyCommand) {
+            return {
+                cm.operation {
+                    try {
+                        if (command is KeyToKeyCommand) {
+                            doKeyToKey(cm, command.toKeys, command)
+                        } else {
+                            VimCommandDispatcher.processCommand(cm, vim, command)
+                        }
+                    } catch (e: Exception) {
+                        vimStateMap.remove(cm)
+                        maybeInitVimState(cm)
+                        throw e
+                    }
+                }
+                true
+            }
+        }
+        return null
+    }
+
+    // -- Internal helpers -----------------------------------------------------
+
+    private fun mapCommand(command: VimKeyCommand, contextOverride: String? = null) {
+        val cmd = if (contextOverride != null) {
+            when (command) {
+                is KeyToKeyCommand -> command.copy(context = contextOverride)
+                is ActionCommand -> command.copy(context = contextOverride)
+                is MotionCommand -> command.copy(context = contextOverride)
+                is OperatorCommand -> command.copy(context = contextOverride)
+                is SearchCommand -> command.copy(context = contextOverride)
+                is OperatorMotionCommand -> command.copy(context = contextOverride)
+                is IdleCommand -> command.copy(context = contextOverride)
+                is ExCommandMapping -> command.copy(context = contextOverride)
+                is KeyToExCommand -> command.copy(context = contextOverride)
+            }
+        } else {
+            command
+        }
+        (defaultKeymap as MutableList).add(0, cmd)
+    }
+
+    private fun initOptions() {
+        defineOption("filetype", null, "string", listOf("ft")) { value, cm ->
+            cm?.let {
+                // No-op in Kotlin; could configure language mode
+            }
+            value
+        }
+        defineOption("textwidth", 80, "number", listOf("tw"))
+        defineOption("pcre", true, "boolean")
+    }
+}
+
+// ---------------------------------------------------------------------------
+// State init
+// ---------------------------------------------------------------------------
+
+internal fun maybeInitVimState(cm: CodeMirrorAdapter): VimState {
+    return vimStateMap.getOrPut(cm) {
+        val state = VimState()
+        cm.state.vim = state
+        state
+    }
+}
+
+internal fun getVimState(cm: CodeMirrorAdapter): VimState? {
+    return vimStateMap[cm]
+}
+
+// ---------------------------------------------------------------------------
+// Command dispatcher
+// ---------------------------------------------------------------------------
+
+internal data class MatchResult(
+    val type: String,
+    val command: VimKeyCommand? = null,
+    val expectLiteralNext: Boolean = false
+)
+
+internal object VimCommandDispatcher : CommandDispatcherInterface {
+
+    fun matchCommand(
+        keys: String,
+        keyMap: List<VimKeyCommand>,
+        inputState: InputState,
+        context: String
+    ): MatchResult {
+        val matches = commandMatches(keys, keyMap, context, inputState)
+        val bestMatch = matches.full.firstOrNull()
+        if (bestMatch == null) {
+            if (matches.partial.isNotEmpty()) {
+                return MatchResult(
+                    type = "partial",
+                    expectLiteralNext = matches.partial.size == 1 &&
+                        matches.partial[0].keys.endsWith("<character>")
+                )
+            }
+            return MatchResult(type = "none")
+        }
+        if (bestMatch.keys.endsWith("<character>") || bestMatch.keys.endsWith("<register>")) {
+            val character = lastChar(keys)
+            if (character.isEmpty() || character.length > 1) return MatchResult(type = "clear")
+            inputState.selectedCharacter = character
+        }
+        return MatchResult(type = "full", command = bestMatch)
+    }
+
+    override fun processCommand(cm: CodeMirrorAdapter, vim: VimState, command: VimKeyCommand) {
+        vim.inputState.repeatOverride = command.repeatOverride
+        when (command) {
+            is MotionCommand -> processMotion(cm, vim, command)
+            is OperatorCommand -> processOperator(cm, vim, command)
+            is OperatorMotionCommand -> processOperatorMotion(cm, vim, command)
+            is ActionCommand -> processAction(cm, vim, command)
+            is SearchCommand -> processSearch(cm, vim, command)
+            is ExCommandMapping, is KeyToExCommand -> processEx(cm, vim, command)
+            is KeyToKeyCommand -> doKeyToKey(cm, command.toKeys, command)
+            is IdleCommand -> { /* no-op */ }
+        }
+    }
+
+    fun processMotion(cm: CodeMirrorAdapter, vim: VimState, command: VimKeyCommand) {
+        val motionName = when (command) {
+            is MotionCommand -> command.motion
+            is OperatorMotionCommand -> command.motion
+            else -> return
+        }
+        val motionArgsSrc = when (command) {
+            is MotionCommand -> command.motionArgs
+            is OperatorMotionCommand -> command.motionArgs
+            else -> null
+        }
+        vim.inputState.motion = motionName
+        vim.inputState.motionArgs = motionArgsSrc?.copy() ?: MotionArgs()
+        evalInput(cm, vim)
+    }
+
+    fun processOperator(cm: CodeMirrorAdapter, vim: VimState, command: VimKeyCommand) {
+        val inputState = vim.inputState
+        val operatorName = when (command) {
+            is OperatorCommand -> command.operator
+            is OperatorMotionCommand -> command.operator
+            else -> return
+        }
+        val operatorArgsSrc = when (command) {
+            is OperatorCommand -> command.operatorArgs
+            is OperatorMotionCommand -> command.operatorArgs
+            else -> null
+        }
+
+        if (inputState.operator != null) {
+            if (inputState.operator == operatorName) {
+                inputState.motion = "expandToLine"
+                inputState.motionArgs = MotionArgs(linewise = true, repeat = 1)
+                evalInput(cm, vim)
+                return
+            } else {
+                clearInputState(cm)
+            }
+        }
+        inputState.operator = operatorName
+        inputState.operatorArgs = operatorArgsSrc?.copy()
+        if (command.keys.length > 1) {
+            inputState.operatorShortcut = command.keys
+        }
+        if (command.exitVisualBlock == true) {
+            vim.visualBlock = false
+            updateCmSelection(cm)
+        }
+        if (vim.visualMode) {
+            evalInput(cm, vim)
+        }
+    }
+
+    fun processOperatorMotion(
+        cm: CodeMirrorAdapter,
+        vim: VimState,
+        command: OperatorMotionCommand
+    ) {
+        val visualMode = vim.visualMode
+        val operatorMotionArgs = command.operatorMotionArgs
+        if (operatorMotionArgs != null && visualMode && operatorMotionArgs.visualLine == true) {
+            vim.visualLine = true
+        }
+        processOperator(cm, vim, command)
+        if (!visualMode) {
+            processMotion(cm, vim, command)
+        }
+    }
+
+    override fun processAction(cm: CodeMirrorAdapter, vim: VimState, command: ActionCommand) {
+        val inputState = vim.inputState
+        val repeat = inputState.getRepeat()
+        val repeatIsExplicit = repeat != 0
+        val actionArgs = command.actionArgs?.copy() ?: ActionArgs()
+        if (inputState.selectedCharacter != null) {
+            actionArgs.selectedCharacter = inputState.selectedCharacter
+        }
+        if (command.operator != null) {
+            processOperator(
+                cm,
+                vim,
+                OperatorCommand(
+                    keys = command.keys,
+                    operator = command.operator,
+                    context = command.context
+                )
+            )
+        }
+        if (command.motion != null) {
+            processMotion(
+                cm,
+                vim,
+                MotionCommand(
+                    keys = command.keys,
+                    motion = command.motion,
+                    context = command.context
+                )
+            )
+        }
+        if (command.motion != null || command.operator != null) {
+            evalInput(cm, vim)
+        }
+        actionArgs.repeat = if (repeat != 0) repeat else 1
+        actionArgs.repeatIsExplicit = repeatIsExplicit
+        actionArgs.registerName = inputState.registerName
+        clearInputState(cm)
+        vim.lastMotion = null
+        if (command.isEdit == true) {
+            recordLastEdit(vim, inputState, command)
+        }
+        val actionFn = actions[command.action]
+        if (actionFn != null) {
+            actionFn(cm, actionArgs, vim)
+        }
+    }
+
+    fun processSearch(cm: CodeMirrorAdapter, vim: VimState, command: SearchCommand) {
+        val forward = command.searchArgs.forward == true
+        val wholeWordOnly = command.searchArgs.wholeWordOnly == true
+        getSearchState(cm).setReversed(!forward)
+
+        when (command.searchArgs.querySrc) {
+            "prompt" -> {
+                val macroModeState = vimGlobalState.macroModeState
+                if (macroModeState.isPlaying) {
+                    val query = macroModeState.replaySearchQueries.removeFirstOrNull() ?: ""
+                    handleSearchQuery(cm, vim, command, query, ignoreCase = true, smartCase = false)
+                } else {
+                    val promptPrefix = if (forward) "/" else "?"
+                    showPrompt(
+                        cm,
+                        PromptOptions(
+                            onClose = { query ->
+                                handleSearchQuery(
+                                    cm,
+                                    vim,
+                                    command,
+                                    query.orEmpty(),
+                                    ignoreCase = true,
+                                    smartCase = true
+                                )
+                                if (macroModeState.isRecording) {
+                                    logSearchQuery(macroModeState, query.orEmpty())
+                                }
+                            },
+                            prefix = promptPrefix
+                        )
+                    )
+                }
+            }
+            "wordUnderCursor" -> {
+                var word = expandWordUnderCursor(cm, noSymbol = true)
+                var isKeyword = true
+                if (word == null) {
+                    word = expandWordUnderCursor(cm, noSymbol = false)
+                    isKeyword = false
+                }
+                if (word == null) {
+                    showConfirm(cm, "No word under cursor")
+                    clearInputState(cm)
+                    return
+                }
+                var query = cm.getLine(word.start.line)
+                    .substring(word.start.ch, word.end.ch)
+                query = if (isKeyword && wholeWordOnly) {
+                    "\\b$query\\b"
+                } else {
+                    escapeRegex(query)
+                }
+                vimGlobalState.jumpList.cachedCursor = cm.getCursor()
+                cm.setCursor(word.start)
+                handleSearchQuery(cm, vim, command, query, ignoreCase = true, smartCase = false)
+            }
+        }
+    }
+
+    private fun handleSearchQuery(
+        cm: CodeMirrorAdapter,
+        vim: VimState,
+        command: SearchCommand,
+        query: String,
+        ignoreCase: Boolean,
+        smartCase: Boolean
+    ) {
+        try {
+            updateSearchQuery(cm, query, ignoreCase, smartCase)
+        } catch (_: Exception) {
+            showConfirm(cm, "Invalid regex: $query")
+            clearInputState(cm)
+            return
+        }
+        processMotion(
+            cm,
+            vim,
+            MotionCommand(
+                keys = "",
+                motion = "findNext",
+                motionArgs = MotionArgs(
+                    forward = true,
+                    toJumplist = command.searchArgs.toJumplist
+                )
+            )
+        )
+    }
+
+    fun processEx(cm: CodeMirrorAdapter, vim: VimState, command: VimKeyCommand) {
+        if (command is KeyToExCommand) {
+            exCommandDispatcher.processCommand(cm, command.exArgs.input)
+        } else {
+            val promptOptions = PromptOptions(
+                onClose = { input ->
+                    exCommandDispatcher.processCommand(cm, input.orEmpty())
+                    getVimState(cm)?.let { clearInputState(cm) }
+                    clearSearchHighlight(cm)
+                },
+                prefix = ":"
+            )
+            if (vim.visualMode) {
+                promptOptions.value = "'<,'>"
+            } else {
+                val repeat = vim.inputState.getRepeat()
+                if (repeat > 1) {
+                    promptOptions.value = ".,.+${repeat - 1}"
+                }
+            }
+            showPrompt(cm, promptOptions)
+        }
+    }
+
+    override fun evalInput(cm: CodeMirrorAdapter, vim: VimState) {
+        val inputState = vim.inputState
+        val motion = inputState.motion
+        val motionArgs = inputState.motionArgs ?: MotionArgs()
+        val operator = inputState.operator
+        val operatorArgs = inputState.operatorArgs ?: OperatorArgs()
+        val registerName = inputState.registerName
+        val sel = vim.sel
+
+        val origHead = copyCursor(
+            if (vim.visualMode) clipCursorToContent(cm, sel.head) else cm.getCursor("head")
+        )
+        val origAnchor = copyCursor(
+            if (vim.visualMode) clipCursorToContent(cm, sel.anchor) else cm.getCursor("anchor")
+        )
+        val oldHead = copyCursor(origHead)
+        val oldAnchor = copyCursor(origAnchor)
+        var newHead: Pos? = null
+        var newAnchor: Pos? = null
+
+        if (operator != null) {
+            recordLastEdit(vim, inputState)
+        }
+
+        val repeat: Int
+        if (inputState.repeatOverride != null) {
+            repeat = inputState.repeatOverride!!
+        } else {
+            val r = inputState.getRepeat()
+            repeat = if (r > 0 && motionArgs.explicitRepeat == true) {
+                motionArgs.repeatIsExplicit = true
+                r
+            } else if (motionArgs.noRepeat == true ||
+                (motionArgs.explicitRepeat != true && r == 0)
+            ) {
+                motionArgs.repeatIsExplicit = false
+                1
+            } else {
+                r.coerceAtLeast(1)
+            }
+        }
+
+        if (inputState.selectedCharacter != null) {
+            motionArgs.selectedCharacter = inputState.selectedCharacter
+            operatorArgs.selectedCharacter = inputState.selectedCharacter
+        }
+        motionArgs.repeat = repeat
+        clearInputState(cm)
+
+        if (motion != null) {
+            val motionFn = motions[motion]
+            val motionResult = motionFn?.invoke(cm, origHead, motionArgs, vim, inputState)
+            vim.lastMotion = motionFn
+            if (motionResult == null) return
+
+            if (motionArgs.toJumplist == true) {
+                val jumpList = vimGlobalState.jumpList
+                val cachedCursor = jumpList.cachedCursor
+                val resultPos = motionResult.toPos() ?: origHead
+                if (cachedCursor != null) {
+                    recordJumpPosition(cm, cachedCursor, resultPos)
+                    jumpList.cachedCursor = null
+                } else {
+                    recordJumpPosition(cm, origHead, resultPos)
+                }
+            }
+
+            when (motionResult) {
+                is MotionResult.Range -> {
+                    newAnchor = motionResult.anchor
+                    newHead = motionResult.head
+                }
+                is MotionResult.SinglePos -> {
+                    newHead = motionResult.pos
+                }
+            }
+            if (newHead == null) {
+                newHead = copyCursor(origHead)
+            }
+            if (vim.visualMode) {
+                if (!(vim.visualBlock && newHead.ch == Int.MAX_VALUE)) {
+                    newHead = clipCursorToContent(cm, newHead, oldHead)
+                }
+                if (newAnchor != null) {
+                    newAnchor = clipCursorToContent(cm, newAnchor)
+                }
+                newAnchor = newAnchor ?: oldAnchor
+                sel.anchor = newAnchor
+                sel.head = newHead
+                updateCmSelection(cm)
+                updateMark(
+                    cm,
+                    vim,
+                    "<",
+                    if (cursorIsBefore(newAnchor, newHead)) newAnchor else newHead
+                )
+                updateMark(
+                    cm,
+                    vim,
+                    ">",
+                    if (cursorIsBefore(newAnchor, newHead)) newHead else newAnchor
+                )
+            } else if (operator == null) {
+                newHead = clipCursorToContent(cm, newHead, oldHead)
+                cm.setCursor(newHead.line, newHead.ch)
+            }
+        }
+
+        if (operator != null) {
+            if (operatorArgs.lastSel != null) {
+                newAnchor = oldAnchor
+                val lastSel = operatorArgs.lastSel!!
+                val lineOffset = abs(lastSel.head.line - lastSel.anchor.line)
+                val chOffset = abs(lastSel.head.ch - lastSel.anchor.ch)
+                newHead = when {
+                    lastSel.visualLine -> Pos(oldAnchor.line + lineOffset, oldAnchor.ch)
+                    lastSel.visualBlock -> Pos(
+                        oldAnchor.line + lineOffset,
+                        oldAnchor.ch + chOffset
+                    )
+                    lastSel.head.line == lastSel.anchor.line -> Pos(
+                        oldAnchor.line,
+                        oldAnchor.ch + chOffset
+                    )
+                    else -> Pos(oldAnchor.line + lineOffset, oldAnchor.ch)
+                }
+                vim.visualMode = true
+                vim.visualLine = lastSel.visualLine
+                vim.visualBlock = lastSel.visualBlock
+                vim.sel = CM5Range(newAnchor, newHead)
+                updateCmSelection(cm)
+            } else if (vim.visualMode) {
+                operatorArgs.lastSel = LastSelection(
+                    head = copyCursor(sel.head),
+                    anchor = copyCursor(sel.anchor),
+                    visualBlock = vim.visualBlock,
+                    visualLine = vim.visualLine
+                )
+            }
+
+            val curStart: Pos
+            val curEnd: Pos
+            val linewise: Boolean
+            val mode: String
+            val cmSel: CmSelectionResult
+
+            if (vim.visualMode) {
+                curStart = cursorMin(vim.sel.head, vim.sel.anchor)
+                curEnd = cursorMax(vim.sel.head, vim.sel.anchor)
+                linewise = vim.visualLine || operatorArgs.linewise == true
+                mode = when {
+                    vim.visualBlock -> "block"
+                    linewise -> "line"
+                    else -> "char"
+                }
+                val newPositions = updateSelectionForSurrogateCharacters(cm, curStart, curEnd)
+                cmSel = makeCmSelection(
+                    cm,
+                    CM5Range(newPositions.start, newPositions.end),
+                    mode
+                )
+                if (linewise) {
+                    val ranges = cmSel.ranges
+                    if (mode == "block") {
+                        for (i in ranges.indices) {
+                            ranges[i] = CM5Range(
+                                ranges[i].anchor,
+                                Pos(ranges[i].head.line, lineLength(cm, ranges[i].head.line))
+                            )
+                        }
+                    } else if (mode == "line") {
+                        ranges[0] = CM5Range(
+                            ranges[0].anchor,
+                            Pos(ranges[0].head.line + 1, 0)
+                        )
+                    }
+                }
+            } else {
+                var cs = copyCursor(newAnchor ?: oldAnchor)
+                var ce = copyCursor(newHead ?: oldHead)
+                if (cursorIsBefore(ce, cs)) {
+                    val tmp = cs
+                    cs = ce
+                    ce = tmp
+                }
+                linewise = motionArgs.linewise == true || operatorArgs.linewise == true
+                if (linewise) {
+                    expandSelectionToLine(cm, cs, ce)
+                } else if (motionArgs.forward == true) {
+                    clipToLine(cm, cs, ce)
+                }
+                mode = "char"
+                val exclusive = motionArgs.inclusive != true || linewise
+                val newPositions = updateSelectionForSurrogateCharacters(cm, cs, ce)
+                cmSel = makeCmSelection(
+                    cm,
+                    CM5Range(newPositions.start, newPositions.end),
+                    mode,
+                    exclusive
+                )
+            }
+
+            cm.setSelections(cmSel.ranges, cmSel.primary)
+            vim.lastMotion = null
+            operatorArgs.repeat = repeat
+            operatorArgs.registerName = registerName
+            operatorArgs.linewise = linewise
+            val operatorFn = operators[operator]
+            val operatorMoveTo = operatorFn?.invoke(
+                cm,
+                operatorArgs,
+                cmSel.ranges,
+                oldAnchor,
+                newHead
+            )
+            if (vim.visualMode) {
+                exitVisualMode(cm, operatorMoveTo != null)
+            }
+            if (operatorMoveTo != null) {
+                cm.setCursor(operatorMoveTo)
+            }
+        }
+    }
+
+    fun recordLastEdit(
+        vim: VimState,
+        inputState: InputState,
+        actionCommand: ActionCommand? = null
+    ) {
+        val macroModeState = vimGlobalState.macroModeState
+        if (macroModeState.isPlaying) return
+        vim.lastEditInputState = inputState
+        vim.lastEditActionCommand = actionCommand
+        macroModeState.lastInsertModeChanges.changes.clear()
+        macroModeState.lastInsertModeChanges.expectCursorActivityForChange = false
+        macroModeState.lastInsertModeChanges.visualBlock =
+            if (vim.visualBlock) vim.sel.head.line - vim.sel.anchor.line else 0
+    }
+}
+
+// ---------------------------------------------------------------------------
+// CmSelectionResult helper type
+// ---------------------------------------------------------------------------
+
+internal data class CmSelectionResult(
+    val ranges: MutableList<CM5Range>,
+    val primary: Int = 0
+)
+
+// ---------------------------------------------------------------------------
+// Virtual prompt for key-to-key mappings
+// ---------------------------------------------------------------------------
+
+internal fun sendKeyToPrompt(key: String) {
+    val prompt = virtualPrompt ?: error("No prompt to send key to")
+    var effectiveKey = key
+    if (effectiveKey.startsWith("<")) {
+        val lowerKey = effectiveKey.lowercase().drop(1).dropLast(1)
+        val parts = lowerKey.split("-")
+        val lastPart = parts.last()
+        when (lastPart) {
+            "lt" -> effectiveKey = "<"
+            "space" -> effectiveKey = " "
+            "cr" -> effectiveKey = "\n"
+            else -> {
+                val cmKey = vimToCmKeyMap[lastPart]
+                if (cmKey != null) {
+                    val event = VimKeyEvent(key = cmKey)
+                    prompt.onKeyDown?.invoke(event)
+                    virtualPrompt?.onKeyUp?.invoke(event)
+                    return
+                }
+            }
+        }
+    }
+    if (effectiveKey == "\n") {
+        virtualPrompt = null
+        prompt.onClose?.invoke(prompt.value)
+    } else {
+        prompt.value = (prompt.value ?: "") + effectiveKey
+    }
+}
+
+internal fun doKeyToKey(cm: CodeMirrorAdapter, keys: String, fromKey: VimKeyCommand? = null) {
+    val noremapBefore = noremap
+    if (fromKey != null) {
+        if (keyToKeyStack.contains(fromKey)) return
+        keyToKeyStack.add(fromKey)
+        noremap = fromKey.noremap != false
+    }
+
+    try {
+        val vim = maybeInitVimState(cm)
+        val keyRe = Regex("<(?:[CSMA]-)*\\w+>|.", RegexOption.IGNORE_CASE)
+        for (match in keyRe.findAll(keys)) {
+            val matchedKey = match.value
+            val wasInsert = vim.insertMode
+            if (virtualPrompt != null) {
+                sendKeyToPrompt(matchedKey)
+                continue
+            }
+            val result = Vim.handleKey(cm, matchedKey, "mapping")
+            if (!result && wasInsert && vim.insertMode) {
+                var resolvedKey = matchedKey
+                if (resolvedKey.startsWith("<")) {
+                    val lowerKey = resolvedKey.lowercase().drop(1).dropLast(1)
+                    val parts = lowerKey.split("-")
+                    val lastPart = parts.last()
+                    when (lastPart) {
+                        "lt" -> resolvedKey = "<"
+                        "space" -> resolvedKey = " "
+                        "cr" -> resolvedKey = "\n"
+                        else -> {
+                            val cmKey = vimToCmKeyMap[lastPart]
+                            if (cmKey != null) {
+                                continue
+                            }
+                            resolvedKey = resolvedKey.first().toString()
+                        }
+                    }
+                }
+                cm.replaceSelection(resolvedKey)
+            }
+        }
+    } finally {
+        keyToKeyStack.removeLastOrNull()
+        noremap = if (keyToKeyStack.isNotEmpty()) noremapBefore else false
+        if (keyToKeyStack.isEmpty() && virtualPrompt != null) {
+            val promptOptions = virtualPrompt!!
+            virtualPrompt = null
+            showPrompt(cm, promptOptions)
+        }
+    }
+}
