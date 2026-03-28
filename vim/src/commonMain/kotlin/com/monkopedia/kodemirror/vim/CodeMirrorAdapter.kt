@@ -330,10 +330,6 @@ class CodeMirrorAdapter(val session: EditorSession) {
     // Document methods
     // ---------------------------------------------------------------------------
 
-    fun firstLine(): Int = 0
-    fun lastLine(): Int = session.state.doc.lines - 1
-    fun lineCount(): Int = session.state.doc.lines
-
     fun getLine(row: Int): String {
         val doc = session.state.doc
         if (row < 0 || row >= doc.lines) return ""
@@ -341,20 +337,6 @@ class CodeMirrorAdapter(val session: EditorSession) {
     }
 
     fun getValue(): String = session.state.doc.toString()
-
-    fun setValue(text: String) {
-        val doc = session.state.doc
-        session.dispatch(
-            TransactionSpec(
-                changes = ChangeSpec.Single(
-                    DocPos.ZERO,
-                    DocPos(doc.length),
-                    text.asInsert()
-                ),
-                selection = SelectionSpec.CursorSpec(DocPos.ZERO)
-            )
-        )
-    }
 
     fun getRange(s: Pos, e: Pos): String {
         val doc = session.state.doc
@@ -780,65 +762,7 @@ class CodeMirrorAdapter(val session: EditorSession) {
         lineHandleChanges = null
     }
 
-    // ---------------------------------------------------------------------------
-    // Multi-select
-    // ---------------------------------------------------------------------------
-
-    fun isInMultiSelectMode(): Boolean = session.state.selection.ranges.size > 1
-
-    fun virtualSelectionMode(): Boolean = virtualSelection != null
-
-    fun forEachSelection(command: () -> Unit) {
-        val selection = session.state.selection
-        virtualSelection = EditorSelection.create(selection.ranges, selection.mainIndex)
-        for (i in virtualSelection!!.ranges.indices) {
-            val range = virtualSelection!!.ranges[i]
-            session.dispatch(
-                TransactionSpec(
-                    selection = SelectionSpec.EditorSelectionSpec(
-                        EditorSelection.create(listOf(range))
-                    )
-                )
-            )
-            command()
-            // Update the virtual selection range with the current state
-            virtualSelection = virtualSelection!!.replaceRange(
-                session.state.selection.ranges[0], i
-            )
-        }
-        session.dispatch(
-            TransactionSpec(
-                selection = SelectionSpec.EditorSelectionSpec(virtualSelection!!)
-            )
-        )
-        virtualSelection = null
-    }
-
-    // ---------------------------------------------------------------------------
-    // Misc
-    // ---------------------------------------------------------------------------
-
-    fun defaultTextHeight(): Float = 20f // Placeholder for Compose rendering
-
-    fun focus() {
-        // In Compose, focus is managed differently. This is a no-op for now.
-    }
-
-    fun blur() {
-        // No-op in Compose
-    }
-
     fun getLastEditEnd(): Pos = posFromIndex(lastChangeEndOffset)
-
-    fun getMode(): Map<String, Any?> = mapOf("name" to getOption("mode"))
-
-    fun setSize(@Suppress("UNUSED_PARAMETER") w: Int, @Suppress("UNUSED_PARAMETER") h: Int) {
-        // No-op in Compose - layout is handled by the composable
-    }
-
-    fun refresh() {
-        // No-op in Compose
-    }
 
     // ---------------------------------------------------------------------------
     // Hard wrap
@@ -1077,6 +1001,19 @@ class CodeMirrorAdapter(val session: EditorSession) {
             }
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// Extension functions (extracted from CodeMirrorAdapter methods)
+// ---------------------------------------------------------------------------
+
+fun CodeMirrorAdapter.firstLine(): Int = 0
+fun CodeMirrorAdapter.lastLine(): Int = session.state.doc.lines - 1
+fun CodeMirrorAdapter.lineCount(): Int = session.state.doc.lines
+fun CodeMirrorAdapter.defaultTextHeight(): Float = 20f
+
+fun CodeMirrorAdapter.focus() {
+    // In Compose, focus is managed differently. This is a no-op for now.
 }
 
 // ---------------------------------------------------------------------------
