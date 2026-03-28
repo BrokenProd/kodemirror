@@ -303,12 +303,6 @@ public final class com/monkopedia/kodemirror/state/DocSpec$TextDoc : com/monkope
 	public fun toString ()Ljava/lang/String;
 }
 
-public abstract interface class com/monkopedia/kodemirror/state/DynamicSlot {
-	public abstract fun create (Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/state/SlotStatus;
-	public abstract fun reconfigure (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/state/SlotStatus;
-	public abstract fun update (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/Transaction;)Lcom/monkopedia/kodemirror/state/SlotStatus;
-}
-
 public final class com/monkopedia/kodemirror/state/EditorSelection {
 	public static final field Companion Lcom/monkopedia/kodemirror/state/EditorSelection$Companion;
 	public synthetic fun <init> (Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -371,7 +365,7 @@ public final class com/monkopedia/kodemirror/state/EditorSelectionData$Companion
 
 public final class com/monkopedia/kodemirror/state/EditorState {
 	public static final field Companion Lcom/monkopedia/kodemirror/state/EditorState$Companion;
-	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/Configuration;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/EditorSelection;[Ljava/lang/Object;Lkotlin/jvm/functions/Function2;Lcom/monkopedia/kodemirror/state/Transaction;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/monkopedia/kodemirror/state/Configuration;Lcom/monkopedia/kodemirror/state/Text;Lcom/monkopedia/kodemirror/state/EditorSelection;[Ljava/lang/Object;Lcom/monkopedia/kodemirror/state/InitMode;Lcom/monkopedia/kodemirror/state/Transaction;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun changeByRange (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/TransactionSpec;
 	public final fun changes (Lcom/monkopedia/kodemirror/state/ChangeSpec;)Lcom/monkopedia/kodemirror/state/ChangeSet;
 	public static synthetic fun changes$default (Lcom/monkopedia/kodemirror/state/EditorState;Lcom/monkopedia/kodemirror/state/ChangeSpec;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/state/ChangeSet;

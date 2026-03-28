@@ -189,6 +189,7 @@ public abstract interface class com/monkopedia/kodemirror/view/EditorSession {
 	public static synthetic fun coordsAtPos$default (Lcom/monkopedia/kodemirror/view/EditorSession;IIILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/Rect;
 	public abstract fun dispatch ([Lcom/monkopedia/kodemirror/state/TransactionSpec;)V
 	public abstract fun dispatchTransaction (Lcom/monkopedia/kodemirror/state/Transaction;)V
+	public abstract fun getCoroutineScope ()Lkotlinx/coroutines/CoroutineScope;
 	public abstract fun getEditable ()Z
 	public abstract fun getState ()Lcom/monkopedia/kodemirror/state/EditorState;
 	public abstract fun getTextDirection ()Lcom/monkopedia/kodemirror/view/Direction;
@@ -219,8 +220,8 @@ public final class com/monkopedia/kodemirror/view/EditorSessionKt {
 	public static final fun onChangeAsync (Lkotlin/jvm/functions/Function3;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun onSelection (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun onSelectionAsync (Lkotlin/jvm/functions/Function3;)Lcom/monkopedia/kodemirror/state/Extension;
-	public static final fun rememberFacet (Lcom/monkopedia/kodemirror/view/EditorSession;Lcom/monkopedia/kodemirror/state/Facet;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
-	public static final fun rememberField (Lcom/monkopedia/kodemirror/view/EditorSession;Lcom/monkopedia/kodemirror/state/StateField;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
+	public static final fun rememberFacet (Lcom/monkopedia/kodemirror/view/EditorSession;Lcom/monkopedia/kodemirror/state/Facet;Landroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public static final fun rememberField (Lcom/monkopedia/kodemirror/view/EditorSession;Lcom/monkopedia/kodemirror/state/StateField;Landroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public static final fun select-sX5c8NE (Lcom/monkopedia/kodemirror/view/EditorSession;II)V
 	public static synthetic fun select-sX5c8NE$default (Lcom/monkopedia/kodemirror/view/EditorSession;IIILjava/lang/Object;)V
 	public static final fun selectAll (Lcom/monkopedia/kodemirror/view/EditorSession;)V

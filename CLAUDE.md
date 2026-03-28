@@ -11,9 +11,10 @@ to handle the post-task workflow. See `docs/post-task-workflow.md` for the full 
 
 The subagent should:
 1. Fix code style automatically (spotlessApply, ktlintFormat, manual fixes for remaining issues)
-2. Run tests - if tests FAIL, try to fix them. Only stop and report if you don't have a clear direction.
-3. Commit changes with proper message format
-4. Push to remote
+2. Update API dumps (apiDump) so CI's apiCheck passes
+3. Run tests - if tests FAIL, try to fix them. Only stop and report if you don't have a clear direction.
+4. Commit changes with proper message format
+5. Push to remote
 
 Template invocation:
 ```
@@ -26,16 +27,20 @@ Task(subagent_type: "general-purpose", model: "sonnet", description: "Run post-t
        - Run ./gradlew ktlintFormat
        - Fix remaining issues (long lines, empty files)
 
-    2. Run tests (must match CI — see .github/workflows/ci.yml):
+    2. Update API dumps (CI runs apiCheck):
+       - Run ./gradlew apiDump
+       - This regenerates the api/*.api files that CI validates
+
+    3. Run tests (must match CI — see .github/workflows/ci.yml):
        - Run ./gradlew jvmTest -x :collab:jvmTest :state:wasmJsTest :collab:wasmJsTest :lezer-common:wasmJsTest :lezer-highlight:wasmJsTest :lezer-lr:wasmJsTest
        - If FAIL: try to fix the failures yourself. Only STOP and report
          if you don't have a clear direction for the fix.
 
-    3. Commit:
+    4. Commit:
        - git add .
        - Commit with heredoc message including Co-Authored-By
 
-    4. Push:
+    5. Push:
        - git push
   """
 }
@@ -80,6 +85,7 @@ loop for each item in `docs/TODO.md`:
 5. **After implementing:** Run the post-task workflow via a `general-purpose` subagent with
    `model: sonnet` (see "Post-Task Completion" above). The subagent should:
    - Fix code style (`spotlessApply`, `ktlintFormat`, manual fixes)
+   - Update API dumps (`apiDump`)
    - Run tests (`./gradlew jvmTest -x :collab:jvmTest :state:wasmJsTest :collab:wasmJsTest :lezer-common:wasmJsTest :lezer-highlight:wasmJsTest :lezer-lr:wasmJsTest`)
    - If tests fail, try to fix them. If unfixable, mark the item `[BLOCKED]` with the failure info.
    - If tests pass, commit with a descriptive message and push.
