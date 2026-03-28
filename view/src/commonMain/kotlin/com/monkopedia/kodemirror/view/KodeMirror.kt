@@ -139,11 +139,15 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     val bottomPanels = allPanels.filter { !it.top }
     val hasGutters = state.facet(gutters).isNotEmpty()
     val viewport = Viewport(0, state.doc.length)
-    val extensionDecos = state.facet(decorations)
-    val pluginDecos = pluginHost.collectDecorations()
-    val allDecos = extensionDecos + pluginDecos
-    val columnItems = remember(state, allDecos) {
-        buildColumnItems(state, viewport, allDecos)
+    // Compute columnItems when state changes. Decorations (both from
+    // facets and plugins) are derived from state, so `state` is a
+    // sufficient remember key. Avoid using list concatenation results
+    // as keys — the `+` operator creates a new reference every
+    // composition, defeating memoization.
+    val columnItems = remember(state) {
+        val extensionDecos = state.facet(decorations)
+        val pluginDecos = pluginHost.collectDecorations()
+        buildColumnItems(state, viewport, extensionDecos + pluginDecos)
     }
 
     val lazyState = rememberLazyListState()
