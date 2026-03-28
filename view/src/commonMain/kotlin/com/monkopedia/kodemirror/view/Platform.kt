@@ -50,13 +50,16 @@ internal expect fun platformClipboardGet(): String?
 internal expect fun platformClipboardSet(text: String)
 
 /**
- * Check for pending paste text from platform-specific paste handling.
+ * Register a callback to be invoked when the platform delivers paste text.
  *
- * On wasmJs, the browser clipboard API is async and cannot be read
- * synchronously. Instead, a DOM `paste` event listener captures clipboard
- * text into a buffer. This function reads and clears that buffer.
- *
- * Returns null on platforms where paste is handled synchronously through
- * [platformClipboardGet] (e.g., JVM).
+ * On wasmJs, the browser clipboard API is async so [platformClipboardGet]
+ * returns null. Instead, a DOM `paste` event listener captures clipboard
+ * text and invokes [handler] directly. On JVM this is a no-op because
+ * paste is handled synchronously through [platformClipboardGet].
  */
-internal expect fun platformCheckPendingPaste(): String?
+internal expect fun platformRegisterPasteHandler(handler: (String) -> Unit)
+
+/**
+ * Unregister the paste handler previously set by [platformRegisterPasteHandler].
+ */
+internal expect fun platformUnregisterPasteHandler()

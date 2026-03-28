@@ -66,4 +66,6 @@ internal actual fun platformClipboardSet(text: String) {
     }
 }
 
-internal actual fun platformCheckPendingPaste(): String? = null
+internal actual fun platformRegisterPasteHandler(handler: (String) -> Unit) {}
+
+internal actual fun platformUnregisterPasteHandler() {}

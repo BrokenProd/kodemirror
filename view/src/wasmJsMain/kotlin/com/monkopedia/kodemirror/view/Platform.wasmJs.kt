@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.view
 
 import androidx.compose.ui.input.key.KeyEvent
 import kotlin.JsFun
+import kotlin.js.JsString
 
 @JsFun(
     """() => {
@@ -41,7 +42,6 @@ private external fun jsClipboardWrite(text: String)
 @JsFun(
     """() => {
     globalThis.__kodeKey = '';
-    globalThis.__kodePasteText = '';
     var special = ['Home','End','Tab','Backspace','Delete','Enter','Escape',
         'ArrowUp','ArrowDown','ArrowLeft','ArrowRight',
         'PageUp','PageDown','F1','F2','F3','F4','F5','F6',
@@ -59,8 +59,8 @@ private external fun jsClipboardWrite(text: String)
     }, true);
     document.addEventListener('paste', function(e) {
         var text = (e.clipboardData || window.clipboardData).getData('text');
-        if (text) {
-            globalThis.__kodePasteText = text;
+        if (text && globalThis.__kodePasteCallback) {
+            globalThis.__kodePasteCallback(text);
         }
         e.stopPropagation();
         e.preventDefault();
@@ -72,11 +72,11 @@ private external fun installKeyCapture()
 @JsFun("() => globalThis.__kodeKey || ''")
 private external fun readCapturedKey(): String
 
-@JsFun("() => globalThis.__kodePasteText || ''")
-private external fun readPasteText(): String
+@JsFun("(cb) => { globalThis.__kodePasteCallback = cb; }")
+private external fun jsSetPasteCallback(callback: (JsString) -> Unit)
 
-@JsFun("() => { globalThis.__kodePasteText = ''; }")
-private external fun clearPasteText()
+@JsFun("() => { globalThis.__kodePasteCallback = null; }")
+private external fun jsClearPasteCallback()
 
 // Eagerly install the capture listener when this file is first loaded.
 // platformOsName() is called during currentOs initialization (before any
@@ -122,12 +122,10 @@ internal actual fun platformClipboardSet(text: String) {
     }
 }
 
-internal actual fun platformCheckPendingPaste(): String? {
-    keyCaptureInstalled
-    val text = readPasteText()
-    if (text.isNotEmpty()) {
-        clearPasteText()
-        return text
-    }
-    return null
+internal actual fun platformRegisterPasteHandler(handler: (String) -> Unit) {
+    jsSetPasteCallback { jsText -> handler(jsText.toString()) }
+}
+
+internal actual fun platformUnregisterPasteHandler() {
+    jsClearPasteCallback()
 }

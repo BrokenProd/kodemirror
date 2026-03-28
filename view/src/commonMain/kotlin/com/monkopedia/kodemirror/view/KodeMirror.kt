@@ -68,9 +68,11 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.Extension
+import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.asDoc
@@ -122,9 +124,27 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
         }
     }
 
-    // TODO: Replace paste polling with event-driven approach.
-    // Disabled: the while(true)/delay(16) loop prevents the compose test
-    // recomposer from ever reaching idle, causing test hangs.
+    // Event-driven paste handler for wasmJs (where platformClipboardGet()
+    // returns null). The JS paste event listener invokes this callback directly.
+    DisposableEffect(session) {
+        platformRegisterPasteHandler { pasteText ->
+            val sel = session.state.selection.main
+            session.dispatch(
+                TransactionSpec(
+                    changes = ChangeSpec.Single(
+                        from = sel.from,
+                        to = sel.to,
+                        insert = pasteText.asInsert()
+                    ),
+                    selection = SelectionSpec.CursorSpec(
+                        DocPos(sel.from.value + pasteText.length)
+                    ),
+                    userEvent = "input.paste"
+                )
+            )
+        }
+        onDispose { platformUnregisterPasteHandler() }
+    }
 
     // Derive rendering data from current state
     val theme = state.facet(editorTheme)
