@@ -57,7 +57,7 @@ private val vimStateMap = mutableMapOf<CodeMirrorAdapter, VimState>()
 
 private var noremap = false
 private val keyToKeyStack = mutableListOf<VimKeyCommand>()
-private var virtualPrompt: PromptOptions? = null
+internal var virtualPrompt: PromptOptions? = null
 
 // ---------------------------------------------------------------------------
 // Default keymap length tracking (for mapclear)
@@ -95,6 +95,11 @@ object Vim : VimApiInterface {
     }
 
     override fun handleKey(cm: CodeMirrorAdapter, key: String, origin: String): Boolean {
+        // When a virtual prompt is active (test/headless mode), route key input there.
+        if (virtualPrompt != null) {
+            sendKeyToPrompt(key)
+            return true
+        }
         val command = findKey(cm, key, origin)
         if (command != null) {
             return command()
@@ -104,6 +109,71 @@ object Vim : VimApiInterface {
 
     fun handleEx(cm: CodeMirrorAdapter, input: String) {
         exCommandDispatcher.processCommand(cm, input)
+    }
+
+    fun multiSelectHandleKey(cm: CodeMirrorAdapter, key: String, origin: String): Boolean {
+        val vim = maybeInitVimState(cm)
+        val visualBlock = vim.visualBlock || (vim.wasInVisualBlock == true)
+
+        if (visualBlock) {
+            return handleKey(cm, key, origin)
+        }
+        return handleKey(cm, key, origin)
+    }
+
+    fun setOption(
+        name: String,
+        value: Any?,
+        cm: CodeMirrorAdapter? = null,
+        cfg: Map<String, String>? = null
+    ) {
+        com.monkopedia.kodemirror.vim.setOption(name, value, cm, cfg)
+    }
+
+    fun getOption(
+        name: String,
+        cm: CodeMirrorAdapter? = null,
+        cfg: Map<String, String>? = null
+    ): Any? {
+        return com.monkopedia.kodemirror.vim.getOption(name, cm, cfg)
+    }
+
+    fun defineOption(
+        name: String,
+        defaultValue: Any?,
+        type: String? = null,
+        aliases: List<String>? = null,
+        callback: ((Any?, CodeMirrorAdapter?) -> Any?)? = null
+    ) {
+        com.monkopedia.kodemirror.vim.defineOption(name, defaultValue, type, aliases, callback)
+    }
+
+    internal fun defineRegister(name: String, register: Register) {
+        com.monkopedia.kodemirror.vim.defineRegister(name, register)
+    }
+
+    fun langmap(langmapString: String, remapCtrl: Boolean? = null) {
+        updateLangmap(langmapString, remapCtrl)
+    }
+
+    fun vimKeyFromEvent(
+        key: String,
+        ctrlKey: Boolean = false,
+        altKey: Boolean = false,
+        metaKey: Boolean = false,
+        shiftKey: Boolean = false,
+        code: String? = null,
+        vim: VimState? = null
+    ): String? {
+        return com.monkopedia.kodemirror.vim.vimKeyFromEvent(
+            key,
+            ctrlKey,
+            altKey,
+            metaKey,
+            shiftKey,
+            code,
+            vim
+        )
     }
 
     fun defineMotion(name: String, fn: MotionFn) {
@@ -409,13 +479,40 @@ object Vim : VimApiInterface {
 
     private fun initOptions() {
         defineOption("filetype", null, "string", listOf("ft")) { value, cm ->
-            cm?.let {
-                // No-op in Kotlin; could configure language mode
+            if (cm == null) {
+                // Option is local. Do nothing for global.
+                return@defineOption null
             }
-            value
+            if (value == null) {
+                cm.getOption("mode") ?: ""
+            } else {
+                val mode = if (value == "") "null" else value
+                cm.setOption("mode", mode)
+                null
+            }
         }
-        defineOption("textwidth", 80, "number", listOf("tw"))
+        defineOption("textwidth", 80, "number", listOf("tw")) { value, cm ->
+            if (cm == null) return@defineOption null
+            if (value == null) {
+                cm.getOption("textwidth")
+            } else {
+                val column = (value as? Number)?.toInt()
+                    ?: (value as? String)?.toIntOrNull()
+                if (column != null && column > 1) {
+                    cm.setOption("textwidth", column)
+                }
+                null
+            }
+        }
         defineOption("pcre", true, "boolean")
+        defineOption("langmap", null, "string", listOf("lmap")) { value, _ ->
+            if (value == null) {
+                langmap.string
+            } else {
+                updateLangmap(value as String)
+                null
+            }
+        }
     }
 }
 
@@ -903,9 +1000,11 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
                 }
                 linewise = motionArgs.linewise == true || operatorArgs.linewise == true
                 if (linewise) {
-                    expandSelectionToLine(cm, cs, ce)
+                    val (expandedStart, expandedEnd) = expandSelectionToLine(cm, cs, ce)
+                    cs = expandedStart
+                    ce = expandedEnd
                 } else if (motionArgs.forward == true) {
-                    clipToLine(cm, cs, ce)
+                    ce = clipToLine(cm, cs, ce)
                 }
                 mode = "char"
                 val exclusive = motionArgs.inclusive != true || linewise
@@ -972,6 +1071,22 @@ internal data class CmSelectionResult(
 internal fun sendKeyToPrompt(key: String) {
     val prompt = virtualPrompt ?: error("No prompt to send key to")
     var effectiveKey = key
+    // Normalize bare key names (e.g. "Enter", "Return") to their canonical form
+    when (effectiveKey) {
+        "Enter", "Return" -> effectiveKey = "\n"
+        "Escape", "Esc" -> {
+            // Cancel the prompt without invoking onClose
+            virtualPrompt = null
+            return
+        }
+        "Backspace" -> {
+            val current = prompt.value ?: ""
+            if (current.isNotEmpty()) {
+                prompt.value = current.dropLast(1)
+            }
+            return
+        }
+    }
     if (effectiveKey.startsWith("<")) {
         val lowerKey = effectiveKey.lowercase().drop(1).dropLast(1)
         val parts = lowerKey.split("-")
@@ -980,6 +1095,17 @@ internal fun sendKeyToPrompt(key: String) {
             "lt" -> effectiveKey = "<"
             "space" -> effectiveKey = " "
             "cr" -> effectiveKey = "\n"
+            "bs" -> {
+                val current = prompt.value ?: ""
+                if (current.isNotEmpty()) {
+                    prompt.value = current.dropLast(1)
+                }
+                return
+            }
+            "esc" -> {
+                virtualPrompt = null
+                return
+            }
             else -> {
                 val cmKey = vimToCmKeyMap[lastPart]
                 if (cmKey != null) {

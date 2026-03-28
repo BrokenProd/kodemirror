@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.commands
 
 import com.monkopedia.kodemirror.language.getIndentUnit
 import com.monkopedia.kodemirror.state.ChangeSpec
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.Transaction
@@ -47,7 +48,18 @@ private fun changeIndent(view: EditorSession, add: Boolean): Boolean {
     val indent = " ".repeat(getIndentUnit(state))
     val sel = state.selection.main
     val startLine = state.doc.lineAt(sel.from)
-    val endLine = state.doc.lineAt(sel.to)
+    // When the selection ends at the very start of a line and is non-empty,
+    // don't include that line (matches CM6 indentMore behavior).
+    val endLine = if (sel.to > sel.from) {
+        val candidateLine = state.doc.lineAt(sel.to)
+        if (sel.to == candidateLine.from) {
+            state.doc.lineAt(DocPos(sel.to.value - 1))
+        } else {
+            candidateLine
+        }
+    } else {
+        state.doc.lineAt(sel.to)
+    }
 
     val changes = mutableListOf<ChangeSpec>()
 

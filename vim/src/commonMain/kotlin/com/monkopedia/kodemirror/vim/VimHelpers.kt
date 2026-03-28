@@ -27,7 +27,7 @@ import kotlin.math.min
 // ---------------------------------------------------------------------------
 
 internal val validMarks = listOf("<", ">")
-internal val validRegisters = listOf("-", "\"", ".", ":", "_", "/", "+")
+internal val validRegisters = mutableListOf("-", "\"", ".", ":", "_", "/", "+")
 internal val latinCharRegex = Regex("^\\w$")
 internal val upperCaseChars: Regex = try {
     Regex("^[\\p{Lu}]$")
@@ -179,8 +179,11 @@ internal fun cursorIsBetween(cur1: Pos, cur2: Pos, cur3: Pos): Boolean {
     return cur1before2 && cur2before3
 }
 
-internal fun offsetCursor(cur: Pos, offsetLine: Int, offsetCh: Int): Pos =
-    Pos(cur.line + offsetLine, cur.ch + offsetCh)
+internal fun offsetCursor(cur: Pos, offsetLine: Int, offsetCh: Int): Pos {
+    // Use Long arithmetic to avoid integer overflow when ch is Int.MAX_VALUE
+    val newCh = cur.ch.toLong() + offsetCh.toLong()
+    return Pos(cur.line + offsetLine, newCh.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt())
+}
 
 internal fun repeatFn(
     cm: CodeMirrorAdapter,
@@ -206,7 +209,7 @@ internal fun clipCursorToContent(cm: CodeMirrorAdapter, cur: Pos, oldCur: Pos? =
     val includeLineBreak = vim != null && (vim.insertMode || vim.visualMode)
     val line = min(max(cm.firstLine(), cur.line), cm.lastLine())
     val text = cm.getLine(line)
-    val maxCh = text.length - 1 + if (includeLineBreak) 1 else 0
+    val maxCh = max(0, text.length - 1 + if (includeLineBreak) 1 else 0)
     var ch = min(max(0, cur.ch), maxCh)
     // prevent cursor from entering surrogate pair
     if (ch < text.length) {
@@ -1919,16 +1922,22 @@ internal fun showConfirm(
 }
 
 internal fun showPrompt(cm: CodeMirrorAdapter, options: PromptOptions) {
-    // In Compose, prompts are handled through the dialog interface
-    cm.openDialog(
-        options.prefix,
-        { value -> options.onClose?.invoke(value) },
-        mapOf(
-            "bottom" to true,
-            "selectValueOnOpen" to false,
-            "value" to (options.value ?: "")
+    if (cm.openDialogFn != null) {
+        // In Compose/UI mode, prompts are handled through the dialog interface
+        cm.openDialog(
+            options.prefix,
+            { value -> options.onClose?.invoke(value) },
+            mapOf(
+                "bottom" to true,
+                "selectValueOnOpen" to false,
+                "value" to (options.value ?: "")
+            )
         )
-    )
+    } else {
+        // In test/headless mode, use the virtual prompt mechanism so that
+        // subsequent handleKey calls are routed to sendKeyToPrompt.
+        virtualPrompt = options
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -2498,7 +2507,9 @@ internal fun clearInputState(
     ) reason: String? = null
 ) {
     val vim = cm.state.vim ?: return
-    vim.inputState.reset()
+    // Create a new InputState rather than resetting the existing one.
+    // The old inputState may still be referenced by vim.lastEditInputState.
+    vim.inputState = InputState()
     vim.status = ""
 }
 
@@ -2521,7 +2532,7 @@ internal fun doReplace(
     var done = false
     var matches = 0
     var lastPos: Pos? = null
-    var modifiedLineNumber = 0
+    var modifiedLineNumber = -1
     var joined = false
     var adjustedLineEnd = lineEnd
 
@@ -2563,7 +2574,7 @@ internal fun doReplace(
     fun findNextValidMatch(): List<String?>? {
         val lastMatchTo = if (lastPos != null) searchCursor.to() else null
         val match = searchCursor.findNext()
-        if (match != null && match[0]?.isEmpty() == true &&
+        if (match != null && match.isNotEmpty() && match[0]?.isEmpty() == true &&
             lastMatchTo != null && searchCursor.from() != null &&
             cursorEqual(searchCursor.from()!!, lastMatchTo)
         ) {
@@ -2643,117 +2654,385 @@ internal fun doReplace(
 }
 
 // ---------------------------------------------------------------------------
-// Global state & forward references (stubs for now)
+// Langmap support
 // ---------------------------------------------------------------------------
 
-// These will be fully defined when VimGlobalState.kt is ported.
-// For now they serve as forward declarations so VimActions and VimExCommands
-// can reference them.
+internal data class Langmap(
+    val keymap: Map<String, String>,
+    val string: String,
+    var remapCtrl: Boolean? = null
+)
+
+internal var langmap: Langmap = parseLangmap("")
+
+internal fun parseLangmap(langmapString: String): Langmap {
+    val keymap = mutableMapOf<String, String>()
+    if (langmapString.isEmpty()) return Langmap(keymap = keymap, string = "")
+
+    fun getEscaped(list: String): List<String> =
+        Regex("\\\\?(.)").findAll(list).mapNotNull { it.groupValues.getOrNull(1) }
+            .filter { it.isNotEmpty() }.toList()
+
+    Regex("((?:[^\\\\,]|\\\\.)+),?").findAll(langmapString).forEach { partMatch ->
+        val part = partMatch.groupValues[1]
+        if (part.isEmpty()) return@forEach
+        val semicolonParts = Regex("((?:[^\\\\;]|\\\\.)+);").findAll(part).toList()
+        if (semicolonParts.size == 1) {
+            val fromStr = semicolonParts[0].groupValues[1]
+            val remainder = part.substring(semicolonParts[0].range.last + 1)
+            val from = getEscaped(fromStr)
+            val to = getEscaped(remainder)
+            if (from.size == to.size) {
+                for (i in from.indices) {
+                    keymap[from[i]] = to[i]
+                }
+            }
+        } else {
+            val pairs = getEscaped(part)
+            if (pairs.size % 2 == 0) {
+                var i = 0
+                while (i < pairs.size) {
+                    keymap[pairs[i]] = pairs[i + 1]
+                    i += 2
+                }
+            }
+        }
+    }
+    return Langmap(keymap = keymap, string = langmapString)
+}
+
+internal fun updateLangmap(langmapString: String, remapCtrl: Boolean? = null) {
+    if (langmap.string != langmapString) {
+        langmap = parseLangmap(langmapString)
+    }
+    langmap.remapCtrl = remapCtrl
+}
+
+// ---------------------------------------------------------------------------
+// HistoryController (for search and ex command history)
+// ---------------------------------------------------------------------------
+
+internal class HistoryController {
+    val historyBuffer: MutableList<String> = mutableListOf()
+    var iterator: Int = 0
+    var initialPrefix: String? = null
+
+    fun nextMatch(input: String, up: Boolean): String? {
+        val dir = if (up) -1 else 1
+        if (initialPrefix == null) initialPrefix = input
+        val prefix = initialPrefix!!
+        var i = iterator + dir
+        while (if (up) i >= 0 else i < historyBuffer.size) {
+            val element = historyBuffer[i]
+            for (j in 0..element.length) {
+                if (prefix == element.substring(0, j)) {
+                    iterator = i
+                    return element
+                }
+            }
+            i += dir
+        }
+        if (i >= historyBuffer.size) {
+            iterator = historyBuffer.size
+            return initialPrefix
+        }
+        if (i < 0) return input
+        return null
+    }
+
+    fun pushInput(input: String) {
+        val index = historyBuffer.indexOf(input)
+        if (index > -1) historyBuffer.removeAt(index)
+        if (input.isNotEmpty()) historyBuffer.add(input)
+    }
+
+    fun reset() {
+        initialPrefix = null
+        iterator = historyBuffer.size
+    }
+}
+
+// ---------------------------------------------------------------------------
+// defineRegister
+// ---------------------------------------------------------------------------
+
+internal fun defineRegister(name: String, register: Register) {
+    val registers = vimGlobalState.registerController.registers
+    if (name.length != 1) {
+        error("Register name must be 1 character")
+    }
+    if (registers.containsKey(name)) {
+        error("Register already defined $name")
+    }
+    registers[name] = register
+    validRegisters.add(name)
+}
+
+// ---------------------------------------------------------------------------
+// vimKeyFromEvent (keyboard event to vim key string)
+// ---------------------------------------------------------------------------
+
+private val ignoredKeys = setOf(
+    "Shift",
+    "Alt",
+    "Command",
+    "Control",
+    "CapsLock",
+    "AltGraph",
+    "Dead",
+    "Unidentified"
+)
+
+internal fun vimKeyFromEvent(
+    key: String,
+    ctrlKey: Boolean = false,
+    altKey: Boolean = false,
+    metaKey: Boolean = false,
+    shiftKey: Boolean = false,
+    code: String? = null,
+    vim: VimState? = null
+): String? {
+    var effectiveKey = key
+    if (ignoredKeys.contains(effectiveKey)) return null
+    if (effectiveKey.length > 1 && effectiveKey.startsWith("n")) {
+        effectiveKey = effectiveKey.replace("Numpad", "")
+    }
+    effectiveKey = specialKeyMap[effectiveKey] ?: effectiveKey
+
+    var name = ""
+    if (ctrlKey) name += "C-"
+    if (altKey) name += "A-"
+    if (metaKey) name += "M-"
+    if ((name.isNotEmpty() || effectiveKey.length > 1) && shiftKey) name += "S-"
+
+    if (vim != null && !vim.expectLiteralNext && effectiveKey.length == 1) {
+        val lm = langmap
+        if (lm.keymap.isNotEmpty() && effectiveKey in lm.keymap) {
+            if (lm.remapCtrl != false || name.isEmpty()) {
+                effectiveKey = lm.keymap[effectiveKey] ?: effectiveKey
+            }
+        }
+    }
+
+    name += effectiveKey
+    if (name.length > 1) name = "<$name>"
+    return name
+}
+
+private val specialKeyMap = mapOf(
+    "Return" to "CR",
+    "Backspace" to "BS",
+    "Delete" to "Del",
+    "Escape" to "Esc",
+    "Insert" to "Ins",
+    "ArrowLeft" to "Left",
+    "ArrowRight" to "Right",
+    "ArrowUp" to "Up",
+    "ArrowDown" to "Down",
+    "Enter" to "CR",
+    " " to "Space"
+)
+
+// ---------------------------------------------------------------------------
+// Global state
+// ---------------------------------------------------------------------------
 
 internal class VimGlobalState {
-    val jumpList = JumpList()
+    val jumpList = CircularJumpList()
     val registerController = RegisterController()
     var macroModeState = MacroModeState()
     var lastCharacterSearch = LastCharacterSearch()
     var lastSubstituteReplacePart: String? = null
     var query: Regex? = null
     var isReversed: Boolean = false
+    val searchHistoryController = HistoryController()
+    val exCommandHistoryController = HistoryController()
 }
 
-internal class JumpList {
-    private val jumpList = mutableListOf<Marker>()
+internal class CircularJumpList {
+    private val size = 100
+    private var pointer = -1
     private var head = 0
+    private var tail = 0
+    private val buffer = arrayOfNulls<Marker>(size)
     var cachedCursor: Pos? = null
 
     fun add(cm: CodeMirrorAdapter, oldCur: Pos, newCur: Pos) {
-        val marker = cm.setBookmark(oldCur)
-        while (jumpList.size > head) {
-            jumpList.removeLastOrNull()
+        val current = ((pointer % size) + size) % size
+        val curMark = buffer[current]
+
+        fun useNextSlot(cursor: Pos) {
+            pointer++
+            val next = ((pointer % size) + size) % size
+            buffer[next]?.clear()
+            buffer[next] = cm.setBookmark(cursor)
         }
-        jumpList.add(marker)
-        head = jumpList.size
+
+        if (curMark != null) {
+            val markPos = curMark.find()
+            if (markPos != null && !cursorEqual(markPos, oldCur)) {
+                useNextSlot(oldCur)
+            }
+        } else {
+            useNextSlot(oldCur)
+        }
+        useNextSlot(newCur)
+        head = pointer
+        tail = pointer - size + 1
+        if (tail < 0) tail = 0
     }
 
     fun move(cm: CodeMirrorAdapter, offset: Int): Marker? {
-        val newHead = head + offset
-        if (newHead < 0 || newHead >= jumpList.size) return null
-        head = newHead
-        return jumpList[head]
+        pointer += offset
+        if (pointer > head) {
+            pointer = head
+        } else if (pointer < tail) pointer = tail
+        var mark = buffer[((size + pointer) % size + size) % size]
+        if (mark != null && mark.find() == null) {
+            val inc = if (offset > 0) 1 else -1
+            val oldCur = cm.getCursor()
+            do {
+                pointer += inc
+                mark = buffer[((size + pointer) % size + size) % size]
+                val newCur = mark?.find()
+                if (mark != null && newCur != null && !cursorEqual(oldCur, newCur)) break
+            } while (pointer < head && pointer > tail)
+        }
+        return mark
     }
 
-    fun find(
-        @Suppress("UNUSED_PARAMETER") cm: CodeMirrorAdapter,
-        @Suppress("UNUSED_PARAMETER") offset: Int
-    ): Pos? {
-        return null // Simplified
+    fun find(cm: CodeMirrorAdapter, offset: Int): Pos? {
+        val oldPointer = pointer
+        val mark = move(cm, offset)
+        pointer = oldPointer
+        return mark?.find()
     }
 }
 
 internal class RegisterController {
     val registers: MutableMap<String, Register> = mutableMapOf()
-    val unnamedRegister = Register()
+    val unnamedRegister: Register
+
+    init {
+        unnamedRegister = Register()
+        registers["\""] = unnamedRegister
+        registers["."] = Register()
+        registers[":"] = Register()
+        registers["/"] = Register()
+        registers["+"] = Register()
+    }
 
     fun isValidRegister(name: String?): Boolean {
         if (name == null) return false
-        return name.length == 1 && Regex("[a-zA-Z0-9.:%#\\-\"*/+_]").matches(name)
+        return validRegisters.contains(name) || latinCharRegex.matches(name)
     }
 
     fun getRegister(name: String?): Register {
-        if (name == null) return unnamedRegister
-        val effectiveName = name.lowercase()
+        if (!isValidRegister(name)) return unnamedRegister
+        val effectiveName = name!!.lowercase()
         return registers.getOrPut(effectiveName) { Register() }
     }
 
     fun pushText(
-        registerName: String,
-        @Suppress("UNUSED_PARAMETER") operator: String,
+        registerName: String?,
+        operator: String,
         text: String,
         linewise: Boolean,
-        blockwise: Boolean
+        blockwise: Boolean = false
     ) {
-        val register = getRegister(registerName)
-        if (registerName.length == 1 && isUpperCase(registerName)) {
-            register.setText(register.toString() + text, linewise, blockwise)
-        } else {
-            register.setText(text, linewise, blockwise)
+        // The black hole register, "_, means delete/yank to nowhere.
+        if (registerName == "_") return
+        var effectiveText = text
+        if (linewise && effectiveText.isNotEmpty() && effectiveText.last() != '\n') {
+            effectiveText += "\n"
         }
-        if (registerName != "_") {
-            unnamedRegister.setText(text, linewise, blockwise)
+        // Lowercase and uppercase registers refer to the same register.
+        // Uppercase just means append.
+        val register = if (isValidRegister(registerName)) {
+            getRegister(registerName)
+        } else {
+            null
+        }
+        if (register == null || registerName == null) {
+            when (operator) {
+                "yank" -> {
+                    registers["0"] = Register(effectiveText, linewise, blockwise)
+                }
+                "delete", "change" -> {
+                    if (!effectiveText.contains('\n')) {
+                        registers["-"] = Register(effectiveText, linewise)
+                    } else {
+                        shiftNumericRegisters()
+                        registers["1"] = Register(effectiveText, linewise)
+                    }
+                }
+            }
+            unnamedRegister.setText(effectiveText, linewise, blockwise)
+            return
+        }
+        val append = isUpperCase(registerName)
+        if (append) {
+            register.pushText(effectiveText, linewise)
+        } else {
+            register.setText(effectiveText, linewise, blockwise)
+        }
+        unnamedRegister.setText(register.toString(), linewise)
+    }
+
+    private fun shiftNumericRegisters() {
+        for (i in 9 downTo 2) {
+            registers[i.toString()] = getRegister((i - 1).toString())
         }
     }
 }
 
-internal class Register {
-    private var text: String = ""
-    var linewise: Boolean = false
-    var blockwise: Boolean = false
-    val keyBuffer: MutableList<String> = mutableListOf()
+internal class Register(
+    text: String? = null,
+    linewise: Boolean = false,
+    blockwise: Boolean = false
+) {
+    var linewise: Boolean = linewise
+    var blockwise: Boolean = blockwise
+    val keyBuffer: MutableList<String> = mutableListOf(text ?: "")
     val insertModeChanges: MutableList<InsertModeChanges> = mutableListOf()
     val searchQueries: MutableList<String> = mutableListOf()
 
-    fun setText(t: String, lw: Boolean = false, bw: Boolean = false) {
-        text = t
+    fun setText(text: String?, lw: Boolean = false, bw: Boolean = false) {
+        keyBuffer.clear()
+        keyBuffer.add(text ?: "")
         linewise = lw
         blockwise = bw
     }
 
-    fun pushText(key: String) {
-        if (keyBuffer.isNotEmpty()) {
-            keyBuffer[keyBuffer.size - 1] = keyBuffer.last() + key
-        } else {
-            keyBuffer.add(key)
+    fun pushText(text: String, lw: Boolean = false) {
+        if (lw) {
+            if (!linewise) {
+                keyBuffer.add("\n")
+            }
+            linewise = true
         }
+        keyBuffer.add(text)
     }
 
     fun pushInsertModeChanges(changes: InsertModeChanges) {
-        insertModeChanges.add(changes)
+        val copy = InsertModeChanges()
+        copy.changes.addAll(changes.changes)
+        copy.expectCursorActivityForChange = changes.expectCursorActivityForChange
+        insertModeChanges.add(copy)
     }
 
     fun pushSearchQuery(query: String) {
         searchQueries.add(query)
     }
 
-    override fun toString(): String = text
+    fun clear() {
+        keyBuffer.clear()
+        insertModeChanges.clear()
+        searchQueries.clear()
+        linewise = false
+    }
+
+    override fun toString(): String = keyBuffer.joinToString("")
 }
 
 internal class MacroModeState {
@@ -2765,8 +3044,10 @@ internal class MacroModeState {
 
     fun enterMacroRecordMode(cm: CodeMirrorAdapter, registerName: String?) {
         if (isRecording) return
-        isRecording = true
+        val register = vimGlobalState.registerController.getRegister(registerName)
+        register.clear()
         latestRegister = registerName
+        isRecording = true
     }
 
     fun exitMacroRecordMode() {
@@ -2790,6 +3071,9 @@ internal fun resetVimGlobalState() {
     vimGlobalState.lastSubstituteReplacePart = null
     vimGlobalState.query = null
     vimGlobalState.isReversed = false
+    for ((_, option) in vimOptions) {
+        option.value = option.defaultValue
+    }
 }
 
 // ---------------------------------------------------------------------------

@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.vim
 
+import com.monkopedia.kodemirror.commands.history
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
@@ -44,7 +45,7 @@ val DEFAULT_CODE = buildString {
     appendLine()
     appendLine("  return (--n >= 0) ? (unsigned char) *bufp++ : EOF;")
     appendLine(" ")
-    append("}")
+    appendLine("}")
 }
 
 /**
@@ -60,12 +61,8 @@ class VimHelpers(
      */
     fun doKeys(vararg keys: String) {
         for (key in keys) {
-            val resolved = if (key.length > 1 && key.startsWith("<") && key.endsWith(">")) {
-                vimKeyToKeyName(key.substring(1, key.length - 1))
-            } else {
-                key
-            }
-            typeKey(cm, resolved)
+            // Pass keys directly in vim notation — handleKey expects <C-r>, not Ctrl-r
+            typeKey(cm, key)
         }
     }
 
@@ -123,9 +120,21 @@ private fun vimKeyToKeyName(key: String): String {
 
 /**
  * Simulate typing a key in vim mode.
+ * When in insert mode and the key is a printable character that vim doesn't handle,
+ * insert it into the document (simulating what EditorView would do).
  */
 internal fun typeKey(cm: CodeMirrorAdapter, key: String) {
-    Vim.handleKey(cm, key, "user")
+    val handled = Vim.handleKey(cm, key, "user")
+    if (!handled) {
+        val vim = cm.state.vim
+        if (vim != null && vim.insertMode && key.length == 1) {
+            // Simulate text input: insert the character at the cursor
+            val cursor = cm.getCursor()
+            cm.replaceRange(key, cursor, cursor)
+            // Record the change for macro/repeat tracking
+            onChange(cm, Change(text = listOf(key)))
+        }
+    }
 }
 
 /**
@@ -157,7 +166,8 @@ fun testVim(value: String = DEFAULT_CODE, cursor: Pos? = null, fn: (VimHelpers) 
     val state = EditorState.create(
         EditorStateConfig(
             doc = value.asDoc(),
-            selection = SelectionSpec.CursorSpec(DocPos(cursorOffset))
+            selection = SelectionSpec.CursorSpec(DocPos(cursorOffset)),
+            extensions = history()
         )
     )
     val session = EditorSession(state)

@@ -43,6 +43,7 @@ class VimMotionTest {
     // Line 12: "  return (--n >= 0) ? (unsigned char) *bufp++ : EOF;"
     // Line 13: " "
     // Line 14: "}"
+    // Line 15: "" (trailing newline creates empty last line)
 
     // Line info
     private val word1Start = Pos(0, 1)
@@ -52,7 +53,7 @@ class VimMotionTest {
     private val word3Start = Pos(1, 1)
     private val word3End = Pos(1, 5)
     private val charLine = 2
-    private val endOfDocument = Pos(14, 1)
+    private val endOfDocument = Pos(15, 0)
 
     @Test
     fun pipe() = testMotion(listOf("|"), Pos(0, 0), Pos(0, 4))
@@ -136,7 +137,7 @@ class VimMotionTest {
     fun gg_repeat() = testMotion(listOf("3", "g", "g"), Pos(2, 0))
 
     @Test
-    fun capitalG() = testMotion(listOf("G"), Pos(14, 0), Pos(3, 1))
+    fun capitalG() = testMotion(listOf("G"), Pos(15, 0), Pos(3, 1))
 
     @Test
     fun zero() = testMotion(listOf("0"), Pos(0, 0), Pos(0, 8))

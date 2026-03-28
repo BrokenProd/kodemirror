@@ -888,6 +888,8 @@ public final class com/monkopedia/kodemirror/vim/Vim : com/monkopedia/kodemirror
 	public final fun defineEx (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)V
 	public final fun defineMotion (Ljava/lang/String;Lkotlin/jvm/functions/Function5;)V
 	public final fun defineOperator (Ljava/lang/String;Lkotlin/jvm/functions/Function5;)V
+	public final fun defineOption (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun defineOption$default (Lcom/monkopedia/kodemirror/vim/Vim;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public final fun enterVimMode (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)V
 	public final fun exitInsertMode (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Z)V
 	public static synthetic fun exitInsertMode$default (Lcom/monkopedia/kodemirror/vim/Vim;Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;ZILjava/lang/Object;)V
@@ -895,18 +897,27 @@ public final class com/monkopedia/kodemirror/vim/Vim : com/monkopedia/kodemirror
 	public static synthetic fun exitVisualMode$default (Lcom/monkopedia/kodemirror/vim/Vim;Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;ZILjava/lang/Object;)V
 	public final fun findKey (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;Ljava/lang/String;)Lkotlin/jvm/functions/Function0;
 	public static synthetic fun findKey$default (Lcom/monkopedia/kodemirror/vim/Vim;Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lkotlin/jvm/functions/Function0;
+	public final fun getOption (Ljava/lang/String;Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/util/Map;)Ljava/lang/Object;
+	public static synthetic fun getOption$default (Lcom/monkopedia/kodemirror/vim/Vim;Ljava/lang/String;Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/util/Map;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun handleEx (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;)V
 	public fun handleKey (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun langmap (Ljava/lang/String;Ljava/lang/Boolean;)V
+	public static synthetic fun langmap$default (Lcom/monkopedia/kodemirror/vim/Vim;Ljava/lang/String;Ljava/lang/Boolean;ILjava/lang/Object;)V
 	public final fun leaveVimMode (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)V
 	public final fun map (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public static synthetic fun map$default (Lcom/monkopedia/kodemirror/vim/Vim;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)V
 	public fun mapclear (Ljava/lang/String;)V
 	public final fun maybeInitVimState_ (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;)Lcom/monkopedia/kodemirror/vim/VimState;
+	public final fun multiSelectHandleKey (Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/lang/String;Ljava/lang/String;)Z
 	public final fun noremap (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public static synthetic fun noremap$default (Lcom/monkopedia/kodemirror/vim/Vim;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)V
 	public final fun resetVimGlobalState_ ()V
+	public final fun setOption (Ljava/lang/String;Ljava/lang/Object;Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/util/Map;)V
+	public static synthetic fun setOption$default (Lcom/monkopedia/kodemirror/vim/Vim;Ljava/lang/String;Ljava/lang/Object;Lcom/monkopedia/kodemirror/vim/CodeMirrorAdapter;Ljava/util/Map;ILjava/lang/Object;)V
 	public final fun unmap (Ljava/lang/String;Ljava/lang/String;)Z
 	public static synthetic fun unmap$default (Lcom/monkopedia/kodemirror/vim/Vim;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Z
+	public final fun vimKeyFromEvent (Ljava/lang/String;ZZZZLjava/lang/String;Lcom/monkopedia/kodemirror/vim/VimState;)Ljava/lang/String;
+	public static synthetic fun vimKeyFromEvent$default (Lcom/monkopedia/kodemirror/vim/Vim;Ljava/lang/String;ZZZZLjava/lang/String;Lcom/monkopedia/kodemirror/vim/VimState;ILjava/lang/Object;)Ljava/lang/String;
 }
 
 public abstract class com/monkopedia/kodemirror/vim/VimKeyCommand {

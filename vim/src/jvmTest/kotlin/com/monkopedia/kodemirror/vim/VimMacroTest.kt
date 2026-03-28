@@ -46,6 +46,6 @@ class VimMacroTest {
         h.doKeys("q", "a", "I", "x", "<Esc>", "j", "q")
         h.assertCursorAt(1, 0)
         h.doKeys("@", "a")
-        assertEquals("xaaa\nxbbb\nxccc", h.cm.getValue())
+        assertEquals("xaaa\nxbbb\nccc", h.cm.getValue())
     }
 }

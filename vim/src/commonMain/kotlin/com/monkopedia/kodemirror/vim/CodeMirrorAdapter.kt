@@ -66,7 +66,9 @@ fun indexFromPos(doc: Text, pos: Pos): DocPos {
         ch = Int.MAX_VALUE
     }
     val line = doc.line(LineNumber(lineNumber))
-    return DocPos(min(line.from.value + max(0, ch), line.to.value))
+    // Clamp ch to line length to avoid integer overflow when ch is Int.MAX_VALUE
+    val clampedCh = min(max(0, ch).toLong(), (line.to.value - line.from.value).toLong()).toInt()
+    return DocPos(line.from.value + clampedCh)
 }
 
 /** Convert an absolute document offset to a vim Pos (0-based line, ch). */
@@ -162,6 +164,7 @@ class VimSearchCursor(
     private var afterEmptyMatch = false
     private val firstOffset: DocPos
     private val source: String
+    private val queryOptions: Set<RegexOption>
 
     init {
         val ch = pos.ch
@@ -177,6 +180,7 @@ class VimSearchCursor(
                 "\\" + mr.value
             }
         }
+        queryOptions = query.options
     }
 
     data class SearchMatch(val from: DocPos, val to: DocPos, val match: List<String?>)
@@ -187,8 +191,7 @@ class VimSearchCursor(
         from: DocPos = DocPos.ZERO,
         to: DocPos = doc.endPos
     ): RegExpCursor {
-        val options = mutableSetOf<RegexOption>()
-        return RegExpCursor(doc, source, options, from, to)
+        return RegExpCursor(doc, source, queryOptions, from, to)
     }
 
     private fun nextMatch(from: DocPos): SearchMatch? {
@@ -196,8 +199,11 @@ class VimSearchCursor(
         if (from.value > doc.length) return null
         val cursor = rCursor(doc, from)
         if (!cursor.hasNext()) return null
+        // Capture match groups before calling next(), because next() calls advance()
+        // which overwrites matchGroups with the groups for the *following* match.
+        val groups = cursor.matchGroups
         val res = cursor.next()
-        return SearchMatch(res.from, res.to, cursor.matchGroups)
+        return SearchMatch(res.from, res.to, groups)
     }
 
     private val chunkSize = 10000
@@ -209,8 +215,12 @@ class VimSearchCursor(
             val start = DocPos(max(from.value, to.value - size * chunkSize))
             val cursor = rCursor(doc, start, to)
             var range: SearchMatch? = null
-            for (m in cursor) {
-                range = SearchMatch(m.from, m.to, cursor.matchGroups)
+            // Capture match groups before each call to next(), because next() calls
+            // advance() which overwrites matchGroups with groups for the following match.
+            while (cursor.hasNext()) {
+                val groups = cursor.matchGroups
+                val m = cursor.next()
+                range = SearchMatch(m.from, m.to, groups)
             }
             val farEnough = start == from ||
                 (range != null && range.from.value > start.value + 10)
@@ -348,7 +358,11 @@ class CodeMirrorAdapter(val session: EditorSession) {
 
     fun getRange(s: Pos, e: Pos): String {
         val doc = session.state.doc
-        return session.state.sliceDoc(indexFromPos(doc, s), indexFromPos(doc, e))
+        val from = indexFromPos(doc, s)
+        val to = indexFromPos(doc, e)
+        val lo = if (from <= to) from else to
+        val hi = if (from <= to) to else from
+        return session.state.sliceDoc(lo, hi)
     }
 
     fun replaceRange(text: String, s: Pos, e: Pos? = null) {
@@ -356,8 +370,10 @@ class CodeMirrorAdapter(val session: EditorSession) {
         val doc = session.state.doc
         val from = indexFromPos(doc, s)
         val to = indexFromPos(doc, end)
+        val lo = if (from <= to) from else to
+        val hi = if (from <= to) to else from
         dispatchChange(
-            TransactionSpec(changes = ChangeSpec.Single(from, to, text.asInsert()))
+            TransactionSpec(changes = ChangeSpec.Single(lo, hi, text.asInsert()))
         )
     }
 
