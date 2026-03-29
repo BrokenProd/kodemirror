@@ -273,12 +273,29 @@ class VimKodemirrorDriver extends KodemirrorDriver implements VimEditorDriver {
     }
   }
 
+  /**
+   * Ensure the editor has focus. KodeMirror's auto-focus LaunchedEffect
+   * gives Compose focus to the BasicTextField (which causes Skiko to create
+   * a backing DOM textarea). We need that textarea to have DOM focus for
+   * keyboard events to reach Compose.
+   *
+   * We focus the textarea (not the canvas) because clicking the canvas
+   * triggers Skiko's pointer handling which can steal Compose focus away
+   * from the BasicTextField.
+   */
   private async ensureFocus(): Promise<void> {
     await this.page.evaluate(() => {
       const shadow = document.body.shadowRoot;
       if (shadow) {
+        // The auto-focused BasicTextField creates a DOM textarea
         const ta = shadow.querySelector("textarea");
-        if (ta) ta.focus();
+        if (ta) {
+          ta.focus();
+        } else {
+          // Fallback: focus canvas (Skiko will route events)
+          const canvas = shadow.querySelector("canvas");
+          if (canvas) (canvas as HTMLElement).focus();
+        }
       }
     });
   }
