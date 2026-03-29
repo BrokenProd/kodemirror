@@ -416,10 +416,20 @@ private fun EditorContent(
     var hiddenTextValue by remember {
         mutableStateOf(TextFieldValue(""))
     }
+    // Flag to suppress onValueChange when onPreviewKeyEvent consumed the key.
+    // On wasmJs, returning true from onPreviewKeyEvent does NOT call
+    // preventDefault() on the DOM event, so the browser still generates an
+    // input event that triggers onValueChange. This flag bridges the gap.
+    val suppressInput = remember { booleanArrayOf(false) }
     BasicTextField(
         value = hiddenTextValue,
         cursorBrush = SolidColor(Color.Transparent),
         onValueChange = { newValue ->
+            if (suppressInput[0]) {
+                suppressInput[0] = false
+                hiddenTextValue = TextFieldValue("")
+                return@BasicTextField
+            }
             // Filter control characters (Tab, etc.) that leak through
             // when their key events aren't consumed by the keymap.
             // Preserve newlines — they are valid input (e.g. paste).
@@ -455,7 +465,9 @@ private fun EditorContent(
                 impl.hasFocus = focusState.isFocused
             }
             .onPreviewKeyEvent { event ->
-                handleKeyEvent(session, event)
+                val consumed = handleKeyEvent(session, event)
+                if (consumed) suppressInput[0] = true
+                consumed
             }
     )
 
