@@ -26,6 +26,7 @@ import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.assertEquals
+import kotlin.test.fail
 
 /**
  * Default code used in vim tests, matching the upstream vim_test.js `code` variable.
@@ -100,6 +101,11 @@ class VimHelpers(
      * Get the register controller for inspecting register contents.
      */
     internal fun getRegisterController() = Vim.getRegisterController()
+
+    /**
+     * Get the current selection text.
+     */
+    fun getSelection(): String = cm.getSelection()
 }
 
 /**
@@ -189,4 +195,105 @@ fun testMotion(keys: List<String>, endPos: LinePos, startPos: LinePos = LinePos(
     testVim(cursor = startPos) { helpers ->
         helpers.doKeys(*keys.toTypedArray())
         helpers.assertCursorAt(endPos)
+    }
+
+/**
+ * Test an edit operation. Mirrors the upstream `testEdit` function.
+ *
+ * @param before The initial document text
+ * @param pos A regex to find the cursor position in the `before` string
+ * @param edit The keys to press (each character is a separate key)
+ * @param after The expected document text after the edit
+ */
+fun testEdit(before: String, pos: Regex, edit: String, after: String) =
+    testVim(value = before) { h ->
+        val matchIdx = pos.find(before)?.range?.first
+            ?: fail("Regex $pos not found in '$before'")
+        val beforeMatch = before.substring(0, matchIdx)
+        val lines = beforeMatch.split("\n")
+        val line = lines.size - 1
+        val ch = lines.last().length
+        h.cm.setCursor(line, ch)
+        h.doKeys(*edit.map { it.toString() }.toTypedArray())
+        assertEquals(after, h.cm.getValue())
+    }
+
+/**
+ * Test a selection operation. Mirrors the upstream `testSelection` function.
+ *
+ * @param before The initial document text
+ * @param pos A regex to find the cursor position in the `before` string
+ * @param keys The keys to press (each character is a separate key)
+ * @param expectedSel The expected selection text
+ */
+fun testSelection(before: String, pos: Regex, keys: String, expectedSel: String) =
+    testVim(value = before) { h ->
+        val matchIdx = pos.find(before)?.range?.first
+            ?: fail("Regex $pos not found in '$before'")
+        val beforeMatch = before.substring(0, matchIdx)
+        val lines = beforeMatch.split("\n")
+        val line = lines.size - 1
+        val ch = lines.last().length
+        h.cm.setCursor(line, ch)
+        h.doKeys(*keys.map { it.toString() }.toTypedArray())
+        assertEquals(expectedSel, h.getSelection())
+    }
+
+/**
+ * Test a substitute command. Runs the test twice — once with pcre=true and once with
+ * pcre=false. Mirrors the upstream `testSubstitute` function.
+ *
+ * @param value The initial document text
+ * @param expr The substitute expression (used when pcre=true)
+ * @param expectedValue The expected result
+ * @param noPcreExpr The substitute expression for pcre=false (defaults to [expr])
+ */
+fun testSubstitute(value: String, expr: String, expectedValue: String, noPcreExpr: String? = null) {
+    // Test with pcre=true
+    testVim(value = value, cursor = LinePos(1, 0)) { h ->
+        Vim.setOption("pcre", true)
+        h.doEx(expr)
+        assertEquals(expectedValue, h.cm.getValue(), "pcre=true")
+    }
+    // Test with pcre=false
+    testVim(value = value, cursor = LinePos(1, 0)) { h ->
+        Vim.setOption("pcre", false)
+        h.doEx(noPcreExpr ?: expr)
+        assertEquals(expectedValue, h.cm.getValue(), "pcre=false")
+    }
+}
+
+/**
+ * Test substitute with confirm flag. Mirrors the upstream `testSubstituteConfirm`.
+ *
+ * @param command The ex substitute command (e.g., "%s/a/b/cg")
+ * @param initial The initial document text
+ * @param expected The expected result after confirm keys
+ * @param keys The confirm response keys (y/n/a/q/l)
+ * @param finalPos The expected final cursor position
+ */
+fun testSubstituteConfirm(
+    command: String,
+    initial: String,
+    expected: String,
+    keys: String,
+    finalPos: LinePos
+) = testVim(value = initial) { h ->
+    h.doEx(command)
+    for (ch in keys) {
+        typeKey(h.cm, ch.toString())
+    }
+    assertEquals(expected, h.cm.getValue())
+    h.assertCursorAt(finalPos)
+}
+
+/**
+ * Test jumplist behavior. Mirrors the upstream `testJumplist` function.
+ */
+fun testJumplist(keys: List<String>, endPos: LinePos, startPos: LinePos, value: String) =
+    testVim(value = value) { h ->
+        Vim.resetVimGlobalState_()
+        h.cm.setCursor(startPos.line, startPos.ch)
+        h.doKeys(*keys.toTypedArray())
+        h.assertCursorAt(endPos)
     }
