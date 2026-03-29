@@ -130,12 +130,19 @@ class VimCM6Driver extends CM6Driver implements VimEditorDriver {
 }
 
 /**
- * VimKodemirrorDriver uses the sendKey/typeText bridge exposed by VimTestBridge.kt
- * instead of Playwright keyboard events.
+ * VimKodemirrorDriver uses REAL browser keyboard events to interact with
+ * Kodemirror's vim mode — the same path that a real user's keystrokes follow.
  *
- * Compose for Web's onPreviewKeyEvent doesn't intercept Playwright's synthetic
- * keyboard events, so keys would bypass vim and be inserted as text. The bridge
- * calls Vim.multiSelectHandleKey() directly from Kotlin/WASM.
+ * Compose for Web renders into a shadow DOM with a canvas and a hidden textarea.
+ * The keyboard event flow is:
+ *   1. page.keyboard.press(key) → browser dispatches KeyboardEvent
+ *   2. Document-level capture keydown listener (Platform.wasmJs.kt) intercepts it
+ *   3. KodeMirror's onPreviewKeyEvent processes it for vim
+ *   4. For insert-mode text input, page.keyboard.type(ch) goes through the
+ *      textarea → DomInputStrategy → Compose text input pipeline
+ *
+ * Any test failures from this approach point to REAL input handling bugs in
+ * the Compose/Skiko/KodeMirror pipeline.
  */
 class VimKodemirrorDriver extends KodemirrorDriver implements VimEditorDriver {
   async getVimState(): Promise<VimStateSnapshot> {
@@ -144,127 +151,150 @@ class VimKodemirrorDriver extends KodemirrorDriver implements VimEditorDriver {
     });
   }
 
-  /** Map a Playwright key string to a vim key string for the sendKey bridge. */
-  private toVimKey(key: string): string {
-    // Handle modifier combinations (e.g., "Control+r", "Shift+4")
+  /**
+   * Determine if the editor is currently in insert mode.
+   */
+  private async isInsertMode(): Promise<boolean> {
+    const state = await this.getVimState();
+    return state.vimMode === "insert";
+  }
+
+  /**
+   * Convert a Playwright key spec to a character for type(), or null if it
+   * must be sent via press() (special/modifier keys).
+   */
+  private keyToChar(key: string): string | null {
+    // No + means it's a single key
+    if (!key.includes("+")) {
+      const specialKeys = new Set([
+        "Enter",
+        "Escape",
+        "Tab",
+        "Backspace",
+        "Delete",
+        "ArrowLeft",
+        "ArrowRight",
+        "ArrowUp",
+        "ArrowDown",
+        "Home",
+        "End",
+        "PageUp",
+        "PageDown",
+      ]);
+      if (specialKeys.has(key)) return null;
+      return key;
+    }
+
+    // Handle modifier combinations
     const parts = key.split("+");
-    const modifiers: string[] = [];
-    let mainKey = parts[parts.length - 1];
+    const modifiers = parts.slice(0, -1).map((m) => m.toLowerCase());
+    const mainKey = parts[parts.length - 1];
 
-    for (let i = 0; i < parts.length - 1; i++) {
-      const mod = parts[i].toLowerCase();
-      if (mod === "control") modifiers.push("C");
-      else if (mod === "alt") modifiers.push("A");
-      else if (mod === "meta") modifiers.push("M");
-      else if (mod === "shift") {
-        // Shift+letter → uppercase; Shift+digit → symbol
-        mainKey = this.shiftedKey(mainKey);
+    // Control/Alt/Meta combos must use press()
+    if (
+      modifiers.includes("control") ||
+      modifiers.includes("alt") ||
+      modifiers.includes("meta")
+    ) {
+      return null;
+    }
+
+    // Shift+key → shifted character
+    if (modifiers.length === 1 && modifiers[0] === "shift") {
+      const shiftMap: Record<string, string> = {
+        "1": "!",
+        "2": "@",
+        "3": "#",
+        "4": "$",
+        "5": "%",
+        "6": "^",
+        "7": "&",
+        "8": "*",
+        "9": "(",
+        "0": ")",
+        "-": "_",
+        "=": "+",
+        "[": "{",
+        "]": "}",
+        "\\": "|",
+        ";": ":",
+        "'": '"',
+        ",": "<",
+        ".": ">",
+        "/": "?",
+        "`": "~",
+      };
+      if (shiftMap[mainKey]) return shiftMap[mainKey];
+      if (mainKey.length === 1 && mainKey >= "a" && mainKey <= "z") {
+        return mainKey.toUpperCase();
       }
+      return mainKey;
     }
 
-    // Map special Playwright key names to vim key names
-    const specialMap: Record<string, string> = {
-      Escape: "Esc",
-      Enter: "CR",
-      Tab: "Tab",
-      Backspace: "BS",
-      Delete: "Del",
-      ArrowLeft: "Left",
-      ArrowRight: "Right",
-      ArrowUp: "Up",
-      ArrowDown: "Down",
-      Home: "Home",
-      End: "End",
-      PageUp: "PageUp",
-      PageDown: "PageDown",
-      " ": "Space",
-    };
-
-    const vimName = specialMap[mainKey];
-    if (vimName) {
-      if (modifiers.length > 0) {
-        return `<${modifiers.join("-")}-${vimName}>`;
-      }
-      return `<${vimName}>`;
-    }
-
-    // For regular characters with Ctrl/Alt modifiers
-    if (modifiers.length > 0) {
-      return `<${modifiers.join("-")}-${mainKey.toLowerCase()}>`;
-    }
-
-    // Plain character key
-    return mainKey;
+    return null;
   }
 
-  private shiftedKey(key: string): string {
-    const shiftMap: Record<string, string> = {
-      "1": "!",
-      "2": "@",
-      "3": "#",
-      "4": "$",
-      "5": "%",
-      "6": "^",
-      "7": "&",
-      "8": "*",
-      "9": "(",
-      "0": ")",
-      "-": "_",
-      "=": "+",
-      "[": "{",
-      "]": "}",
-      "\\": "|",
-      ";": ":",
-      "'": '"',
-      ",": "<",
-      ".": ">",
-      "/": "?",
-      "`": "~",
-    };
-    if (shiftMap[key]) return shiftMap[key];
-    // Letters: uppercase
-    if (key.length === 1 && key >= "a" && key <= "z") return key.toUpperCase();
-    // Already uppercase or special
-    return key;
-  }
-
+  /**
+   * Press a key using real browser events.
+   *
+   * In insert mode, character keys are sent via type() (through the textarea
+   * input pipeline). In normal mode, all keys go through press() (keyboard
+   * events intercepted by the document-level listener).
+   *
+   * Special keys (Escape, Enter, arrows, etc.) always use press().
+   */
   override async press(key: string): Promise<void> {
-    const vimKey = this.toVimKey(key);
-    const fromVer = await this.getVersion();
-    await this.page.evaluate((k: string) => {
-      (globalThis as any).__kodemirror.sendKey(k);
-    }, vimKey);
-    // Wait briefly for state to sync
-    try {
-      await this.page.waitForFunction(
-        (v: number) => {
-          const km = (globalThis as any).__kodemirror;
-          return km && km.version > v;
-        },
-        fromVer,
-        { timeout: 500 }
-      );
-    } catch {
-      // Some keys may not change state
+    const ver = await this.getVersion();
+    await this.ensureFocus();
+
+    const char = this.keyToChar(key);
+    const insertMode = await this.isInsertMode();
+
+    if (char !== null && insertMode) {
+      // In insert mode, use type() for character input — this goes through
+      // the textarea → DomInputStrategy → Compose text input pipeline,
+      // matching what a real user typing would do.
+      await this.page.keyboard.type(char);
+    } else {
+      // Normal mode keys and special keys go through press() — the
+      // document-level capture listener intercepts them.
+      await this.page.keyboard.press(key);
     }
+
+    await this.waitForUpdate(ver);
   }
 
   override async type(text: string): Promise<void> {
-    const fromVer = await this.getVersion();
-    await this.page.evaluate((t: string) => {
-      (globalThis as any).__kodemirror.typeText(t);
-    }, text);
+    await this.ensureFocus();
+    for (const ch of text) {
+      const ver = await this.getVersion();
+      await this.page.keyboard.type(ch);
+      await this.waitForUpdate(ver);
+    }
+  }
+
+  private async ensureFocus(): Promise<void> {
+    await this.page.evaluate(() => {
+      const shadow = document.body.shadowRoot;
+      if (shadow) {
+        const ta = shadow.querySelector("textarea");
+        if (ta) ta.focus();
+      }
+    });
+  }
+
+  private async waitForUpdate(fromVersion: number): Promise<void> {
     try {
       await this.page.waitForFunction(
         (v: number) => {
           const km = (globalThis as any).__kodemirror;
           return km && km.version > v;
         },
-        fromVer,
-        { timeout: 1000 }
+        fromVersion,
+        { timeout: 500 }
       );
     } catch {
-      // ignore timeout
+      // Key press may not change state
     }
   }
 }
@@ -330,12 +360,6 @@ export const test = base.extend<VimTestFixtures>({
         },
         undefined,
         { timeout: KM_READY_TIMEOUT }
-      );
-      // Wait for sendKey bridge to be registered
-      await page.waitForFunction(
-        () => typeof (globalThis as any).__kodemirror.sendKey === "function",
-        undefined,
-        { timeout: 5000 }
       );
       driver = kmDriver;
       kmAvailable = true;
