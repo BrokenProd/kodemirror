@@ -649,6 +649,7 @@ val defaultKeymap: List<VimKeyCommand> = mutableListOf(
         operator = "change",
         operatorArgs = OperatorArgs(linewise = true, fullLine = true),
         context = "visual",
+        exitVisualBlock = true,
         isEdit = true
     ),
     ActionCommand(keys = "u", action = "undo", context = "normal"),

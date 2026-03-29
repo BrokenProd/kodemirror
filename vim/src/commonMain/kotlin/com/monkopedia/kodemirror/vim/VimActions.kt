@@ -308,25 +308,29 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
             curEnd = clipCursorToContent(cm, LinePos(curStart.line + repeat - 1, Int.MAX_VALUE))
         }
         var finalCh = 0
-        for (i in curStart.line until curEnd.line) {
-            finalCh = lineLength(cm, curStart.line)
-            var text = ""
-            var nextStartCh = 0
+        // Build the joined text as a single replacement so undo treats
+        // the entire visual-mode join as one step.
+        val sb = StringBuilder(cm.getLine(curStart.line))
+        for (lineIdx in curStart.line + 1..curEnd.line) {
+            finalCh = sb.length
+            val nextLine = cm.getLine(lineIdx)
             if (actionArgs.keepSpaces != true) {
-                val nextLine = cm.getLine(curStart.line + 1)
-                nextStartCh = nextLine.indexOfFirst { !it.isWhitespace() }
+                val nextStartCh = nextLine.indexOfFirst { !it.isWhitespace() }
                 if (nextStartCh == -1) {
-                    nextStartCh = nextLine.length
+                    // Line is all whitespace -- skip adding its content
                 } else {
-                    text = " "
+                    sb.append(' ')
+                    sb.append(nextLine.substring(nextStartCh))
                 }
+            } else {
+                sb.append(nextLine)
             }
-            cm.replaceRange(
-                text,
-                LinePos(curStart.line, finalCh),
-                LinePos(curStart.line + 1, nextStartCh)
-            )
         }
+        cm.replaceRange(
+            sb.toString(),
+            LinePos(curStart.line, 0),
+            LinePos(curEnd.line, lineLength(cm, curEnd.line))
+        )
         val curFinalPos = clipCursorToContent(cm, LinePos(curStart.line, finalCh))
         if (vim.visualMode) {
             exitVisualMode(cm, false)
@@ -524,7 +528,19 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
     // redo
     // -----------------------------------------------------------------------
     "redo" to { cm, actionArgs, _ ->
-        repeatFn(cm, { it.execCommand("redo") }, actionArgs.repeat).invoke()
+        cm.operation {
+            repeatFn(cm, { it.execCommand("redo") }, actionArgs.repeat).invoke()
+            // After redo, position cursor at the earliest changed position
+            // (matching vim's behavior of placing cursor at the start of
+            // the redone change).
+            val sels = cm.listSelections()
+            var earliest = cm.getCursor("start")
+            for (sel in sels) {
+                val s = cursorMin(sel.anchor, sel.head)
+                if (cursorIsBefore(s, earliest)) earliest = s
+            }
+            cm.setCursor(clipCursorToContent(cm, earliest))
+        }
     },
 
     // -----------------------------------------------------------------------
@@ -552,15 +568,23 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
     "oneNormalCommand" to { cm, _, vim ->
         exitInsertMode(cm, true)
         vim.insertModeReturn = true
-        cm.on("vim-command-done") { _ ->
-            if (vim.visualMode) return@on
-            if (vim.insertModeReturn) {
-                vim.insertModeReturn = false
-                if (!vim.insertMode) {
-                    actions["enterInsertMode"]?.invoke(cm, ActionArgs(), vim)
+        lateinit var handler: (Array<out Any?>) -> Unit
+        handler = { _ ->
+            if (!vim.visualMode) {
+                if (vim.insertModeReturn) {
+                    vim.insertModeReturn = false
+                    if (!vim.insertMode) {
+                        actions["enterInsertMode"]?.invoke(
+                            cm,
+                            ActionArgs(),
+                            vim
+                        )
+                    }
                 }
+                cm.off("vim-command-done", handler)
             }
         }
+        cm.on("vim-command-done", handler)
     },
 
     // -----------------------------------------------------------------------

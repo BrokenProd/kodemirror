@@ -367,22 +367,33 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
             "octal" -> 8
             else -> null
         }
-        val numPart = mutableListOf<Any>() // String or MatchResult
+        // Each entry in numPart is (sortKey, originalLine)
+        val numPart = mutableListOf<Pair<String, String>>()
         val textPart = mutableListOf<String>()
         if (number != null || pattern != null) {
             for (i in text.indices) {
                 val matchPart = if (pattern != null) pattern.find(text[i]) else null
-                if (matchPart != null && !includeMatch) {
-                    val sliced = text[i].substring(matchPart.range.first + matchPart.value.length)
-                    if (sliced.isNotEmpty()) {
-                        numPart.add(matchPart)
+                if (matchPart != null && matchPart.value.isNotEmpty()) {
+                    val sortKey = if (includeMatch) {
+                        // r flag: sort by the matched text itself
+                        matchPart.value
                     } else {
-                        textPart.add(text[i])
+                        // No r flag: sort by text after the match
+                        text[i].substring(
+                            matchPart.range.first + matchPart.value.length
+                        )
                     }
-                } else if (matchPart != null && matchPart.value.isNotEmpty()) {
-                    numPart.add(matchPart)
-                } else if (numberRegex != null && numberRegex.containsMatchIn(text[i])) {
-                    numPart.add(text[i])
+                    if (!includeMatch && sortKey.isEmpty()) {
+                        // No text after match means no sort key — treat as
+                        // unsortable
+                        textPart.add(text[i])
+                    } else {
+                        numPart.add(sortKey to text[i])
+                    }
+                } else if (
+                    numberRegex != null && numberRegex.containsMatchIn(text[i])
+                ) {
+                    numPart.add(text[i] to text[i])
                 } else {
                     textPart.add(text[i])
                 }
@@ -418,40 +429,35 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
             if (sa < sb) -1 else if (sa > sb) 1 else 0
         }
 
+        val comparePatternFn = Comparator<Pair<String, String>> { a, b ->
+            var sa = a.first
+            var sb = b.first
+            if (reverse) {
+                val tmp = sa
+                sa = sb
+                sb = tmp
+            }
+            if (ignoreCase) {
+                sa = sa.lowercase()
+                sb = sb.lowercase()
+            }
+            if (sa < sb) -1 else 1
+        }
+
         if (pattern != null) {
-            numPart.sortWith(
-                Comparator { a, b ->
-                    var sa = if (a is kotlin.text.MatchResult) a.value else a.toString()
-                    var sb = if (b is kotlin.text.MatchResult) b.value else b.toString()
-                    if (reverse) {
-                        val tmp = sa
-                        sa = sb
-                        sb = tmp
-                    }
-                    if (ignoreCase) {
-                        sa = sa.lowercase()
-                        sb = sb.lowercase()
-                    }
-                    if (sa < sb) -1 else 1
-                }
-            )
+            numPart.sortWith(comparePatternFn)
         } else if (number == null) {
             textPart.sortWith(compareFn)
         } else {
             numPart.sortWith(
                 Comparator { a, b ->
-                    compareFn.compare(a.toString(), b.toString())
+                    compareFn.compare(a.first, b.first)
                 }
             )
         }
 
-        // Reconstruct numPart as strings
-        val numPartStrings = numPart.map { entry ->
-            when (entry) {
-                is kotlin.text.MatchResult -> entry.value
-                else -> entry.toString()
-            }
-        }
+        // Reconstruct numPart as original line strings
+        val numPartStrings = numPart.map { it.second }
 
         text = if (!reverse) {
             (textPart + numPartStrings).toMutableList()

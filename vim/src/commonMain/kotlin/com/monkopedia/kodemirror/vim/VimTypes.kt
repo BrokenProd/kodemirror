@@ -157,6 +157,7 @@ data class OperatorCommand(
     val operator: String,
     val operatorArgs: OperatorArgs? = null,
     override val context: String? = null,
+    override val exitVisualBlock: Boolean? = null,
     override val isEdit: Boolean? = null,
     override val noremap: Boolean? = null
 ) : VimKeyCommand()

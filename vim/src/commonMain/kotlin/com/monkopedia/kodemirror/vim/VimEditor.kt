@@ -30,6 +30,7 @@ import com.monkopedia.kodemirror.commands.undo
 import com.monkopedia.kodemirror.language.ensureSyntaxTree
 import com.monkopedia.kodemirror.language.indentUnit
 import com.monkopedia.kodemirror.language.matchBrackets
+import com.monkopedia.kodemirror.language.syntaxTreeAvailable
 import com.monkopedia.kodemirror.search.RegExpCursor
 import com.monkopedia.kodemirror.search.SearchQuery
 import com.monkopedia.kodemirror.search.setSearchQuery
@@ -142,14 +143,15 @@ internal class VimSearchCursor(
         val ch = pos.ch
         firstOffset = indexFromPos(cm.session.state.doc, if (ch == Int.MAX_VALUE) pos else pos)
 
-        // Escape unmatched braces for RegExpCursor compatibility
+        // Escape unmatched braces for RegExpCursor compatibility.
+        // Preserve \Q...\E literal quoting blocks (from Regex.escape()).
         val braceRe =
-            Regex("""(\\.|(\{(?:\d+(?:,\d*)?|,\d+)\}))|([{}])""")
+            Regex("""(\\Q[^\\]*(?:\\(?!E)[^\\]*)*\\E)|(\\.|(\{(?:\d+(?:,\d*)?|,\d+)\}))|([{}])""")
         source = query.pattern.replace(braceRe) { mr ->
-            if (mr.groupValues[1].isNotEmpty()) {
-                mr.groupValues[1]
-            } else {
-                "\\" + mr.value
+            when {
+                mr.groupValues[1].isNotEmpty() -> mr.groupValues[1]
+                mr.groupValues[2].isNotEmpty() -> mr.groupValues[2]
+                else -> "\\" + mr.value
             }
         }
         queryOptions = query.options
@@ -308,14 +310,66 @@ internal fun VimEditor.signal(type: String, vararg args: Any?) = events.signal(t
 
 internal fun VimEditor.findMatchingBracket(pos: LinePos): BracketMatch {
     val state = session.state
-    val offset = indexFromPos(state.doc, pos)
-    var m = matchBrackets(state, offset + 1, -1)
-    if (m?.end != null) {
-        return BracketMatch(posFromIndex(state.doc, m.end!!.from))
+    val hasLanguage = syntaxTreeAvailable(state)
+    if (hasLanguage) {
+        val offset = indexFromPos(state.doc, pos)
+        var m = matchBrackets(state, offset + 1, -1)
+        if (m?.end != null) {
+            return BracketMatch(posFromIndex(state.doc, m.end!!.from))
+        }
+        m = matchBrackets(state, offset, 1)
+        if (m?.end != null) {
+            return BracketMatch(posFromIndex(state.doc, m.end!!.from))
+        }
+        return BracketMatch(null)
     }
-    m = matchBrackets(state, offset, 1)
-    if (m?.end != null) {
-        return BracketMatch(posFromIndex(state.doc, m.end!!.from))
+    // Fallback: no language configured, use text-based bracket matching
+    // that skips brackets inside strings and comments.
+    return findMatchingBracketByText(pos)
+}
+
+/**
+ * Text-based bracket matching that skips brackets inside strings and
+ * block comments. Used when no language parser is configured.
+ */
+private fun VimEditor.findMatchingBracketByText(pos: LinePos): BracketMatch {
+    val lineText = getLine(pos.line)
+    if (pos.ch >= lineText.length) return BracketMatch(null)
+    val bracket = lineText[pos.ch]
+    val matchInfo = BRACKET_MATCHING[bracket] ?: return BracketMatch(null)
+    val targetCh = matchInfo[0]
+    val forward = matchInfo[1] == '>'
+    val dir = if (forward) 1 else -1
+
+    val state = session.state
+    val startOffset = indexFromPos(state.doc, pos).value
+    val doc = state.doc
+    var depth = 1
+    var scanPos = startOffset + dir
+    val maxDist = 10000
+
+    // Track string/comment state by rescanning from the beginning of each line
+    while (depth > 0 && scanPos >= 0 && scanPos < doc.length &&
+        kotlin.math.abs(scanPos - startOffset) < maxDist
+    ) {
+        val scanLinePos = posFromIndex(state.doc, DocPos(scanPos))
+        val tokenType = getTokenTypeByText(scanLinePos)
+        if (tokenType == "" || tokenType == "comment" || tokenType == "string") {
+            val c = doc.sliceString(DocPos(scanPos), DocPos(scanPos + 1))
+            if (c.length == 1) {
+                if (tokenType == "") {
+                    if (c[0] == bracket) {
+                        depth++
+                    } else if (c[0] == targetCh) {
+                        depth--
+                        if (depth == 0) {
+                            return BracketMatch(scanLinePos)
+                        }
+                    }
+                }
+            }
+        }
+        scanPos += dir
     }
     return BracketMatch(null)
 }
@@ -666,6 +720,30 @@ internal fun VimEditor.dispatchChange(spec: TransactionSpec) {
     session.dispatch(spec)
 }
 
+/**
+ * Lightweight change tracking for headless / test environments.
+ * Updates line handles, marks, virtual selections, and lastChangeEndOffset.
+ * Does NOT touch [curOp] or fire change/cursorActivity handlers.
+ */
+internal fun VimEditor.onChangeLight(update: ViewUpdate) {
+    lineHandleChanges?.add(update)
+    for ((_, m) in marks) {
+        m.update(update.changes)
+    }
+    virtualSelection?.let { vs ->
+        virtualSelection = EditorSelection.create(
+            vs.ranges.map { it.map(update.changes) },
+            vs.mainIndex
+        )
+    }
+    update.changes.iterChanges(
+        f = { _: DocPos, _: DocPos, _: DocPos, toB: DocPos, _: Text ->
+            lastChangeEndOffset = toB
+        },
+        individual = true
+    )
+}
+
 internal fun VimEditor.replaceRange(text: String, s: LinePos, e: LinePos? = null) {
     val end = e ?: s
     val doc = session.state.doc
@@ -701,6 +779,13 @@ internal fun VimEditor.setCursor(line: Int, ch: Int = 0) {
         )
     )
     if (curOp != null && curOp?.isVimOp != true) {
+        onBeforeEndOperation()
+    } else if (curOp == null && vimPlugin == null) {
+        // In headless/test environments without the VimExtension plugin,
+        // selection changes from external setCursor calls won't trigger
+        // the plugin's update() handler.  Fire selectionChange manually
+        // so handleExternalSelection can synchronise vim state.
+        onSelectionChange()
         onBeforeEndOperation()
     }
 }
@@ -875,6 +960,56 @@ internal fun VimEditor.getTokenTypeAt(pos: LinePos): String {
     return when {
         type.contains("comment", ignoreCase = true) -> "comment"
         type.contains("string", ignoreCase = true) -> "string"
+        type.isNotEmpty() -> ""
+        // Fallback: no syntax tree available, use text-based heuristic
+        else -> getTokenTypeByText(pos)
+    }
+}
+
+/**
+ * Text-based heuristic for detecting whether a position is inside a string
+ * or block comment. Used as a fallback when no language parser is configured.
+ *
+ * Scans the line text up to [pos] to detect unclosed double-quote strings
+ * and `/ * ... * /` block comments.
+ */
+private fun VimEditor.getTokenTypeByText(pos: LinePos): String {
+    val lineText = getLine(pos.line)
+    val ch = pos.ch.coerceAtMost(lineText.length)
+    var inString = false
+    var inComment = false
+    var i = 0
+    while (i < ch) {
+        if (inComment) {
+            if (i + 1 < lineText.length && lineText[i] == '*' && lineText[i + 1] == '/') {
+                inComment = false
+                i += 2
+                continue
+            }
+        } else if (inString) {
+            if (lineText[i] == '\\') {
+                i += 2 // skip escaped character
+                continue
+            }
+            if (lineText[i] == '"') {
+                inString = false
+            }
+        } else {
+            if (lineText[i] == '"') {
+                inString = true
+            } else if (
+                i + 1 < lineText.length && lineText[i] == '/' && lineText[i + 1] == '*'
+            ) {
+                inComment = true
+                i += 2
+                continue
+            }
+        }
+        i++
+    }
+    return when {
+        inComment -> "comment"
+        inString -> "string"
         else -> ""
     }
 }

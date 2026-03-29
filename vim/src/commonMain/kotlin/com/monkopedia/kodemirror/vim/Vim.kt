@@ -234,12 +234,20 @@ object Vim : VimApiInterface {
         }
     }
 
+    internal val cursorActivityHandlers = mutableMapOf<VimEditor, (Array<out Any?>) -> Unit>()
+
     fun enterVimMode(cm: VimEditor) {
         cm.signal("vim-mode-change", mapOf("mode" to "normal"))
+        val handler: (Array<out Any?>) -> Unit = { onCursorActivity(cm) }
+        cursorActivityHandlers[cm] = handler
+        cm.events.on("cursorActivity", handler)
         maybeInitVimState(cm)
     }
 
     fun leaveVimMode(cm: VimEditor) {
+        cursorActivityHandlers.remove(cm)?.let { handler ->
+            cm.events.off("cursorActivity", handler)
+        }
         cm.vim = null
     }
 
@@ -510,7 +518,17 @@ object Vim : VimApiInterface {
 // ---------------------------------------------------------------------------
 
 internal fun maybeInitVimState(cm: VimEditor): VimState {
-    return cm.vim ?: VimState().also { cm.vim = it }
+    return cm.vim ?: VimState().also {
+        cm.vim = it
+        // Register the cursorActivity handler for this editor so that
+        // handleExternalSelection can synchronise vim visual-mode state
+        // when the selection is changed outside of vim operations.
+        if (!Vim.cursorActivityHandlers.containsKey(cm)) {
+            val handler: (Array<out Any?>) -> Unit = { onCursorActivity(cm) }
+            Vim.cursorActivityHandlers[cm] = handler
+            cm.events.on("cursorActivity", handler)
+        }
+    }
 }
 
 internal fun getVimState(cm: VimEditor): VimState? {
@@ -799,7 +817,9 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
         val motion = inputState.motion
         val motionArgs = inputState.motionArgs ?: MotionArgs()
         val operator = inputState.operator
-        val operatorArgs = inputState.operatorArgs ?: OperatorArgs()
+        val operatorArgs = inputState.operatorArgs ?: OperatorArgs().also {
+            inputState.operatorArgs = it
+        }
         val registerName = inputState.registerName
         val sel = vim.sel
 

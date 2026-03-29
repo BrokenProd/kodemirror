@@ -19,13 +19,16 @@
 package com.monkopedia.kodemirror.vim
 
 import com.monkopedia.kodemirror.commands.history
+import com.monkopedia.kodemirror.language.indentService
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
+import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
 import com.monkopedia.kodemirror.state.extensionListOf
 import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.ViewUpdate
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
@@ -157,9 +160,25 @@ internal fun typeKey(cm: VimEditor, key: String) {
                     // Simulate text input: insert the character at the cursor.
                     // Use replaceSelection which places the cursor after the
                     // inserted text (matching real EditorView input handling).
+                    val selCount = cm.listSelections().size
                     cm.replaceSelection(key)
-                    // Record the change for macro/repeat tracking
-                    onChange(cm, Change(text = listOf(key)))
+                    // Record the change for macro/repeat tracking.
+                    // With multi-cursor, create a chain of Changes (one per
+                    // selection) so the ignoreCount logic works correctly.
+                    val first = Change(text = listOf(key))
+                    var last = first
+                    for (i in 1 until selCount) {
+                        val next = Change(text = listOf(key))
+                        last.next = next
+                        last = next
+                    }
+                    onChange(cm, first)
+                }
+                key == "Enter" || key == "Return" -> {
+                    // Simulate Enter in insert mode: insert newline with
+                    // indentation, matching what EditorView would do.
+                    cm.execCommand("newlineAndIndent")
+                    onChange(cm, Change(text = listOf("", "")))
                 }
                 key == "Backspace" || key == "Delete" -> {
                     // Record as InsertModeKey for macro/repeat tracking,
@@ -211,12 +230,59 @@ fun testVim(value: String = DEFAULT_CODE, cursor: LinePos? = null, fn: (VimHelpe
             selection = SelectionSpec.CursorSpec(DocPos(cursorOffset)),
             extensions = extensionListOf(
                 history(),
-                EditorState.allowMultipleSelections.of(true)
+                EditorState.allowMultipleSelections.of(true),
+                indentService.of { context, pos ->
+                    // Basic bracket-aware indentation for tests.
+                    // When simulateBreak is set, the break position's
+                    // line determines indent. Otherwise, use the
+                    // previous line.
+                    val line = context.lineAt(pos)
+                    val textBefore = if (context.simulateBreak != null) {
+                        val breakLine = context.lineAt(context.simulateBreak!!)
+                        val col = context.simulateBreak!!.value -
+                            breakLine.from.value
+                        breakLine.text.substring(0, col)
+                    } else if (line.number.value > 1) {
+                        context.state.doc.line(
+                            LineNumber(line.number.value - 1)
+                        ).text
+                    } else {
+                        return@of 0
+                    }
+                    val baseIndent = textBefore.takeWhile {
+                        it == ' ' || it == '\t'
+                    }.sumOf { if (it == '\t') 4 else 1 }
+                    val trimmed = textBefore.trimEnd()
+                    val extra = if (trimmed.endsWith("{") ||
+                        trimmed.endsWith("[") ||
+                        trimmed.endsWith("(")
+                    ) {
+                        2
+                    } else {
+                        0
+                    }
+                    baseIndent + extra
+                }
             )
         )
     )
-    val session = EditorSession(state)
-    val cm = VimEditor(session)
+    var cm: VimEditor? = null
+    val session = EditorSession(state) { tr ->
+        // Lightweight change tracking: keep line handles, marks, and
+        // lastChangeEndOffset in sync for the headless test environment
+        // (no VimExtension plugin to call onChange).
+        val editor = cm ?: return@EditorSession
+        if (editor.vimPlugin != null) return@EditorSession
+        if (tr.docChanged) {
+            val update = ViewUpdate(
+                session = editor.session,
+                state = editor.session.state,
+                transactions = listOf(tr)
+            )
+            editor.onChangeLight(update)
+        }
+    }
+    cm = VimEditor(session)
 
     // Initialize vim mode
     val vim = Vim.maybeInitVimState_(cm)

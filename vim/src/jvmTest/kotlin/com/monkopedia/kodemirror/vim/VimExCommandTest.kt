@@ -296,11 +296,14 @@ class VimExCommandTest {
     }
 
     @Test
-    fun ex_normal() = testVim(value = "one one\nx\none\none one") { h ->
+    fun ex_normal() = testVim(value = "one one\nxxx\none one\none one") { h ->
         h.cm.setCursor(0, 0)
         h.doEx("g/one/normal    cw 1<lt>Esc><Esc>\$i\$")
         h.doKeys("r", "t")
-        assertEquals(" 1<Esc> on\$e\nx\n 1<Esc> on\$e\n 1<Esc> on\$t", h.cm.getValue())
+        assertEquals(
+            " 1<Esc> on\$e\nxxx\n 1<Esc> on\$e\n 1<Esc> on\$t",
+            h.cm.getValue()
+        )
     }
 
     @Test

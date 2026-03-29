@@ -325,7 +325,7 @@ internal fun lastChar(keys: String): String {
 
 internal fun extendLineToColumn(cm: VimEditor, lineNum: Int, column: Int) {
     val endCh = lineLength(cm, lineNum)
-    val spaces = " ".repeat(column - endCh + 1)
+    val spaces = " ".repeat(column - endCh)
     cm.setCursor(LinePos(lineNum, endCh))
     cm.replaceRange(spaces, cm.getCursor())
 }
@@ -534,9 +534,10 @@ internal fun makeCmSelection(
             val bottom = max(anchor.line, head.line)
             var toCh = head.ch
             if (fromCh < toCh) {
-                toCh += 1
+                // Guard against Int.MAX_VALUE overflow (JS uses Infinity)
+                if (toCh < Int.MAX_VALUE) toCh += 1
             } else {
-                fromCh += 1
+                if (fromCh < Int.MAX_VALUE) fromCh += 1
             }
             val height = bottom - top + 1
             val primary = if (head.line == top) 0 else height - 1
@@ -2528,17 +2529,14 @@ internal fun repeatInsertModeChanges(cm: VimEditor, changes: MutableList<Any>, r
 // clearInputState
 // ---------------------------------------------------------------------------
 
-internal fun clearInputState(
-    cm: VimEditor,
-    @Suppress(
-        "UNUSED_PARAMETER"
-    ) reason: String? = null
-) {
+internal fun clearInputState(cm: VimEditor, reason: String? = null) {
     val vim = cm.vim ?: return
     // Create a new InputState rather than resetting the existing one.
     // The old inputState may still be referenced by vim.lastEditInputState.
     vim.inputState = InputState()
+    vim.expectLiteralNext = false
     vim.status = ""
+    cm.signal("vim-command-done", reason)
 }
 
 // ---------------------------------------------------------------------------
@@ -2906,7 +2904,7 @@ private val specialKeyMap = mapOf(
 
 internal class VimGlobalState {
     val jumpList = CircularJumpList()
-    val registerController = RegisterController()
+    var registerController = RegisterController()
     var macroModeState = MacroModeState()
     var lastCharacterSearch = LastCharacterSearch()
     var lastSubstituteReplacePart: String? = null
@@ -3141,7 +3139,7 @@ internal val vimGlobalState = VimGlobalState()
 
 internal fun resetVimGlobalState() {
     vimGlobalState.macroModeState = MacroModeState()
-    vimGlobalState.registerController.registers.clear()
+    vimGlobalState.registerController = RegisterController()
     vimGlobalState.lastCharacterSearch = LastCharacterSearch()
     vimGlobalState.lastSubstituteReplacePart = null
     vimGlobalState.query = null
