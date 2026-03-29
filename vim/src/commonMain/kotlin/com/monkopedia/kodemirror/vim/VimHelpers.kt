@@ -1978,7 +1978,7 @@ internal class ExCommandDispatcher {
         var command: ExCommandDefinition? = null
         var commandName: String? = null
         if (params.commandName.isEmpty()) {
-            if (params.line != 0 || params.lineEnd != null) {
+            if (params.hasLineRange) {
                 commandName = "move"
             }
         } else {
@@ -2024,6 +2024,7 @@ internal class ExCommandDispatcher {
         if (pos < input.length && input[pos] == '%') {
             result.line = cm.firstLine()
             result.lineEnd = cm.lastLine()
+            result.hasLineRange = true
             pos++
         } else if (pos < input.length && input[pos] == '*') {
             val lastSelection = cm.vim?.lastSelection
@@ -2031,20 +2032,25 @@ internal class ExCommandDispatcher {
             val head = lastSelection?.headMark?.find()?.line ?: 0
             result.line = max(anchor, head)
             result.lineEnd = min(anchor, head)
+            result.hasLineRange = true
             pos++
         } else {
             val lineSpec = parseLineSpec(cm, input, pos)
             result.line = lineSpec.first ?: 0
             pos = lineSpec.second
+            if (lineSpec.first != null) {
+                result.hasLineRange = true
+            }
             if (pos < input.length && input[pos] == ',') {
                 pos++
                 val lineEnd = parseLineSpec(cm, input, pos)
                 result.lineEnd = lineEnd.first
+                result.hasLineRange = true
                 pos = lineEnd.second
             }
         }
 
-        if (result.line == 0 && result.lineEnd == null) {
+        if (!result.hasLineRange) {
             if (cm.vim?.visualMode == true) {
                 result.selectionLine = getMarkPos(cm, cm.vim!!, "<")?.line ?: 0
                 result.selectionLineEnd = getMarkPos(cm, cm.vim!!, ">")?.line
@@ -2086,36 +2092,67 @@ internal class ExCommandDispatcher {
         var pos = startPos
         if (pos >= input.length) return null to pos
 
+        // Parse base address
+        var baseLine: Int? = null
+
         val numberMatch = Regex("^([\\d]+)").find(input.substring(pos))
         if (numberMatch != null) {
             pos += numberMatch.value.length
-            return (numberMatch.groupValues[1].toInt() - 1) to pos
+            baseLine = numberMatch.groupValues[1].toInt() - 1
+        } else {
+            when {
+                pos < input.length && input[pos] == '.' -> {
+                    pos++
+                    baseLine = cm.getCursor().line
+                }
+                pos < input.length && input[pos] == '$' -> {
+                    pos++
+                    baseLine = cm.lastLine()
+                }
+                pos < input.length && input[pos] == '\'' -> {
+                    pos++
+                    val markName = if (pos < input.length) input[pos].toString() else ""
+                    pos++
+                    val markPos = getMarkPos(cm, cm.vim!!, markName)
+                        ?: throw Error("Mark not set")
+                    baseLine = markPos.line
+                }
+                pos < input.length && (input[pos] == '+' || input[pos] == '-') -> {
+                    // Offset relative to current line (no explicit base)
+                    baseLine = cm.getCursor().line
+                }
+                else -> return null to pos
+            }
         }
 
-        if (pos >= input.length) return null to pos
-        return when (input[pos]) {
-            '.' -> {
-                pos++
-                cm.getCursor().line to pos
+        // Parse optional offset: +N, -N, or bare N (implicit +)
+        while (pos < input.length && (
+                input[pos] == '+' || input[pos] == '-' ||
+                    input[pos].isDigit()
+                )
+        ) {
+            val sign = when {
+                input[pos] == '+' -> {
+                    pos++
+                    1
+                }
+                input[pos] == '-' -> {
+                    pos++
+                    -1
+                }
+                else -> 1 // bare number = implicit +
             }
-            '$' -> {
-                pos++
-                cm.lastLine() to pos
+            val offsetMatch = Regex("^([\\d]+)").find(input.substring(pos))
+            val offset = if (offsetMatch != null) {
+                pos += offsetMatch.value.length
+                offsetMatch.groupValues[1].toInt()
+            } else {
+                1 // bare + or - without number means +1 or -1
             }
-            '\'' -> {
-                pos++
-                val markName = if (pos < input.length) input[pos].toString() else ""
-                pos++
-                val markPos = getMarkPos(cm, cm.vim!!, markName)
-                    ?: throw Error("Mark not set")
-                markPos.line to pos
-            }
-            '-', '+', '/', '?' -> {
-                // Offset relative to current line
-                cm.getCursor().line to pos
-            }
-            else -> null to pos
+            baseLine = (baseLine ?: 0) + sign * offset
         }
+
+        return baseLine to pos
     }
 
     fun matchCommand(commandName: String): ExCommandDefinition? {

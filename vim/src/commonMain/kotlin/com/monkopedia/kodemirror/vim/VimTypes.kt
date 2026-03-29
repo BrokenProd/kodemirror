@@ -403,6 +403,7 @@ data class ExParams(
     var args: MutableList<String>? = null,
     var line: Int = 0,
     var lineEnd: Int? = null,
+    var hasLineRange: Boolean = false,
     var selectionLine: Int = 0,
     var selectionLineEnd: Int? = null,
     var setCfg: MutableMap<String, String>? = null,

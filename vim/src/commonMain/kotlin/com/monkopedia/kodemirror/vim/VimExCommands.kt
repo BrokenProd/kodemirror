@@ -670,7 +670,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
             showConfirm(cm, "No previous search pattern")
             return@to
         }
-        var lineStart = if (params.line > 0 || params.lineEnd != null) params.line else cm.getCursor().line
+        var lineStart = if (params.hasLineRange) params.line else cm.getCursor().line
         var lineEnd = params.lineEnd ?: lineStart
         if (lineStart == cm.firstLine() && lineEnd == cm.lastLine()) {
             lineEnd = Int.MAX_VALUE
