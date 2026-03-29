@@ -187,6 +187,11 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     // Focus management
     val focusRequester = remember { FocusRequester() }
 
+    // Auto-focus the hidden text field when the editor first appears
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
     // Prevent tap from overriding drag selection
     var recentlyDragged by remember { mutableStateOf(false) }
 
