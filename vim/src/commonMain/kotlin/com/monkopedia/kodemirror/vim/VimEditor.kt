@@ -328,7 +328,7 @@ internal fun VimEditor.scanForBracket(
 ): ScanResult? {
     val maxScanLen = (config?.get("maxScanLineLength") as? Int) ?: 10000
     val maxScanLines = (config?.get("maxScanLines") as? Int) ?: 1000
-    val re = Regex("[(){}\\[\\]]")
+    val re = (config?.get("bracketRegex") as? Regex) ?: Regex("[(){}\\[\\]]")
 
     val stack = mutableListOf<String>()
     val lineEnd = if (dir > 0) {

@@ -130,8 +130,25 @@ private fun vimKeyToKeyName(key: String): String {
  * When in insert mode and the key is a printable character that vim doesn't handle,
  * insert it into the document (simulating what EditorView would do).
  */
+// Maps browser-style key names to vim notation, matching upstream vimKeyFromEvent's specialKey map
+private val keyNameToVim = mapOf(
+    "Space" to "<Space>",
+    "Enter" to "<CR>",
+    "Return" to "<CR>",
+    "Backspace" to "<BS>",
+    "Delete" to "<Del>",
+    "Escape" to "<Esc>",
+    "Insert" to "<Ins>",
+    "ArrowLeft" to "<Left>",
+    "ArrowRight" to "<Right>",
+    "ArrowUp" to "<Up>",
+    "ArrowDown" to "<Down>"
+)
+
 internal fun typeKey(cm: VimEditor, key: String) {
-    val handled = Vim.handleKey(cm, key, "user")
+    // Normalize browser-style key names to vim notation
+    val normalizedKey = keyNameToVim[key] ?: key
+    val handled = Vim.handleKey(cm, normalizedKey, "user")
     if (!handled) {
         val vim = cm.vim
         if (vim != null && vim.insertMode) {

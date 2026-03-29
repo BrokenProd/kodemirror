@@ -1364,13 +1364,14 @@ internal fun findSentence(cm: VimEditor, cur: LinePos, repeat: Int, dir: Int): L
                 } else {
                     curr.ln to curr.pos
                 }
-            } else if (curr.pos < (curr.line?.length ?: 0) &&
+            } else if (curr.pos >= 0 && curr.pos < (curr.line?.length ?: 0) &&
                 isEndOfSentenceSymbol(curr.line!![curr.pos].toString()) &&
                 lastValidPos != null &&
                 !(curr.ln == lastValidLn && curr.pos + 1 == lastValidPos)
             ) {
                 return lastValidLn to lastValidPos
-            } else if (curr.line?.isNotEmpty() == true && curr.pos < curr.line!!.length &&
+            } else if (curr.line?.isNotEmpty() == true &&
+                curr.pos >= 0 && curr.pos < curr.line!!.length &&
                 !isWhiteSpaceString(curr.line!![curr.pos].toString())
             ) {
                 skipEmptyVar = false
