@@ -84,9 +84,11 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
             args.linewise == true,
             ranges.size > 1
         )
-        // In the JS source, this calls actions.enterInsertMode(cm, {head: finalHead}, vim).
-        // Since actions is a separate object, we store the final position and let the
-        // caller handle entering insert mode.
+        actions["enterInsertMode"]?.invoke(
+            cm,
+            ActionArgs(head = finalHead),
+            vim
+        )
         finalHead
     },
 

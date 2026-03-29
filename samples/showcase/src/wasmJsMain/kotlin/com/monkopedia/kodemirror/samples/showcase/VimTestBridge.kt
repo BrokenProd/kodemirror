@@ -16,12 +16,16 @@
 package com.monkopedia.kodemirror.samples.showcase
 
 import com.monkopedia.kodemirror.search.searchPanelOpen
+import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.Extension
+import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.asInsert
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.getPanel
+import com.monkopedia.kodemirror.vim.Vim
 import com.monkopedia.kodemirror.vim.getVimEditor
 import kotlin.JsFun
 
@@ -40,6 +44,24 @@ private external fun initVimBridge()
 }"""
 )
 private external fun syncVimState(json: String, version: Int)
+
+@JsFun(
+    """(callback) => {
+    globalThis.__kodemirror.sendKey = (key) => {
+        callback(key);
+    };
+}"""
+)
+private external fun registerKeyHandler(callback: (String) -> Unit)
+
+@JsFun(
+    """(callback) => {
+    globalThis.__kodemirror.typeText = (text) => {
+        callback(text);
+    };
+}"""
+)
+private external fun registerTypeHandler(callback: (String) -> Unit)
 
 private var vimBridgeVersion = 0
 
@@ -140,10 +162,73 @@ private fun serializeVimState(session: EditorSession): String {
     }
 }
 
-private class VimTestBridgePlugin(session: EditorSession) : PluginValue {
+private class VimTestBridgePlugin(private val session: EditorSession) : PluginValue {
     init {
         vimBridgeVersion++
         syncVimState(serializeVimState(session), vimBridgeVersion)
+
+        // Register key handler for test-mode key injection.
+        // Playwright keyboard events don't go through Compose's
+        // onPreviewKeyEvent on WASM, so tests call sendKey() directly.
+        registerKeyHandler { key ->
+            handleVimKey(key)
+        }
+        registerTypeHandler { text ->
+            handleTypeText(text)
+        }
+    }
+
+    private fun handleVimKey(key: String) {
+        val cm = getVimEditor(session) ?: return
+        // Use handleKey (not multiSelectHandleKey) so the virtual prompt
+        // (ex command line, search prompt) receives keys when active.
+        val consumed = Vim.handleKey(cm, key, "user")
+        // Re-init in case of exception recovery
+        Vim.maybeInitVimState_(cm)
+
+        // In insert mode, if vim didn't consume the key and it's a single
+        // character, insert it directly (normally Compose's text field does
+        // this, but the bridge bypasses that path).
+        if (!consumed && cm.vim?.insertMode == true && key.length == 1) {
+            insertTextAtCursor(key)
+        }
+
+        vimBridgeVersion++
+        syncVimState(serializeVimState(session), vimBridgeVersion)
+    }
+
+    private fun handleTypeText(text: String) {
+        val cm = getVimEditor(session) ?: return
+        if (cm.vim?.insertMode == true) {
+            // In insert mode, insert text directly — Vim.handleKey returns
+            // false for regular characters (they're handled by the editor's
+            // native input), so we insert via dispatch.
+            insertTextAtCursor(text)
+        } else {
+            for (ch in text) {
+                val consumed = Vim.handleKey(cm, ch.toString(), "user")
+                Vim.maybeInitVimState_(cm)
+                if (!consumed && cm.vim?.insertMode == true) {
+                    insertTextAtCursor(ch.toString())
+                }
+            }
+        }
+        vimBridgeVersion++
+        syncVimState(serializeVimState(session), vimBridgeVersion)
+    }
+
+    private fun insertTextAtCursor(text: String) {
+        val state = session.state
+        val main = state.selection.main
+        session.dispatch(
+            TransactionSpec(
+                changes = ChangeSpec.Single(
+                    from = main.from,
+                    to = main.to,
+                    insert = text.asInsert()
+                )
+            )
+        )
     }
 
     override fun update(update: ViewUpdate) {
