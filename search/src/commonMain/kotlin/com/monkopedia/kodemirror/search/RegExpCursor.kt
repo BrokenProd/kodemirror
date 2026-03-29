@@ -75,11 +75,29 @@ class RegExpCursor(
         }
         val content = text.sliceString(pos, to)
         val result = regex.find(content)
-        if (result != null && pos + result.range.first < to) {
+        if (result != null) {
             val matchFrom = pos + result.range.first
             val matchTo = pos + (result.range.last + 1)
-            matchGroups = result.groupValues
-            nextMatch = SearchMatch(matchFrom, matchTo)
+            // Allow zero-width matches at `to` (e.g. $ anchor at document end),
+            // but reject non-zero-width matches that start past the boundary.
+            // Also reject zero-width matches at `to` that duplicate the
+            // previous match's end position (prevents spurious trailing empty
+            // matches from patterns like `.*`).
+            val isZeroWidth = matchFrom == matchTo
+            val previousEnd = value?.to
+            if (matchFrom < to ||
+                (
+                    isZeroWidth && matchFrom == to &&
+                        previousEnd != matchFrom && text.length > 0
+                    )
+            ) {
+                matchGroups = result.groupValues
+                nextMatch = SearchMatch(matchFrom, matchTo)
+            } else {
+                done = true
+                nextMatch = null
+                matchGroups = emptyList()
+            }
         } else {
             done = true
             nextMatch = null

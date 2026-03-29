@@ -24,6 +24,7 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
+import com.monkopedia.kodemirror.state.extensionListOf
 import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -133,12 +134,30 @@ internal fun typeKey(cm: VimEditor, key: String) {
     val handled = Vim.handleKey(cm, key, "user")
     if (!handled) {
         val vim = cm.vim
-        if (vim != null && vim.insertMode && key.length == 1) {
-            // Simulate text input: insert the character at the cursor
-            val cursor = cm.getCursor()
-            cm.replaceRange(key, cursor, cursor)
-            // Record the change for macro/repeat tracking
-            onChange(cm, Change(text = listOf(key)))
+        if (vim != null && vim.insertMode) {
+            when {
+                key.length == 1 -> {
+                    // Simulate text input: insert the character at the cursor.
+                    // Use replaceSelection which places the cursor after the
+                    // inserted text (matching real EditorView input handling).
+                    cm.replaceSelection(key)
+                    // Record the change for macro/repeat tracking
+                    onChange(cm, Change(text = listOf(key)))
+                }
+                key == "Backspace" || key == "Delete" -> {
+                    // Record as InsertModeKey for macro/repeat tracking,
+                    // matching upstream onKeyEventTargetKeyDown behavior.
+                    val lastChange =
+                        vimGlobalState.macroModeState.lastInsertModeChanges
+                    if (lastChange.maybeReset == true) {
+                        lastChange.changes.clear()
+                        lastChange.maybeReset = false
+                    }
+                    lastChange.changes.add(InsertModeKey(key))
+                    // Simulate the editor's default key handling
+                    sendCmKey(cm, key)
+                }
+            }
         }
     }
 }
@@ -173,7 +192,10 @@ fun testVim(value: String = DEFAULT_CODE, cursor: LinePos? = null, fn: (VimHelpe
         EditorStateConfig(
             doc = value.asDoc(),
             selection = SelectionSpec.CursorSpec(DocPos(cursorOffset)),
-            extensions = history()
+            extensions = extensionListOf(
+                history(),
+                EditorState.allowMultipleSelections.of(true)
+            )
         )
     )
     val session = EditorSession(state)

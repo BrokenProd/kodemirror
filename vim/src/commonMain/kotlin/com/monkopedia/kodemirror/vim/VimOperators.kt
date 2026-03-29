@@ -78,7 +78,7 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
             finalHead = cursorMin(ranges[0].head, ranges[0].anchor)
         }
         vimGlobalState.registerController.pushText(
-            args.registerName ?: "\"",
+            args.registerName,
             "change",
             text,
             args.linewise == true,
@@ -89,7 +89,11 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
             ActionArgs(head = finalHead),
             vim
         )
-        finalHead
+        // Return null: enterInsertMode already positions the cursor (including
+        // multi-cursor via selectForInsert for visual-block).  Returning a
+        // position here would cause evalInput to call setCursor, collapsing
+        // the multi-cursor state.
+        null
     },
 
     "delete" to { cm, args, ranges, _oldAnchor, _newHead ->
@@ -130,7 +134,7 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
             finalHead = cursorMin(ranges[0].head, ranges[0].anchor)
         }
         vimGlobalState.registerController.pushText(
-            args.registerName ?: "\"",
+            args.registerName,
             "delete",
             text,
             args.linewise == true,
@@ -283,7 +287,7 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
             oldAnchor
         }
         vimGlobalState.registerController.pushText(
-            args.registerName ?: "\"",
+            args.registerName,
             "yank",
             text,
             args.linewise == true,

@@ -49,15 +49,15 @@ private val vimToCmKeyMap: Map<String, String> = buildMap {
     }
 }
 
-private var noremap = false
-private val keyToKeyStack = mutableListOf<VimKeyCommand>()
+internal var noremap = false
+internal val keyToKeyStack = mutableListOf<VimKeyCommand>()
 internal var virtualPrompt: PromptOptions? = null
 
 // ---------------------------------------------------------------------------
 // Default keymap length tracking (for mapclear)
 // ---------------------------------------------------------------------------
 
-private val defaultKeymapLength = defaultKeymap.size
+internal val defaultKeymapLength = defaultKeymap.size
 
 // ---------------------------------------------------------------------------
 // The Vim API object
@@ -179,7 +179,7 @@ object Vim : VimApiInterface {
     }
 
     fun defineEx(name: String, prefix: String?, func: ExFn) {
-        val effectivePrefix = prefix ?: name
+        val effectivePrefix = if (prefix.isNullOrEmpty()) name else prefix
         if (!name.startsWith(effectivePrefix)) {
             error("\"$effectivePrefix\" is not a prefix of \"$name\", command not registered")
         }
@@ -818,22 +818,19 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
             recordLastEdit(vim, inputState)
         }
 
-        val repeat: Int
+        var repeat: Int
         if (inputState.repeatOverride != null) {
             repeat = inputState.repeatOverride!!
         } else {
-            val r = inputState.getRepeat()
-            repeat = if (r > 0 && motionArgs.explicitRepeat == true) {
-                motionArgs.repeatIsExplicit = true
-                r
-            } else if (motionArgs.noRepeat == true ||
-                (motionArgs.explicitRepeat != true && r == 0)
-            ) {
-                motionArgs.repeatIsExplicit = false
-                1
-            } else {
-                r.coerceAtLeast(1)
-            }
+            repeat = inputState.getRepeat()
+        }
+        if (repeat > 0 && motionArgs.explicitRepeat == true) {
+            motionArgs.repeatIsExplicit = true
+        } else if (motionArgs.noRepeat == true ||
+            (motionArgs.explicitRepeat != true && repeat == 0)
+        ) {
+            repeat = 1
+            motionArgs.repeatIsExplicit = false
         }
 
         if (inputState.selectedCharacter != null) {
@@ -1096,6 +1093,14 @@ internal fun sendKeyToPrompt(key: String) {
                     return
                 }
             }
+        }
+    }
+    // If an onKeyDown handler is set, dispatch the key to it first.
+    // If it returns true, the key was handled and should not be appended.
+    if (prompt.onKeyDown != null) {
+        val event = VimKeyEvent(key = effectiveKey)
+        if (prompt.onKeyDown!!.invoke(event)) {
+            return
         }
     }
     if (effectiveKey == "\n") {

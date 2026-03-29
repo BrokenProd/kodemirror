@@ -622,7 +622,9 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
                 val rawReplace = tokens[1]
                 replacePart = if (getOption("pcre") == true) {
                     unescapeRegexReplace(
-                        rawReplace.replace(Regex("([^\\\\])&"), "$1\$&")
+                        rawReplace.replace(Regex("(^|[^\\\\])&")) { mr ->
+                            mr.groupValues[1] + "\$&"
+                        }
                     )
                 } else {
                     translateRegexReplace(rawReplace)
@@ -668,7 +670,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
             showConfirm(cm, "No previous search pattern")
             return@to
         }
-        var lineStart = if (params.line > 0) params.line else cm.getCursor().line
+        var lineStart = if (params.line > 0 || params.lineEnd != null) params.line else cm.getCursor().line
         var lineEnd = params.lineEnd ?: lineStart
         if (lineStart == cm.firstLine() && lineEnd == cm.lastLine()) {
             lineEnd = Int.MAX_VALUE

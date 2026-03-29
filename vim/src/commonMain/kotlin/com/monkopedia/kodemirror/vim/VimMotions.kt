@@ -499,7 +499,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
             move = true
             tmp = selectCompanionObject(cm, head, character, inclusive)
             if (tmp == null) {
-                val sc = cm.getSearchCursor(Regex("\\\\" + character), head)
+                val sc = cm.getSearchCursor(Regex(Regex.escape(character)), head)
                 if (sc.findNext() != null) {
                     tmp = selectCompanionObject(cm, sc.from()!!, character, inclusive)
                 }

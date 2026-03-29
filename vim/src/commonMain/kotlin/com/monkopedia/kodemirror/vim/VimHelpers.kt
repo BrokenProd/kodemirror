@@ -268,7 +268,7 @@ internal fun commandMatches(
     if (inputState.operator != null) ctx = "operatorPending"
     val partial = mutableListOf<VimKeyCommand>()
     val full = mutableListOf<VimKeyCommand>()
-    val startIndex = 0 // noremap handling deferred to engine
+    val startIndex = if (noremap) keyMap.size - defaultKeymapLength else 0
     for (i in startIndex until keyMap.size) {
         val command = keyMap[i]
         if (ctx == "insert" && command.context != "insert") continue
@@ -1790,7 +1790,11 @@ internal fun findNext(cm: VimEditor, prev: Boolean, query: Regex, repeat: Int? =
             if (found == null) {
                 cursor = cm.getSearchCursor(
                     query,
-                    if (prev) LinePos(cm.lastLine(), 0) else LinePos(cm.firstLine(), 0)
+                    if (prev) {
+                        LinePos(cm.lastLine(), Int.MAX_VALUE)
+                    } else {
+                        LinePos(cm.firstLine(), 0)
+                    }
                 )
                 if (cursor.find(prev) == null) {
                     return@operation null
@@ -1827,7 +1831,11 @@ internal fun findNextFromAndToInclusive(
             if (found == null) {
                 val wrapCursor = cm.getSearchCursor(
                     query,
-                    if (prev) LinePos(cm.lastLine(), 0) else LinePos(cm.firstLine(), 0)
+                    if (prev) {
+                        LinePos(cm.lastLine(), Int.MAX_VALUE)
+                    } else {
+                        LinePos(cm.firstLine(), 0)
+                    }
                 )
                 if (wrapCursor.find(prev) == null) {
                     return@operation null
@@ -2168,11 +2176,10 @@ internal class ExCommandDispatcher {
                 return true
             }
         } else {
-            for (i in defaultKeymapMutable.indices.reversed()) {
-                if (lhs == defaultKeymapMutable[i].keys &&
-                    defaultKeymapMutable[i].context == ctx
-                ) {
-                    defaultKeymapMutable.removeAt(i)
+            val keymap = defaultKeymap as MutableList
+            for (i in keymap.indices.reversed()) {
+                if (lhs == keymap[i].keys && keymap[i].context == ctx) {
+                    keymap.removeAt(i)
                     return true
                 }
             }
@@ -2182,11 +2189,8 @@ internal class ExCommandDispatcher {
 }
 
 internal fun mapCommand(command: VimKeyCommand) {
-    defaultKeymapMutable.add(0, command)
+    (defaultKeymap as MutableList).add(0, command)
 }
-
-// The mutable version of default keymap for runtime modifications
-internal val defaultKeymapMutable: MutableList<VimKeyCommand> = defaultKeymap.toMutableList()
 
 // Global ex command dispatcher
 internal val exCommandDispatcher = ExCommandDispatcher()
@@ -2426,13 +2430,23 @@ internal fun repeatLastEdit(cm: VimEditor, vim: VimState, repeat: Int, repeatFor
 
 internal fun sendCmKey(cm: VimEditor, key: String) {
     when (key) {
-        "Backspace" -> cm.execCommand("cursorCharLeft")
+        "Backspace" -> {
+            val cur = cm.getCursor()
+            if (cur.ch > 0) {
+                cm.replaceRange("", LinePos(cur.line, cur.ch - 1), cur)
+            } else if (cur.line > 0) {
+                val prevLine = cur.line - 1
+                val prevLineLen = cm.getLine(prevLine).length
+                cm.replaceRange("", LinePos(prevLine, prevLineLen), cur)
+            }
+        }
         "Delete" -> {
-            // Handle delete key in insert mode
             val cur = cm.getCursor()
             val line = cm.getLine(cur.line)
             if (cur.ch < line.length) {
                 cm.replaceRange("", cur, LinePos(cur.line, cur.ch + 1))
+            } else if (cur.line < cm.lastLine()) {
+                cm.replaceRange("", cur, LinePos(cur.line + 1, 0))
             }
         }
     }
@@ -2441,14 +2455,15 @@ internal fun sendCmKey(cm: VimEditor, key: String) {
 internal fun repeatInsertModeChanges(cm: VimEditor, changes: MutableList<Any>, repeat: Int) {
     val head = cm.getCursor("head")
     val visualBlock = vimGlobalState.macroModeState.lastInsertModeChanges.visualBlock
+    val hasVisualBlock = visualBlock != null && visualBlock != 0
     var rpt = repeat
-    if (visualBlock != null) {
-        selectForInsert(cm, head, visualBlock + 1)
+    if (hasVisualBlock) {
+        selectForInsert(cm, head, visualBlock!! + 1)
         rpt = cm.listSelections().size
         cm.setCursor(head)
     }
     for (i in 0 until rpt) {
-        if (visualBlock != null) {
+        if (hasVisualBlock) {
             cm.setCursor(offsetCursor(head, i, 0))
         }
         for (change in changes) {
@@ -2466,7 +2481,7 @@ internal fun repeatInsertModeChanges(cm: VimEditor, changes: MutableList<Any>, r
             }
         }
     }
-    if (visualBlock != null) {
+    if (hasVisualBlock) {
         cm.setCursor(offsetCursor(head, 0, 1))
     }
 }
@@ -2542,7 +2557,9 @@ internal fun doReplace(
         val unmodifiedLineNumber = searchCursor.to()!!.line
         searchCursor.replace(newText)
         modifiedLineNumber = searchCursor.to()!!.line
-        adjustedLineEnd += modifiedLineNumber - unmodifiedLineNumber
+        if (adjustedLineEnd != Int.MAX_VALUE) {
+            adjustedLineEnd += modifiedLineNumber - unmodifiedLineNumber
+        }
         joined = modifiedLineNumber < unmodifiedLineNumber
     }
 
@@ -2573,6 +2590,9 @@ internal fun doReplace(
     }
 
     fun stop() {
+        if (virtualPrompt != null) {
+            virtualPrompt = null
+        }
         cm.focus()
         val pos = lastPos
         if (pos != null) {
@@ -2618,12 +2638,46 @@ internal fun doReplace(
         callback?.invoke()
         return
     }
-    // Confirm mode: use prompt
+    // Confirm mode: use prompt with key handler for y/n/a/q/l
+    var localCallback = callback
+    fun onPromptKeyDown(event: VimKeyEvent): Boolean {
+        val keyName = event.key
+        when (keyName) {
+            "y" -> {
+                replace()
+                next()
+            }
+            "n" -> {
+                next()
+            }
+            "a" -> {
+                // replaceAll contains a call to stop of its own. We don't want
+                // it to fire too early or multiple times.
+                val savedCallback = localCallback
+                localCallback = null
+                cm.operation { replaceAll() }
+                localCallback = savedCallback
+            }
+            "l" -> {
+                replace()
+                stop()
+            }
+            "q", "Escape" -> {
+                stop()
+            }
+            else -> return true // swallow all other keys
+        }
+        if (done) {
+            stop()
+        }
+        return true
+    }
     showPrompt(
         cm,
         PromptOptions(
             prefix = "replace with $replaceWith (y/n/a/q/l)",
-            onClose = { stop() }
+            onClose = { stop() },
+            onKeyDown = ::onPromptKeyDown
         )
     )
 }
@@ -2857,6 +2911,14 @@ internal class CircularJumpList {
         if (tail < 0) tail = 0
     }
 
+    fun clear() {
+        pointer = -1
+        head = 0
+        tail = 0
+        buffer.fill(null)
+        cachedCursor = null
+    }
+
     fun move(cm: VimEditor, offset: Int): Marker? {
         pointer += offset
         if (pointer > head) {
@@ -3049,6 +3111,14 @@ internal fun resetVimGlobalState() {
     for ((_, option) in vimOptions) {
         option.value = option.defaultValue
     }
+    vimGlobalState.jumpList.clear()
+    vimGlobalState.searchHistoryController.historyBuffer.clear()
+    vimGlobalState.exCommandHistoryController.historyBuffer.clear()
+    vimApi.mapclear()
+    exCommandDispatcher.buildCommandMap()
+    virtualPrompt = null
+    noremap = false
+    keyToKeyStack.clear()
 }
 
 // ---------------------------------------------------------------------------

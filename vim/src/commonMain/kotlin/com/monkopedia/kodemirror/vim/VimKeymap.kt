@@ -25,7 +25,7 @@ package com.monkopedia.kodemirror.vim
  * `@replit/codemirror-vim` package.  Every entry from the JS source is
  * represented here in the same order.
  */
-val defaultKeymap: List<VimKeyCommand> = listOf(
+val defaultKeymap: List<VimKeyCommand> = mutableListOf(
     // -----------------------------------------------------------------------
     // Key-to-key mappings (must come first so they can override others)
     // -----------------------------------------------------------------------
