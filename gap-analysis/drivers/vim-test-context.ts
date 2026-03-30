@@ -253,34 +253,25 @@ class VimKodemirrorDriver extends KodemirrorDriver implements VimEditorDriver {
   /**
    * Press a key using the real browser input path.
    *
-   * - Normal mode: focus canvas → press() → Skiko → Compose KeyEvent → vim
-   * - Insert mode chars: focus textarea → type() → Compose text input
-   * - Special keys always: focus canvas → press() → Skiko → Compose KeyEvent
+   * All keys go through the canvas → Skiko → Compose KeyEvent pipeline.
+   * In normal mode, vim consumes the key. In insert mode, vim returns false
+   * for printable chars and KodeMirror's fallback inserts them directly.
    */
   override async press(key: string): Promise<void> {
     const ver = await this.getVersion();
-
-    const char = this.keyToChar(key);
-    const insertMode = await this.isInsertMode();
-
-    if (char !== null && insertMode) {
-      // Insert mode text input goes through the textarea
-      await this.focusTextarea();
-      await this.page.keyboard.type(char);
-    } else {
-      // Normal mode keys and special keys go through the canvas → Skiko
-      await this.focusCanvas();
-      await this.page.keyboard.press(key);
-    }
-
+    await this.focusCanvas();
+    await this.page.keyboard.press(key);
     await this.waitForUpdate(ver);
   }
 
   override async type(text: string): Promise<void> {
-    await this.focusTextarea();
+    // In insert mode, each character goes through canvas → Skiko → Compose.
+    // The vim handler returns false for printable chars in insert mode,
+    // and KodeMirror's fallback inserts them via session.dispatch().
+    await this.focusCanvas();
     for (const ch of text) {
       const ver = await this.getVersion();
-      await this.page.keyboard.type(ch);
+      await this.page.keyboard.press(ch);
       await this.waitForUpdate(ver);
     }
   }

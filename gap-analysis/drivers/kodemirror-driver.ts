@@ -65,19 +65,13 @@ export class KodemirrorDriver implements EditorDriver {
   }
 
   async type(text: string): Promise<void> {
-    // Text input goes through the textarea in the shadow DOM.
-    // Focus it first, then use Playwright's keyboard.type() which sends
-    // through the full input event chain.
-    await this.page.evaluate(() => {
-      const shadow = document.body.shadowRoot;
-      if (shadow) {
-        const ta = shadow.querySelector("textarea");
-        if (ta) ta.focus();
-      }
-    });
+    // Route each character through the canvas → Skiko → Compose pipeline.
+    // KodeMirror's onPreviewKeyEvent handles unconsumed printable chars by
+    // inserting them directly via session.dispatch().
+    await this.ensureFocus();
     for (const ch of text) {
       const ver = await this.getVersion();
-      await this.page.keyboard.type(ch);
+      await this.page.keyboard.press(ch);
       await this.waitForUpdate(ver);
     }
   }

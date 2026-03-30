@@ -59,6 +59,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -485,7 +486,34 @@ private fun EditorContent(
             }
             .onPreviewKeyEvent { event ->
                 val consumed = handleKeyEvent(session, event)
-                if (consumed) suppressInput[0] = true
+                if (consumed) {
+                    suppressInput[0] = true
+                } else if (event.type == KeyEventType.KeyDown) {
+                    // When the keymap doesn't consume a printable character,
+                    // insert it directly. On wasmJs with canvas focus, the
+                    // browser doesn't generate a text input event on the
+                    // BasicTextField's backing element, so onValueChange
+                    // won't fire. This bridges the gap.
+                    val char = keyEventLayoutKey(event)
+                        ?: keyEventCharacter(event)?.toString()
+                    if (char != null && char.length == 1 &&
+                        !char[0].isISOControl()
+                    ) {
+                        val sel = session.state.selection.main
+                        session.dispatch(
+                            TransactionSpec(
+                                changes = ChangeSpec.Single(
+                                    from = sel.from,
+                                    to = sel.to,
+                                    insert = char.asInsert()
+                                ),
+                                userEvent = "input.type"
+                            )
+                        )
+                        suppressInput[0] = true
+                        return@onPreviewKeyEvent true
+                    }
+                }
                 consumed
             }
     )
