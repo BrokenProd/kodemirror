@@ -153,10 +153,17 @@ class VimKodemirrorDriver extends KodemirrorDriver implements VimEditorDriver {
 
   /**
    * Determine if the editor is currently in insert mode.
+   * Reads directly from the vim state object (not the cached snapshot)
+   * to avoid stale mode info after mode-changing commands like `i`, `c`, etc.
    */
   private async isInsertMode(): Promise<boolean> {
-    const state = await this.getVimState();
-    return state.vimMode === "insert";
+    return await this.page.evaluate(() => {
+      const km = (globalThis as any).__kodemirror;
+      // Read vim insert mode directly from the live vim state
+      if (km && km.getInsertMode) return km.getInsertMode();
+      // Fallback to cached snapshot
+      return km?.state?.vimMode === "insert";
+    });
   }
 
   /**

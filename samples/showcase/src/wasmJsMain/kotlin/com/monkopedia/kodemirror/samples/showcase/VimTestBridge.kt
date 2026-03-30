@@ -47,6 +47,13 @@ private external fun syncVimState(json: String, version: Int)
 
 @JsFun(
     """(callback) => {
+    globalThis.__kodemirror.getInsertMode = () => callback();
+}"""
+)
+private external fun registerInsertModeGetter(callback: () -> Boolean)
+
+@JsFun(
+    """(callback) => {
     globalThis.__kodemirror.sendKey = (key) => {
         callback(key);
     };
@@ -167,9 +174,11 @@ private class VimTestBridgePlugin(private val session: EditorSession) : PluginVa
         vimBridgeVersion++
         syncVimState(serializeVimState(session), vimBridgeVersion)
 
+        // Register live vim mode getter for the test driver
+        registerInsertModeGetter {
+            getVimEditor(session)?.vim?.insertMode == true
+        }
         // Register key handler for test-mode key injection.
-        // Playwright keyboard events don't go through Compose's
-        // onPreviewKeyEvent on WASM, so tests call sendKey() directly.
         registerKeyHandler { key ->
             handleVimKey(key)
         }
