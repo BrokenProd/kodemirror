@@ -4,6 +4,7 @@
   "scripts": {
     "test": "playwright test",
     "test:perf": "playwright test --project=performance",
+    "test:cm6-ref": "playwright test --project=cm6-reference",
     "report": "ts-node report/generate-report.ts",
     "install-browser": "playwright install chromium"
   },

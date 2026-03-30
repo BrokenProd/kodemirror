@@ -48,7 +48,7 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         ...(hasDisplay ? { launchOptions: { headless: false } } : {}),
       },
-      testIgnore: ["**/performance.spec.ts"],
+      testIgnore: ["**/performance.spec.ts", "**/cm6-reference-capture.spec.ts"],
     },
     {
       name: "performance",
@@ -58,6 +58,14 @@ export default defineConfig({
       },
       testMatch: ["**/performance.spec.ts"],
       retries: 0,
+    },
+    {
+      name: "cm6-reference",
+      testMatch: "tests/cm6-reference-capture.spec.ts",
+      use: {
+        viewport: { width: 800, height: 600 },
+        browserName: "chromium",
+      },
     },
   ],
   ...(kmBuildExists

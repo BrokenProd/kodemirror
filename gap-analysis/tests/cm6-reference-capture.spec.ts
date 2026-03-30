@@ -2,8 +2,8 @@ import { test } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
 
-const scenariosDir = path.join(__dirname, "scenarios");
-const outputDir = path.join(__dirname, "output");
+const scenariosDir = path.join(__dirname, "..", "fixtures", "cm6-scenarios");
+const outputDir = path.join(__dirname, "..", "screenshots", "cm6-reference");
 
 // Ensure output directory exists
 fs.mkdirSync(outputDir, { recursive: true });
