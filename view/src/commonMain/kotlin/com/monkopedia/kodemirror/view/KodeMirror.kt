@@ -194,24 +194,28 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
         platformFocusInput()
     }
 
-    // Track whether onPreviewKeyEvent fires for each keydown.
-    // If it doesn't fire, Skiko missed the key and we handle it from the
-    // document-level listener.
-    val keyHandledByCompose = remember { booleanArrayOf(false) }
+    // Track whether the platform callback already handled this keydown.
+    // The document-level listener fires in capture phase BEFORE Skiko
+    // processes the event. If the callback handled the key, onPreviewKeyEvent
+    // should skip to avoid double-handling.
+    val keyProcessedByCallback = remember { booleanArrayOf(false) }
 
     // Register a platform-level key handler that receives ALL keydown events.
-    // For keys that Skiko converts to Compose KeyEvents, onPreviewKeyEvent
-    // handles them and sets keyHandledByCompose. For keys Skiko misses,
-    // this handler routes them through the keymap and fallback insertion.
+    // This is the primary input path on wasmJs because Playwright (and some
+    // headless environments) dispatch key events to BODY rather than the
+    // canvas in the shadow DOM, so Skiko never generates Compose KeyEvents.
+    // For real users (events targeting the canvas), both this callback AND
+    // onPreviewKeyEvent fire — the flag prevents double-handling.
     DisposableEffect(session) {
         platformRegisterKeyHandler handler@{ key, ctrl, alt, meta, shift ->
-            if (keyHandledByCompose[0]) {
-                // Compose already processed this key via onPreviewKeyEvent
-                keyHandledByCompose[0] = false
-                return@handler false
+            // Clear the flag at the start of each key event.
+            // It will be set to true only if we handle this key.
+            keyProcessedByCallback[0] = false
+            val handled = handleRawKeyEvent(session, key, ctrl, alt, meta, shift)
+            if (handled) {
+                keyProcessedByCallback[0] = true
             }
-            // Skiko missed this key — process it directly
-            handleRawKeyEvent(session, key, ctrl, alt, meta, shift)
+            handled
         }
         onDispose {
             platformUnregisterKeyHandler()
@@ -411,7 +415,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                     pendingLineLayouts = pendingLineLayouts,
                     editorCoordinates = editorCoordinates,
                     textLayoutResults = textLayoutResults,
-                    keyHandledByCompose = keyHandledByCompose
+                    keyProcessedByCallback = keyProcessedByCallback
                 )
             }
             for (panel in bottomPanels) {
@@ -440,7 +444,7 @@ private fun EditorContent(
     pendingLineLayouts: MutableMap<Int, PendingLineLayout>,
     editorCoordinates: LayoutCoordinates?,
     textLayoutResults: MutableMap<Int, TextLayoutResult>,
-    keyHandledByCompose: BooleanArray
+    keyProcessedByCallback: BooleanArray
 ) {
     val session = LocalEditorSession.current
     val impl = session as EditorSessionImpl
@@ -511,10 +515,14 @@ private fun EditorContent(
                 impl.hasFocus = focusState.isFocused
             }
             .onPreviewKeyEvent { event ->
-                // Mark that Compose processed this key, so the document-level
-                // fallback handler knows not to double-handle it.
-                if (event.type == KeyEventType.KeyDown) {
-                    keyHandledByCompose[0] = true
+                // If the document-level callback already handled this
+                // keydown, skip to avoid double-handling.
+                if (event.type == KeyEventType.KeyDown &&
+                    keyProcessedByCallback[0]
+                ) {
+                    keyProcessedByCallback[0] = false
+                    suppressInput[0] = true
+                    return@onPreviewKeyEvent true
                 }
                 val consumed = handleKeyEvent(session, event)
                 if (consumed) {

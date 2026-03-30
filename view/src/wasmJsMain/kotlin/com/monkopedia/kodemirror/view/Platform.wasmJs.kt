@@ -41,10 +41,13 @@ private external fun jsClipboardWrite(text: String)
 // Uses capture phase on document so it fires before Skiko/Compose processes
 // the event on the canvas.
 //
-// Also invokes __kodeKeyCallback for keys that Skiko doesn't convert to
-// Compose KeyEvents (symbol keys like /, ?, etc. on the canvas). The callback
-// receives (key, ctrlKey, altKey, metaKey, shiftKey) and should return true
-// if the key was handled (to prevent default browser behavior).
+// Routes ALL keys through __kodeKeyCallback because Playwright (and some
+// headless environments) dispatch key events to BODY rather than the canvas
+// in the shadow DOM, so Skiko never generates Compose KeyEvents for them.
+// The callback receives (key, ctrlKey, altKey, metaKey, shiftKey) and should
+// return true if the key was handled (to prevent default browser behavior).
+// For real users (events targeting the canvas), both this callback AND
+// onPreviewKeyEvent may fire; a Kotlin-side flag prevents double-handling.
 @JsFun(
     """() => {
     globalThis.__kodeKey = '';
@@ -63,17 +66,18 @@ private external fun jsClipboardWrite(text: String)
         if (isModified || special.indexOf(e.key) !== -1) {
             e.preventDefault();
         }
-        // Notify Kotlin of the raw key event. For keys that Skiko converts
-        // to Compose KeyEvents, this is redundant (Compose handles them).
-        // For keys Skiko misses (symbols like /, ?, etc.), this is the
-        // only way they reach the key handler.
+        // Route all keys through the Kotlin callback. This is necessary
+        // because Playwright (and some headless environments) dispatch key
+        // events to BODY rather than the canvas in the shadow DOM, so Skiko
+        // never converts them to Compose KeyEvents. The Kotlin callback
+        // sets a flag so onPreviewKeyEvent skips if Skiko also processes
+        // the same event (preventing double-handling).
         if (globalThis.__kodeKeyCallback) {
             var handled = globalThis.__kodeKeyCallback(
                 e.key, e.ctrlKey, e.altKey, e.metaKey, e.shiftKey
             );
             if (handled) {
                 e.preventDefault();
-                e.stopPropagation();
             }
         }
     }, true);
