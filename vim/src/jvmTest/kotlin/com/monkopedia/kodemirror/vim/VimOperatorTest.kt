@@ -122,6 +122,20 @@ class VimOperatorTest {
     }
 
     @Test
+    fun cw_changes_punctuation_word_preserves_space() =
+        testVim(value = "// Fibonacci sequence") { h ->
+            h.doKeys("c", "w")
+            // cw should delete "//" only (not the trailing space)
+            assertEquals(" Fibonacci sequence", h.cm.getValue())
+            // Type replacement text
+            for (ch in "REPLACED") {
+                h.doKeys(ch.toString())
+            }
+            h.doKeys("<Esc>")
+            assertEquals("REPLACED Fibonacci sequence", h.cm.getValue())
+        }
+
+    @Test
     fun capitalC_changes_to_eol() = testVim(
         value = "foo bar\nbaz",
         cursor = LinePos(0, 3)

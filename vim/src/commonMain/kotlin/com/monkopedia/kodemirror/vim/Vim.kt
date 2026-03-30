@@ -435,6 +435,7 @@ object Vim : VimApiInterface {
         } else if (command is VimKeyCommand) {
             return {
                 cm.operation {
+                    cm.curOp?.let { it.isVimOp = true }
                     try {
                         if (command is KeyToKeyCommand) {
                             doKeyToKey(cm, command.toKeys, command)
