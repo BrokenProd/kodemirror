@@ -111,9 +111,12 @@ internal fun GoToLinePanel(view: EditorSession) {
         )
     }
 
+    val inputShape = RoundedCornerShape(4.dp)
+    val buttonShape = RoundedCornerShape(4.dp)
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(4.dp)
+        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
     ) {
         BasicText(
             "Go to line: ",
@@ -124,9 +127,9 @@ internal fun GoToLinePanel(view: EditorSession) {
             value = lineText,
             onValueChange = { lineText = it },
             modifier = Modifier.width(80.dp)
-                .background(theme.inputBackground)
-                .border(1.dp, theme.inputBorderColor)
-                .padding(2.dp),
+                .background(theme.inputBackground, inputShape)
+                .border(1.dp, theme.inputBorderColor, inputShape)
+                .padding(horizontal = 6.dp, vertical = 4.dp),
             textStyle = panelTextStyle,
             cursorBrush = SolidColor(theme.cursor),
             keyboardOptions = KeyboardOptions(
@@ -138,15 +141,14 @@ internal fun GoToLinePanel(view: EditorSession) {
             ),
             singleLine = true
         )
-        val buttonShape = RoundedCornerShape(1.dp)
         BasicText(
-            " Go",
+            "Go",
             style = panelTextStyle,
             modifier = Modifier.padding(start = 4.dp)
                 .background(theme.buttonBackground, buttonShape)
                 .border(1.dp, theme.buttonBorderColor, buttonShape)
                 .clickable { goToLine() }
-                .padding(horizontal = 4.dp, vertical = 1.dp)
+                .padding(horizontal = 8.dp, vertical = 3.dp)
         )
     }
 }

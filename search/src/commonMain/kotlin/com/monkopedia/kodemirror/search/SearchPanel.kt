@@ -66,7 +66,8 @@ internal fun SearchPanel(view: EditorSession, modifier: Modifier = Modifier) {
         color = theme.foreground,
         fontSize = (contentStyle.fontSize.value * 0.8).sp
     )
-    val buttonShape = RoundedCornerShape(1.dp)
+    val inputShape = RoundedCornerShape(4.dp)
+    val buttonShape = RoundedCornerShape(4.dp)
     val buttonMod = Modifier
         .background(theme.buttonBackground, buttonShape)
         .border(1.dp, theme.buttonBorderColor, buttonShape)
@@ -101,7 +102,8 @@ internal fun SearchPanel(view: EditorSession, modifier: Modifier = Modifier) {
     }
 
     Column(
-        modifier = modifier.then(Modifier.padding(4.dp))
+        modifier = modifier
+            .then(Modifier.padding(horizontal = 8.dp, vertical = 6.dp))
             .onPreviewKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                 when (event.key) {
@@ -115,7 +117,8 @@ internal fun SearchPanel(view: EditorSession, modifier: Modifier = Modifier) {
                     }
                     else -> false
                 }
-            }
+            },
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         // Row 1: Find input + navigation + options + close
         Row(
@@ -130,13 +133,18 @@ internal fun SearchPanel(view: EditorSession, modifier: Modifier = Modifier) {
                 },
                 modifier = Modifier.width(200.dp)
                     .focusRequester(focusRequester)
-                    .background(theme.inputBackground)
-                    .border(1.dp, theme.inputBorderColor),
+                    .background(theme.inputBackground, inputShape)
+                    .border(1.dp, theme.inputBorderColor, inputShape),
                 textStyle = panelTextStyle,
                 cursorBrush = SolidColor(theme.cursor),
                 singleLine = true,
                 decorationBox = { innerTextField ->
-                    Box(modifier = Modifier.padding(2.dp)) {
+                    Box(
+                        modifier = Modifier.padding(
+                            horizontal = 6.dp,
+                            vertical = 4.dp
+                        )
+                    ) {
                         if (searchText.isEmpty()) {
                             BasicText(
                                 view.phrase("Find"),
@@ -154,21 +162,21 @@ internal fun SearchPanel(view: EditorSession, modifier: Modifier = Modifier) {
                 style = panelTextStyle,
                 modifier = buttonMod
                     .clickable { findNext(view) }
-                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
             )
             BasicText(
                 "previous",
                 style = panelTextStyle,
                 modifier = buttonMod
                     .clickable { findPrevious(view) }
-                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
             )
             BasicText(
                 "all",
                 style = panelTextStyle,
                 modifier = buttonMod
                     .clickable { selectMatches(view) }
-                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
             )
             PanelCheckbox(
                 checked = caseSensitive,
@@ -200,10 +208,12 @@ internal fun SearchPanel(view: EditorSession, modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.weight(1f))
             BasicText(
                 "\u00D7",
-                style = panelTextStyle,
+                style = panelTextStyle.copy(fontSize = (contentStyle.fontSize.value * 1.0).sp),
                 modifier = Modifier
                     .clickable { closeSearchPanel(view) }
-                    .padding(horizontal = 4.dp)
+                    .background(theme.buttonBackground, buttonShape)
+                    .border(1.dp, theme.buttonBorderColor, buttonShape)
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
             )
         }
         // Row 2: Replace input + replace buttons
@@ -218,13 +228,18 @@ internal fun SearchPanel(view: EditorSession, modifier: Modifier = Modifier) {
                     updateQuery()
                 },
                 modifier = Modifier.width(200.dp)
-                    .background(theme.inputBackground)
-                    .border(1.dp, theme.inputBorderColor),
+                    .background(theme.inputBackground, inputShape)
+                    .border(1.dp, theme.inputBorderColor, inputShape),
                 textStyle = panelTextStyle,
                 cursorBrush = SolidColor(theme.cursor),
                 singleLine = true,
                 decorationBox = { innerTextField ->
-                    Box(modifier = Modifier.padding(2.dp)) {
+                    Box(
+                        modifier = Modifier.padding(
+                            horizontal = 6.dp,
+                            vertical = 4.dp
+                        )
+                    ) {
                         if (replaceText.isEmpty()) {
                             BasicText(
                                 view.phrase("Replace"),
@@ -242,14 +257,14 @@ internal fun SearchPanel(view: EditorSession, modifier: Modifier = Modifier) {
                 style = panelTextStyle,
                 modifier = buttonMod
                     .clickable { replaceNext(view) }
-                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
             )
             BasicText(
                 "replace all",
                 style = panelTextStyle,
                 modifier = buttonMod
                     .clickable { replaceAll(view) }
-                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
             )
         }
         LaunchedEffect(Unit) {
@@ -266,18 +281,20 @@ private fun PanelCheckbox(
     onToggle: () -> Unit
 ) {
     val theme = LocalEditorTheme.current
+    val checkboxShape = RoundedCornerShape(3.dp)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.clickable { onToggle() }
+            .padding(horizontal = 2.dp)
     ) {
         Box(
-            modifier = Modifier.size(12.dp)
-                .border(1.dp, theme.buttonBorderColor)
+            modifier = Modifier.size(14.dp)
+                .border(1.dp, theme.buttonBorderColor, checkboxShape)
                 .then(
                     if (checked) {
-                        Modifier.background(theme.buttonBackground)
+                        Modifier.background(theme.cursor.copy(alpha = 0.7f), checkboxShape)
                     } else {
-                        Modifier
+                        Modifier.background(theme.inputBackground, checkboxShape)
                     }
                 ),
             contentAlignment = Alignment.Center
@@ -286,14 +303,16 @@ private fun PanelCheckbox(
                 BasicText(
                     "\u2713",
                     style = textStyle.copy(
-                        fontSize = 9.sp,
-                        lineHeight = 10.sp
+                        fontSize = 10.sp,
+                        lineHeight = 11.sp,
+                        color = theme.foreground
                     )
                 )
             }
         }
+        Spacer(modifier = Modifier.width(3.dp))
         BasicText(
-            " $label",
+            label,
             style = textStyle
         )
     }
