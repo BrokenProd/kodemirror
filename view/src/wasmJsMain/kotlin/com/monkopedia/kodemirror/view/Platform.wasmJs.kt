@@ -72,6 +72,27 @@ private external fun installKeyCapture()
 @JsFun("() => globalThis.__kodeKey || ''")
 private external fun readCapturedKey(): String
 
+/**
+ * Focus the canvas in the shadow DOM so keyboard events reach Skiko's
+ * event handler. Skiko processes key events from the canvas element
+ * and converts them to Compose KeyEvents that flow through
+ * onPreviewKeyEvent.
+ */
+@JsFun(
+    """() => {
+    var shadow = document.body.shadowRoot;
+    if (shadow) {
+        var canvas = shadow.querySelector('canvas');
+        if (canvas) canvas.focus();
+    }
+}"""
+)
+private external fun platformFocusCanvas()
+
+internal actual fun platformFocusInput() {
+    platformFocusCanvas()
+}
+
 @JsFun("(cb) => { globalThis.__kodePasteCallback = cb; }")
 private external fun jsSetPasteCallback(callback: (JsString) -> Unit)
 

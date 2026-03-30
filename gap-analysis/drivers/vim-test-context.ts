@@ -243,21 +243,26 @@ class VimKodemirrorDriver extends KodemirrorDriver implements VimEditorDriver {
    *
    * Special keys (Escape, Enter, arrows, etc.) always use press().
    */
+  /**
+   * Press a key using the real browser input path.
+   *
+   * - Normal mode: focus canvas → press() → Skiko → Compose KeyEvent → vim
+   * - Insert mode chars: focus textarea → type() → Compose text input
+   * - Special keys always: focus canvas → press() → Skiko → Compose KeyEvent
+   */
   override async press(key: string): Promise<void> {
     const ver = await this.getVersion();
-    await this.ensureFocus();
 
     const char = this.keyToChar(key);
     const insertMode = await this.isInsertMode();
 
     if (char !== null && insertMode) {
-      // In insert mode, use type() for character input — this goes through
-      // the textarea → DomInputStrategy → Compose text input pipeline,
-      // matching what a real user typing would do.
+      // Insert mode text input goes through the textarea
+      await this.focusTextarea();
       await this.page.keyboard.type(char);
     } else {
-      // Normal mode keys and special keys go through press() — the
-      // document-level capture listener intercepts them.
+      // Normal mode keys and special keys go through the canvas → Skiko
+      await this.focusCanvas();
       await this.page.keyboard.press(key);
     }
 
@@ -265,7 +270,7 @@ class VimKodemirrorDriver extends KodemirrorDriver implements VimEditorDriver {
   }
 
   override async type(text: string): Promise<void> {
-    await this.ensureFocus();
+    await this.focusTextarea();
     for (const ch of text) {
       const ver = await this.getVersion();
       await this.page.keyboard.type(ch);
@@ -274,28 +279,29 @@ class VimKodemirrorDriver extends KodemirrorDriver implements VimEditorDriver {
   }
 
   /**
-   * Ensure the editor has focus. KodeMirror's auto-focus LaunchedEffect
-   * gives Compose focus to the BasicTextField (which causes Skiko to create
-   * a backing DOM textarea). We need that textarea to have DOM focus for
-   * keyboard events to reach Compose.
-   *
-   * We focus the textarea (not the canvas) because clicking the canvas
-   * triggers Skiko's pointer handling which can steal Compose focus away
-   * from the BasicTextField.
+   * Focus the canvas for keyboard events. Skiko routes key events from
+   * the canvas through Compose's onPreviewKeyEvent pipeline.
    */
-  private async ensureFocus(): Promise<void> {
+  private async focusCanvas(): Promise<void> {
     await this.page.evaluate(() => {
       const shadow = document.body.shadowRoot;
       if (shadow) {
-        // The auto-focused BasicTextField creates a DOM textarea
+        const canvas = shadow.querySelector("canvas");
+        if (canvas) (canvas as HTMLElement).focus();
+      }
+    });
+  }
+
+  /**
+   * Focus the textarea for text input. In insert mode, typed characters
+   * need to go through the textarea → Compose text input pipeline.
+   */
+  private async focusTextarea(): Promise<void> {
+    await this.page.evaluate(() => {
+      const shadow = document.body.shadowRoot;
+      if (shadow) {
         const ta = shadow.querySelector("textarea");
-        if (ta) {
-          ta.focus();
-        } else {
-          // Fallback: focus canvas (Skiko will route events)
-          const canvas = shadow.querySelector("canvas");
-          if (canvas) (canvas as HTMLElement).focus();
-        }
+        if (ta) ta.focus();
       }
     });
   }

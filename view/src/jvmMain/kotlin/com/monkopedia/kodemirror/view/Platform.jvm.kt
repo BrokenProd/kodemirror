@@ -50,6 +50,10 @@ actual fun keyEventLayoutKey(event: KeyEvent): String? {
     return char.lowercaseChar().toString()
 }
 
+internal actual fun platformFocusInput() {
+    // No-op on JVM — Compose Desktop manages focus natively
+}
+
 internal actual fun platformClipboardGet(): String? = try {
     val clipboard = Toolkit.getDefaultToolkit().systemClipboard
     clipboard.getData(DataFlavor.stringFlavor) as? String

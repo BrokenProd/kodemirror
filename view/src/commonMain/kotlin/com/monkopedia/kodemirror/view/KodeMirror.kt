@@ -190,6 +190,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     // Auto-focus the hidden text field when the editor first appears
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
+        platformFocusInput()
     }
 
     // Prevent tap from overriding drag selection
@@ -287,6 +288,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                 return@detectTapGestures
                             }
                             focusRequester.requestFocus()
+                            platformFocusInput()
                             // Use LazyColumn layout info (always reliable) with
                             // cache-based positioning as fallback.
                             val pos = posFromVisibleItems(
@@ -313,6 +315,8 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                         detectDragGestures(
                             onDragStart = { offset ->
                                 recentlyDragged = true
+                                focusRequester.requestFocus()
+                                platformFocusInput()
                                 dragStart = offset
                                 dragCurrent = offset
                             },

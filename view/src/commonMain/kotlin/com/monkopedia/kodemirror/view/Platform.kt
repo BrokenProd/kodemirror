@@ -43,6 +43,17 @@ internal expect fun keyEventCharacter(event: KeyEvent): Char?
  */
 expect fun keyEventLayoutKey(event: KeyEvent): String?
 
+/**
+ * Ensure the editor's backing text input element has platform focus.
+ *
+ * On wasmJs, Compose's FocusRequester.requestFocus() gives Compose-internal
+ * focus but doesn't always move DOM focus to the textarea that Skiko creates.
+ * This function explicitly focuses the textarea in the shadow DOM.
+ *
+ * On JVM/Desktop, this is a no-op since Compose manages focus natively.
+ */
+internal expect fun platformFocusInput()
+
 /** Read text from the system clipboard. Returns null if unavailable. */
 internal expect fun platformClipboardGet(): String?
 

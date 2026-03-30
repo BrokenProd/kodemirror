@@ -65,19 +65,9 @@ export class KodemirrorDriver implements EditorDriver {
   }
 
   async type(text: string): Promise<void> {
-    // Compose for Web renders inside a shadow DOM on <body>.
-    // Use Playwright's locator (which pierces shadow DOM) to fill the
-    // hidden textarea character-by-character.
-    const ta = this.page.locator("textarea");
-    for (const ch of text) {
-      const ver = await this.getVersion();
-      await ta.fill(ch);
-      await this.waitForUpdate(ver);
-    }
-  }
-
-  private async ensureFocus(): Promise<void> {
-    // Focus the textarea inside shadow DOM
+    // Text input goes through the textarea in the shadow DOM.
+    // Focus it first, then use Playwright's keyboard.type() which sends
+    // through the full input event chain.
     await this.page.evaluate(() => {
       const shadow = document.body.shadowRoot;
       if (shadow) {
@@ -85,12 +75,27 @@ export class KodemirrorDriver implements EditorDriver {
         if (ta) ta.focus();
       }
     });
+    for (const ch of text) {
+      const ver = await this.getVersion();
+      await this.page.keyboard.type(ch);
+      await this.waitForUpdate(ver);
+    }
+  }
+
+  protected async ensureFocus(): Promise<void> {
+    // Focus the canvas so keyboard events reach Skiko's event handler.
+    // Skiko converts canvas key events to Compose KeyEvents.
+    await this.page.evaluate(() => {
+      const shadow = document.body.shadowRoot;
+      if (shadow) {
+        const canvas = shadow.querySelector("canvas");
+        if (canvas) (canvas as HTMLElement).focus();
+      }
+    });
   }
 
   async press(key: string): Promise<void> {
     const ver = await this.getVersion();
-    // Ensure the hidden textarea has browser focus so onPreviewKeyEvent fires.
-    // The textarea lives inside a shadow DOM on <body>.
     await this.ensureFocus();
     await this.page.keyboard.press(key);
     await this.waitForUpdate(ver);
