@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.view
 
 import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.isShiftPressed
 import kotlin.JsFun
 import kotlin.js.JsString
 
@@ -120,10 +121,13 @@ actual fun keyEventLayoutKey(event: KeyEvent): String? {
     // property initializer that installs the document keydown listener.
     keyCaptureInstalled
     val key = readCapturedKey()
-    // Browser's event.key is a single character for printable keys ("x", "z",
-    // "X" with Shift) and a longer string for special keys ("Enter", "Tab").
-    // Return the character as-is — callers handle case normalization.
+    // Browser's event.key is a single character for printable keys ("x", "z")
+    // and a longer string for special keys ("Enter", "Tab").
+    // Note: Playwright's keyboard.press("Shift+j") sends e.key="j" (lowercase)
+    // even though a real browser Shift+J gives e.key="J". We check the Compose
+    // event's shift state to restore the correct case.
     if (key.length != 1) return null
+    if (event.isShiftPressed && key[0].isLetter()) return key.uppercase()
     return key
 }
 
