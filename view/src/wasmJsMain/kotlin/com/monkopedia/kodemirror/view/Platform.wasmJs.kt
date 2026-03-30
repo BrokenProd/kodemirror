@@ -109,6 +109,17 @@ private val keyCaptureInstalled: Boolean = run {
     true
 }
 
+// US-layout shift map for Playwright compatibility.
+// Playwright sends the unshifted e.key for Shift+digit/symbol combinations.
+// A real browser would send the shifted character (e.g., "$" for Shift+4).
+private val SHIFT_MAP = mapOf(
+    '1' to '!', '2' to '@', '3' to '#', '4' to '$', '5' to '%',
+    '6' to '^', '7' to '&', '8' to '*', '9' to '(', '0' to ')',
+    '-' to '_', '=' to '+', '[' to '{', ']' to '}', '\\' to '|',
+    ';' to ':', '\'' to '"', ',' to '<', '.' to '>', '/' to '?',
+    '`' to '~'
+)
+
 internal actual fun platformOsName(): String = detectOsFromBrowser()
 
 internal actual fun keyEventCharacter(event: KeyEvent): Char? {
@@ -123,11 +134,14 @@ actual fun keyEventLayoutKey(event: KeyEvent): String? {
     val key = readCapturedKey()
     // Browser's event.key is a single character for printable keys ("x", "z")
     // and a longer string for special keys ("Enter", "Tab").
-    // Note: Playwright's keyboard.press("Shift+j") sends e.key="j" (lowercase)
-    // even though a real browser Shift+J gives e.key="J". We check the Compose
-    // event's shift state to restore the correct case.
     if (key.length != 1) return null
-    if (event.isShiftPressed && key[0].isLetter()) return key.uppercase()
+    // Playwright's keyboard.press("Shift+j") sends e.key="j" (not "J") and
+    // keyboard.press("Shift+4") sends e.key="4" (not "$"). A real browser
+    // would give the shifted character. Use Compose's isShiftPressed + a
+    // shift map to produce the correct character.
+    if (event.isShiftPressed) {
+        return SHIFT_MAP[key[0]]?.toString() ?: key.uppercase()
+    }
     return key
 }
 
