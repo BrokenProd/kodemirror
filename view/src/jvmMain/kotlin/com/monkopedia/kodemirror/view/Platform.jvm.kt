@@ -35,7 +35,7 @@ internal actual fun keyEventCharacter(event: KeyEvent): Char? {
     return char
 }
 
-internal actual fun keyEventLayoutKey(event: KeyEvent): String? {
+actual fun keyEventLayoutKey(event: KeyEvent): String? {
     val codePoint = event.utf16CodePoint
     if (codePoint == 0) return null
     // Ctrl+letter produces control characters 1-26 for a-z.

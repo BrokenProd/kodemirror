@@ -52,6 +52,18 @@ val keymap: Facet<List<KeyBinding>, List<KeyBinding>> = Facet.define(
     combine = { values -> values.flatten() }
 )
 
+/**
+ * Facet for extensions that need to suppress text input under certain conditions.
+ *
+ * Each provider returns a function that returns `true` when text input should be
+ * suppressed. This is used by the hidden BasicTextField's `onValueChange` handler
+ * to prevent character insertion when an extension (like vim in normal mode)
+ * handles keys as commands rather than text input.
+ *
+ * This is the equivalent of CM6's `EditorView.inputHandler` returning `true`.
+ */
+val inputSuppressor: Facet<() -> Boolean, List<() -> Boolean>> = Facet.define()
+
 /** Convenience: create an extension from key bindings. */
 fun keymapOf(vararg bindings: KeyBinding): Extension = keymap.of(bindings.toList())
 

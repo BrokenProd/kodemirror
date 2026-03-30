@@ -41,7 +41,7 @@ internal expect fun keyEventCharacter(event: KeyEvent): Char?
  * Returns null if the layout-aware character cannot be determined, in which case
  * callers should fall back to the physical key name.
  */
-internal expect fun keyEventLayoutKey(event: KeyEvent): String?
+expect fun keyEventLayoutKey(event: KeyEvent): String?
 
 /** Read text from the system clipboard. Returns null if unavailable. */
 internal expect fun platformClipboardGet(): String?

@@ -435,6 +435,16 @@ private fun EditorContent(
                 hiddenTextValue = TextFieldValue("")
                 return@BasicTextField
             }
+            // Check if a vim-like extension wants to suppress text input.
+            // In vim normal/visual mode, character keys should execute commands
+            // (not insert text). The inputSuppressor facet lets extensions
+            // signal that text input should be blocked.
+            val shouldSuppress = session.state.facet(inputSuppressor)
+                .any { it.invoke() }
+            if (shouldSuppress) {
+                hiddenTextValue = TextFieldValue("")
+                return@BasicTextField
+            }
             // Filter control characters (Tab, etc.) that leak through
             // when their key events aren't consumed by the keymap.
             // Preserve newlines — they are valid input (e.g. paste).

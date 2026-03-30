@@ -94,7 +94,7 @@ internal actual fun keyEventCharacter(event: KeyEvent): Char? {
     return null
 }
 
-internal actual fun keyEventLayoutKey(event: KeyEvent): String? {
+actual fun keyEventLayoutKey(event: KeyEvent): String? {
     // Reference keyCaptureInstalled to prevent dead-code elimination of the
     // property initializer that installs the document keydown listener.
     keyCaptureInstalled

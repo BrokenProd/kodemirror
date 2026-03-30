@@ -43,6 +43,8 @@ import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
+import com.monkopedia.kodemirror.view.inputSuppressor
+import com.monkopedia.kodemirror.view.keyEventLayoutKey
 import com.monkopedia.kodemirror.view.keymap
 import com.monkopedia.kodemirror.view.showPanel
 
@@ -57,9 +59,32 @@ fun vim(status: Boolean = false): Extension {
     return extensionListOf(
         vimKeymap,
         vimPlugin.asExtension(),
+        vimInputSuppressor,
         if (status) showPanel.of(createStatusPanel()) else vimPanelField
     )
 }
+
+/**
+ * Suppress text input when vim is in normal or visual mode.
+ * Characters should execute vim commands, not insert text.
+ */
+private val vimInputSuppressor: Extension = inputSuppressor.of(::shouldSuppressVimInput)
+
+/**
+ * Returns true when vim is active and NOT in insert mode, meaning
+ * character keys should execute commands, not insert text.
+ */
+private fun shouldSuppressVimInput(): Boolean {
+    // Check the most recently initialized vim state. The vim plugin
+    // sets insertMode when entering/exiting insert mode.
+    val plugin = lastVimPlugin ?: return false
+    val vim = plugin.cm.vim ?: return false
+    return !vim.insertMode
+}
+
+// Track the last active VimPluginValue for inputSuppressor checks.
+// Set during VimPluginValue init, cleared on destroy.
+internal var lastVimPlugin: VimPluginValue? = null
 
 /**
  * Get the [VimEditor] associated with an [EditorSession], or null
@@ -134,6 +159,7 @@ internal class VimPluginValue(private val session: EditorSession) : PluginValue 
         private set
 
     init {
+        lastVimPlugin = this
         Vim.enterVimMode(cm)
         cm.vimPlugin = this
         vimState = cm.vim ?: Vim.maybeInitVimState_(cm)
@@ -243,6 +269,7 @@ internal class VimPluginValue(private val session: EditorSession) : PluginValue 
     }
 
     override fun destroy() {
+        if (lastVimPlugin === this) lastVimPlugin = null
         Vim.leaveVimMode(cm)
     }
 }
@@ -272,9 +299,10 @@ internal fun composeKeyToVimKey(event: KeyEvent, vim: VimState?): String? {
 /**
  * Extract the DOM-style key name from a Compose [KeyEvent].
  *
- * Maps Compose [Key] constants to the same strings that the browser
- * KeyboardEvent.key property would produce, since [vimKeyFromEvent]
- * expects those names.
+ * Uses [keyEventLayoutKey] as the primary source for printable characters,
+ * which provides layout-aware key names (e.g., on Dvorak, physical 'j'
+ * returns 'c'). Falls back to the Compose [Key] enum (physical positions)
+ * only for special keys and when layout info is unavailable.
  */
 private fun composeKeyName(event: KeyEvent): String {
     // For modifier-only keys, return the modifier name
@@ -316,9 +344,41 @@ private fun composeKeyName(event: KeyEvent): String {
         Key.F11 -> "F11"
         Key.F12 -> "F12"
 
-        // Letter and digit keys: use the typed character
-        else -> extractCharFromEvent(event) ?: event.key.toString()
+        // Printable keys: use layout-aware key name from the platform.
+        // This returns the character the user's keyboard layout produces
+        // (e.g., "c" on Dvorak when pressing the physical QWERTY "j" key).
+        // Falls back to the hardcoded Compose Key enum mapping for platforms
+        // where layout info is unavailable.
+        else -> layoutAwareKey(event)
     }
+}
+
+/**
+ * Get the layout-aware character for a key event.
+ *
+ * Tries [keyEventLayoutKey] first (which reads the browser's `e.key` on
+ * wasmJs, or the JVM's `KeyEvent.keyChar`). If that returns null (e.g.,
+ * modifier combo where the platform can't determine the character), falls
+ * back to the hardcoded [extractCharFromEvent] which uses physical key
+ * positions.
+ */
+private fun layoutAwareKey(event: KeyEvent): String {
+    // keyEventLayoutKey returns lowercase single-char layout-aware key
+    val layoutKey = keyEventLayoutKey(event)
+    if (layoutKey != null) {
+        // The platform gives us the lowercase layout key. If Shift is held,
+        // we need the uppercase/shifted variant. The browser's e.key already
+        // accounts for Shift, but keyEventLayoutKey lowercases it. Restore
+        // the shift state for letter keys.
+        return if (event.isShiftPressed && layoutKey.length == 1) {
+            layoutKey.uppercase()
+        } else {
+            layoutKey
+        }
+    }
+    // Fallback: use physical key mapping (works for Ctrl+letter combos
+    // where the platform can't determine the layout character)
+    return extractCharFromEvent(event) ?: event.key.toString()
 }
 
 /**
