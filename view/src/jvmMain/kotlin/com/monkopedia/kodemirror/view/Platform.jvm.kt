@@ -47,7 +47,7 @@ actual fun keyEventLayoutKey(event: KeyEvent): String? {
     }
     val char = codePoint.toChar()
     if (char.isISOControl()) return null
-    return char.lowercaseChar().toString()
+    return char.toString()
 }
 
 internal actual fun platformFocusInput() {

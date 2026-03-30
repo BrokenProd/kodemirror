@@ -55,7 +55,7 @@ fun keyEventToName(event: KeyEvent): String {
     val keyName = if (isSpecialKey(event.key)) {
         keyName(event.key)
     } else {
-        val layoutKey = keyEventLayoutKey(event)
+        val layoutKey = keyEventLayoutKey(event)?.lowercase()
         // Normalize space character to "Space" for consistent key binding
         // matching (browser reports " " but bindings use "Space").
         if (layoutKey == " ") "Space" else layoutKey ?: keyName(event.key)

@@ -357,25 +357,14 @@ private fun composeKeyName(event: KeyEvent): String {
  * Get the layout-aware character for a key event.
  *
  * Tries [keyEventLayoutKey] first (which reads the browser's `e.key` on
- * wasmJs, or the JVM's `KeyEvent.keyChar`). If that returns null (e.g.,
- * modifier combo where the platform can't determine the character), falls
- * back to the hardcoded [extractCharFromEvent] which uses physical key
- * positions.
+ * wasmJs, or the JVM's `KeyEvent.keyChar`). The platform returns the
+ * actual character including shift state (e.g., "R" for Shift+r, "$" for
+ * Shift+4). Falls back to the hardcoded [extractCharFromEvent] for
+ * platforms where layout info is unavailable.
  */
 private fun layoutAwareKey(event: KeyEvent): String {
-    // keyEventLayoutKey returns lowercase single-char layout-aware key
     val layoutKey = keyEventLayoutKey(event)
-    if (layoutKey != null) {
-        // The platform gives us the lowercase layout key. If Shift is held,
-        // we need the uppercase/shifted variant. The browser's e.key already
-        // accounts for Shift, but keyEventLayoutKey lowercases it. Restore
-        // the shift state for letter keys.
-        return if (event.isShiftPressed && layoutKey.length == 1) {
-            layoutKey.uppercase()
-        } else {
-            layoutKey
-        }
-    }
+    if (layoutKey != null) return layoutKey
     // Fallback: use physical key mapping (works for Ctrl+letter combos
     // where the platform can't determine the layout character)
     return extractCharFromEvent(event) ?: event.key.toString()

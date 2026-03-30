@@ -120,11 +120,11 @@ actual fun keyEventLayoutKey(event: KeyEvent): String? {
     // property initializer that installs the document keydown listener.
     keyCaptureInstalled
     val key = readCapturedKey()
-    // Browser's event.key is a single character for printable keys ("x", "z")
-    // and a longer string for special keys ("Enter", "Tab", "ArrowLeft").
-    // Only return single-character keys (layout-aware characters).
+    // Browser's event.key is a single character for printable keys ("x", "z",
+    // "X" with Shift) and a longer string for special keys ("Enter", "Tab").
+    // Return the character as-is — callers handle case normalization.
     if (key.length != 1) return null
-    return key.lowercase()
+    return key
 }
 
 internal actual fun platformClipboardGet(): String? {

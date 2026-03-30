@@ -500,6 +500,7 @@ private fun EditorContent(
                         !char[0].isISOControl()
                     ) {
                         val sel = session.state.selection.main
+                        val newCursor = DocPos(sel.from.value + char.length)
                         session.dispatch(
                             TransactionSpec(
                                 changes = ChangeSpec.Single(
@@ -507,6 +508,7 @@ private fun EditorContent(
                                     to = sel.to,
                                     insert = char.asInsert()
                                 ),
+                                selection = SelectionSpec.CursorSpec(newCursor),
                                 userEvent = "input.type"
                             )
                         )
