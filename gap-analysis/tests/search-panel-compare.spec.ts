@@ -23,6 +23,27 @@ test.describe("Search Panel Comparison", () => {
     }
   });
 
+  test("find and replace panel - visual compare", async ({ cm6, km }) => {
+    await cm6.focus();
+    if (km) await km.focus();
+
+    // Open find-and-replace panel in CM6 with Ctrl+H
+    await cm6.press("Control+h");
+    await cm6.page.waitForTimeout(500);
+    await cm6.screenshot(
+      path.join(screenshotDir, "cm6-find-replace-panel.png")
+    );
+
+    if (km) {
+      // Open find-and-replace panel in KM with Ctrl+H
+      await km.press("Control+h");
+      await km.page.waitForTimeout(1000);
+      await km.screenshot(
+        path.join(screenshotDir, "km-find-replace-panel.png")
+      );
+    }
+  });
+
   test("search panel with query - visual compare", async ({ cm6, km }) => {
     await cm6.focus();
     if (km) await km.focus();
