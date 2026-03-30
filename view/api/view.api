@@ -344,6 +344,7 @@ public final class com/monkopedia/kodemirror/view/InputHandlingKt {
 	public static final fun handleCharacterInput-34rOyRA (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/Object;)Z
 	public static final fun handleDrag-2x9bVx0 (Lcom/monkopedia/kodemirror/view/EditorSession;JJ)V
 	public static final fun handleKeyEvent-34rOyRA (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/Object;)Z
+	public static final fun handleRawKeyEvent (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/String;ZZZZ)Z
 	public static final fun handleRectangularDrag-2x9bVx0 (Lcom/monkopedia/kodemirror/view/EditorSession;JJ)V
 	public static final fun handleTap-Uv8p0NA (Lcom/monkopedia/kodemirror/view/EditorSession;J)V
 	public static final fun keyEventToName-ZmokQxo (Ljava/lang/Object;)Ljava/lang/String;
@@ -352,21 +353,23 @@ public final class com/monkopedia/kodemirror/view/InputHandlingKt {
 
 public final class com/monkopedia/kodemirror/view/KeyBinding {
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ZZ)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function6;ZZ)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function6;ZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Z
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Ljava/lang/String;
 	public final fun component5 ()Lkotlin/jvm/functions/Function1;
 	public final fun component6 ()Lkotlin/jvm/functions/Function1;
 	public final fun component7 ()Lkotlin/jvm/functions/Function2;
-	public final fun component8 ()Z
+	public final fun component8 ()Lkotlin/jvm/functions/Function6;
 	public final fun component9 ()Z
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ZZ)Lcom/monkopedia/kodemirror/view/KeyBinding;
-	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/view/KeyBinding;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ZZILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/KeyBinding;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function6;ZZ)Lcom/monkopedia/kodemirror/view/KeyBinding;
+	public static synthetic fun copy$default (Lcom/monkopedia/kodemirror/view/KeyBinding;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function6;ZZILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/KeyBinding;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAny ()Lkotlin/jvm/functions/Function2;
+	public final fun getAnyRaw ()Lkotlin/jvm/functions/Function6;
 	public final fun getKey ()Ljava/lang/String;
 	public final fun getLinux ()Ljava/lang/String;
 	public final fun getMac ()Ljava/lang/String;

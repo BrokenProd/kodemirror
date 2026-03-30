@@ -43,6 +43,14 @@ data class KeyBinding(
     val run: ((EditorSession) -> Boolean)? = null,
     val shift: ((EditorSession) -> Boolean)? = null,
     val any: ((EditorSession, KeyEvent) -> Boolean)? = null,
+    /**
+     * Raw key handler for keys that don't produce a Compose [KeyEvent].
+     * Called with the browser's key string and modifier state.
+     * On wasmJs, Skiko doesn't generate Compose KeyEvents for some symbol
+     * keys on the canvas (/, ?, ~, etc.). This handler receives them from
+     * the document-level keydown listener.
+     */
+    val anyRaw: ((EditorSession, String, Boolean, Boolean, Boolean, Boolean) -> Boolean)? = null,
     val preventDefault: Boolean = false,
     val stopPropagation: Boolean = false
 )

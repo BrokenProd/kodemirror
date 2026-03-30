@@ -50,6 +50,16 @@ actual fun keyEventLayoutKey(event: KeyEvent): String? {
     return char.toString()
 }
 
+internal actual fun platformRegisterKeyHandler(
+    handler: (key: String, ctrl: Boolean, alt: Boolean, meta: Boolean, shift: Boolean) -> Boolean
+) {
+    // No-op on JVM — Compose Desktop generates KeyEvents for all keys
+}
+
+internal actual fun platformUnregisterKeyHandler() {
+    // No-op
+}
+
 internal actual fun platformFocusInput() {
     // No-op on JVM — Compose Desktop manages focus natively
 }

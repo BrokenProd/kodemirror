@@ -285,6 +285,82 @@ fun handleCharacterInput(view: EditorSession, event: KeyEvent): Boolean {
 }
 
 /**
+ * Handle a raw key event from the platform's document-level listener.
+ *
+ * This is called when Skiko doesn't generate a Compose KeyEvent for a key
+ * (e.g., symbol keys like `/`, `?`, `~` on the canvas). It routes the key
+ * through the keymap's `any` handlers (which includes vim) and falls back
+ * to text insertion for unconsumed printable characters.
+ *
+ * @return true if the key was handled (caller should preventDefault).
+ */
+fun handleRawKeyEvent(
+    view: EditorSession,
+    key: String,
+    ctrl: Boolean,
+    alt: Boolean,
+    meta: Boolean,
+    shift: Boolean
+): Boolean {
+    // Ignore modifier-only keys
+    if (key in setOf("Shift", "Control", "Alt", "Meta", "CapsLock")) return false
+
+    // Route through keymap's `any` handlers (like vim).
+    // The `any` handler expects a KeyEvent, but for raw keys we can't create one.
+    // Instead, directly call vim's handleKey via the key string.
+    // Build the key name for keymap matching.
+    val normalizedKey = if (shift && key.length == 1 && key[0].isLetter()) {
+        key.uppercase()
+    } else if (shift && key.length == 1) {
+        SHIFTED_SYMBOLS[key[0]]?.toString() ?: key
+    } else {
+        key
+    }
+
+    val bindings = view.state.facet(keymap)
+    for (binding in bindings) {
+        if (binding.any != null && resolveBindingKey(binding) == null) {
+            // This is a catch-all handler (like vim's).
+            // Call it with a synthetic raw key dispatch.
+            val result = binding.anyRaw?.invoke(view, normalizedKey, ctrl, alt, meta, shift)
+            if (result == true) return true
+        }
+    }
+
+    // Not consumed by keymap — check if it should be inserted as text
+    val shouldSuppress = view.state.facet(inputSuppressor).any { it.invoke() }
+    if (!shouldSuppress && normalizedKey.length == 1 && !normalizedKey[0].isISOControl() &&
+        !ctrl && !alt && !meta
+    ) {
+        val sel = view.state.selection.main
+        val newCursor = DocPos(sel.from.value + normalizedKey.length)
+        view.dispatch(
+            TransactionSpec(
+                changes = ChangeSpec.Single(
+                    from = sel.from,
+                    to = sel.to,
+                    insert = normalizedKey.asInsert()
+                ),
+                selection = SelectionSpec.CursorSpec(newCursor),
+                userEvent = "input.type"
+            )
+        )
+        return true
+    }
+
+    return false
+}
+
+// US-layout shift map for converting unshifted symbols to their shifted variant
+private val SHIFTED_SYMBOLS = mapOf(
+    '1' to '!', '2' to '@', '3' to '#', '4' to '$', '5' to '%',
+    '6' to '^', '7' to '&', '8' to '*', '9' to '(', '0' to ')',
+    '-' to '_', '=' to '+', '[' to '{', ']' to '}', '\\' to '|',
+    ';' to ':', '\'' to '"', ',' to '<', '.' to '>', '/' to '?',
+    '`' to '~'
+)
+
+/**
  * Handle a tap/click at the given document-space [offset].
  *
  * Moves the cursor to the tapped position by dispatching a transaction that

@@ -40,9 +40,15 @@ private external fun jsClipboardWrite(text: String)
 // Installed eagerly at module load so it's ready before the first key event.
 // Uses capture phase on document so it fires before Skiko/Compose processes
 // the event on the canvas.
+//
+// Also invokes __kodeKeyCallback for keys that Skiko doesn't convert to
+// Compose KeyEvents (symbol keys like /, ?, etc. on the canvas). The callback
+// receives (key, ctrlKey, altKey, metaKey, shiftKey) and should return true
+// if the key was handled (to prevent default browser behavior).
 @JsFun(
     """() => {
     globalThis.__kodeKey = '';
+    globalThis.__kodeKeyCallback = null;
     var special = ['Home','End','Tab','Backspace','Delete','Enter','Escape',
         'ArrowUp','ArrowDown','ArrowLeft','ArrowRight',
         'PageUp','PageDown','F1','F2','F3','F4','F5','F6',
@@ -57,6 +63,19 @@ private external fun jsClipboardWrite(text: String)
         if (isModified || special.indexOf(e.key) !== -1) {
             e.preventDefault();
         }
+        // Notify Kotlin of the raw key event. For keys that Skiko converts
+        // to Compose KeyEvents, this is redundant (Compose handles them).
+        // For keys Skiko misses (symbols like /, ?, etc.), this is the
+        // only way they reach the key handler.
+        if (globalThis.__kodeKeyCallback) {
+            var handled = globalThis.__kodeKeyCallback(
+                e.key, e.ctrlKey, e.altKey, e.metaKey, e.shiftKey
+            );
+            if (handled) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }
     }, true);
     document.addEventListener('paste', function(e) {
         var text = (e.clipboardData || window.clipboardData).getData('text');
@@ -69,6 +88,20 @@ private external fun jsClipboardWrite(text: String)
 }"""
 )
 private external fun installKeyCapture()
+
+@JsFun(
+    """(cb) => {
+    globalThis.__kodeKeyCallback = function(key, ctrl, alt, meta, shift) {
+        return cb(key, ctrl, alt, meta, shift);
+    };
+}"""
+)
+private external fun jsSetKeyCallback(
+    callback: (JsString, Boolean, Boolean, Boolean, Boolean) -> Boolean
+)
+
+@JsFun("() => { globalThis.__kodeKeyCallback = null; }")
+private external fun jsClearKeyCallback()
 
 @JsFun("() => globalThis.__kodeKey || ''")
 private external fun readCapturedKey(): String
@@ -89,6 +122,18 @@ private external fun readCapturedKey(): String
 }"""
 )
 private external fun platformFocusCanvas()
+
+internal actual fun platformRegisterKeyHandler(
+    handler: (key: String, ctrl: Boolean, alt: Boolean, meta: Boolean, shift: Boolean) -> Boolean
+) {
+    jsSetKeyCallback { key, ctrl, alt, meta, shift ->
+        handler(key.toString(), ctrl, alt, meta, shift)
+    }
+}
+
+internal actual fun platformUnregisterKeyHandler() {
+    jsClearKeyCallback()
+}
 
 internal actual fun platformFocusInput() {
     platformFocusCanvas()

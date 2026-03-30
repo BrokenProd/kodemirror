@@ -138,6 +138,12 @@ private val vimKeymap: Extension = keymap.of(
                 if (event.type != KeyEventType.KeyDown) return@handler false
                 val plugin = view.plugin(vimPlugin) ?: return@handler false
                 plugin.handleKey(event)
+            },
+            anyRaw = handler@{ view, key, ctrl, alt, meta, shift ->
+                // Handle raw key events from the document-level listener
+                // for keys that Skiko doesn't convert to Compose KeyEvents.
+                val plugin = view.plugin(vimPlugin) ?: return@handler false
+                plugin.handleRawKey(key, ctrl, alt, meta, shift)
             }
         )
     )
@@ -254,6 +260,39 @@ internal class VimPluginValue(private val session: EditorSession) : PluginValue 
                 return true
             }
         }
+
+        if (result) {
+            rebuildDecorations()
+            updateStatus()
+        }
+
+        return result
+    }
+
+    /**
+     * Handle a raw key event from the document-level listener.
+     * Used for keys that Skiko doesn't convert to Compose KeyEvents.
+     */
+    fun handleRawKey(
+        key: String,
+        ctrl: Boolean,
+        alt: Boolean,
+        meta: Boolean,
+        shift: Boolean
+    ): Boolean {
+        val vim = cm.vim ?: return false
+        val vimKey = vimKeyFromEvent(
+            key = key,
+            ctrlKey = ctrl,
+            altKey = alt,
+            metaKey = meta,
+            shiftKey = shift,
+            vim = vim
+        ) ?: return false
+
+        vim.status = (vim.status) + vimKey
+        val result = Vim.multiSelectHandleKey(cm, vimKey, "user")
+        Vim.maybeInitVimState_(cm)
 
         if (result) {
             rebuildDecorations()

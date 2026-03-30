@@ -44,6 +44,25 @@ internal expect fun keyEventCharacter(event: KeyEvent): Char?
 expect fun keyEventLayoutKey(event: KeyEvent): String?
 
 /**
+ * Register a platform-level key handler that receives raw keyboard events.
+ *
+ * On wasmJs, Skiko doesn't generate Compose KeyEvents for all keys (e.g.,
+ * symbol keys like `/`, `?` on the canvas). This handler receives ALL
+ * keydown events from the document-level listener and can process keys
+ * that Skiko misses. The handler should return true if the key was handled.
+ *
+ * On JVM, this is a no-op since Compose handles all keys natively.
+ */
+internal expect fun platformRegisterKeyHandler(
+    handler: (key: String, ctrl: Boolean, alt: Boolean, meta: Boolean, shift: Boolean) -> Boolean
+)
+
+/**
+ * Unregister the key handler set by [platformRegisterKeyHandler].
+ */
+internal expect fun platformUnregisterKeyHandler()
+
+/**
  * Ensure the editor's backing text input element has platform focus.
  *
  * On wasmJs, Compose's FocusRequester.requestFocus() gives Compose-internal

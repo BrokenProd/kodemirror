@@ -194,6 +194,30 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
         platformFocusInput()
     }
 
+    // Track whether onPreviewKeyEvent fires for each keydown.
+    // If it doesn't fire, Skiko missed the key and we handle it from the
+    // document-level listener.
+    val keyHandledByCompose = remember { booleanArrayOf(false) }
+
+    // Register a platform-level key handler that receives ALL keydown events.
+    // For keys that Skiko converts to Compose KeyEvents, onPreviewKeyEvent
+    // handles them and sets keyHandledByCompose. For keys Skiko misses,
+    // this handler routes them through the keymap and fallback insertion.
+    DisposableEffect(session) {
+        platformRegisterKeyHandler handler@{ key, ctrl, alt, meta, shift ->
+            if (keyHandledByCompose[0]) {
+                // Compose already processed this key via onPreviewKeyEvent
+                keyHandledByCompose[0] = false
+                return@handler false
+            }
+            // Skiko missed this key — process it directly
+            handleRawKeyEvent(session, key, ctrl, alt, meta, shift)
+        }
+        onDispose {
+            platformUnregisterKeyHandler()
+        }
+    }
+
     // Prevent tap from overriding drag selection
     var recentlyDragged by remember { mutableStateOf(false) }
 
@@ -386,7 +410,8 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                     lineLayoutCache = lineLayoutCache,
                     pendingLineLayouts = pendingLineLayouts,
                     editorCoordinates = editorCoordinates,
-                    textLayoutResults = textLayoutResults
+                    textLayoutResults = textLayoutResults,
+                    keyHandledByCompose = keyHandledByCompose
                 )
             }
             for (panel in bottomPanels) {
@@ -414,7 +439,8 @@ private fun EditorContent(
     lineLayoutCache: LineLayoutCache,
     pendingLineLayouts: MutableMap<Int, PendingLineLayout>,
     editorCoordinates: LayoutCoordinates?,
-    textLayoutResults: MutableMap<Int, TextLayoutResult>
+    textLayoutResults: MutableMap<Int, TextLayoutResult>,
+    keyHandledByCompose: BooleanArray
 ) {
     val session = LocalEditorSession.current
     val impl = session as EditorSessionImpl
@@ -485,6 +511,11 @@ private fun EditorContent(
                 impl.hasFocus = focusState.isFocused
             }
             .onPreviewKeyEvent { event ->
+                // Mark that Compose processed this key, so the document-level
+                // fallback handler knows not to double-handle it.
+                if (event.type == KeyEventType.KeyDown) {
+                    keyHandledByCompose[0] = true
+                }
                 val consumed = handleKeyEvent(session, event)
                 if (consumed) {
                     suppressInput[0] = true
