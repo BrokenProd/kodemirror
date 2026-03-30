@@ -208,14 +208,15 @@ private class BlockCursorWidget(
     override fun Content() {
         val textStyle = LocalContentTextStyle.current
         val density = LocalDensity.current
-        // Derive cursor dimensions from the actual font metrics
-        val cursorHeight = textStyle.lineHeight
-        val charWidth = with(density) {
-            (textStyle.fontSize.toPx() * 0.6f).toDp()
-        }
+        // Size to match the character cell: width ≈ 0.6 * fontSize (monospace),
+        // height = fontSize. The mark-based cursor uses SpanStyle(background)
+        // which covers the glyph height, so we match fontSize not lineHeight.
+        val fontSize = textStyle.fontSize
+        val charWidth = with(density) { (fontSize.toPx() * 0.6f).toDp() }
+        val charHeight = with(density) { fontSize.toDp() }
         Box(
             modifier = Modifier
-                .size(width = charWidth, height = with(density) { cursorHeight.toDp() })
+                .size(width = charWidth, height = charHeight)
                 .background(color)
         )
     }
