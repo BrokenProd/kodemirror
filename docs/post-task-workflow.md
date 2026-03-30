@@ -19,7 +19,7 @@ Complete the post-implementation workflow for [TASK_DESCRIPTION]:
    - If ktlint still fails, read the error report and manually fix remaining issues (line length, etc.)
 
 2. Run tests (must match CI command):
-   - Run `./gradlew jvmTest -x :collab:jvmTest :state:wasmJsTest :collab:wasmJsTest :lezer-common:wasmJsTest :lezer-highlight:wasmJsTest :lezer-lr:wasmJsTest`
+   - Run `./gradlew jvmTest :state:wasmJsTest :collab:wasmJsTest :lezer-common:wasmJsTest :lezer-highlight:wasmJsTest :lezer-lr:wasmJsTest`
    - If tests FAIL, try to fix them. Only STOP and report if you don't have a clear direction.
    - If linting fails after step 1, fix any remaining issues
 
@@ -55,7 +55,7 @@ invoke Task {
            - If ktlint still fails, read the error report and manually fix remaining issues
 
         2. Run tests (must match CI command):
-           - Run `./gradlew jvmTest -x :collab:jvmTest :state:wasmJsTest :collab:wasmJsTest :lezer-common:wasmJsTest :lezer-highlight:wasmJsTest :lezer-lr:wasmJsTest`
+           - Run `./gradlew jvmTest :state:wasmJsTest :collab:wasmJsTest :lezer-common:wasmJsTest :lezer-highlight:wasmJsTest :lezer-lr:wasmJsTest`
            - If tests FAIL, try to fix them. Only STOP and report if you
              don't have a clear direction for the fix.
            - If linting fails, fix any remaining issues

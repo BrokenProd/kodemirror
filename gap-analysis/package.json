@@ -12,5 +12,8 @@
     "@playwright/test": "^1.49.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "pngjs": "^7.0.0"
   }
 }

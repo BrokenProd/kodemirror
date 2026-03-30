@@ -90,6 +90,9 @@ test.describe("Vim Visual Comparison", () => {
     if (km) {
       const kmState = await km.getVimState();
       expect(kmState.vimMode).toBe("visual-line");
+      // Selection should cover only 2 lines, same as CM6
+      expect(kmState.selection?.ranges?.[0]?.from).toBe(cm6State.selection?.ranges?.[0]?.from);
+      expect(kmState.selection?.ranges?.[0]?.to).toBe(cm6State.selection?.ranges?.[0]?.to);
     }
   });
 

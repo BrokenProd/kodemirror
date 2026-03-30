@@ -25,7 +25,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -585,7 +585,7 @@ private fun EditorContent(
 
                     val lineModifier: Modifier = Modifier
                         .fillMaxWidth()
-                        .defaultMinSize(minHeight = lineHeightDp)
+                        .height(lineHeightDp)
                     var contentExtraModifier: Modifier = Modifier
                         .padding(start = 6.dp, end = 2.dp)
                     for (deco in item.lineDecorations) {
@@ -608,6 +608,7 @@ private fun EditorContent(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
+                                .fillMaxHeight()
                                 .then(contentExtraModifier)
                                 .drawSelectionOverlay(
                                     state,

@@ -67,6 +67,20 @@ class VimVisualModeTest {
     }
 
     @Test
+    fun visual_line_V_j_selects_exactly_two_lines() = testVim(
+        value = "// Fibonacci sequence\nfunction fibonacci(n) {\n  if (n <= 1) return n;\n}\n",
+        cursor = LinePos(0, 0)
+    ) { h ->
+        h.doKeys("V", "j")
+        assertTrue(h.vim.visualMode)
+        assertTrue(h.vim.visualLine)
+        val sel = h.cm.session.state.selection.main
+        // Selection should span from start of line 0 to end of line 1
+        assertEquals(0, sel.from.value, "selection from")
+        assertEquals(45, sel.to.value, "selection to")
+    }
+
+    @Test
     fun visual_y_yanks_selection() = testVim(value = "abcdef") { h ->
         h.doKeys("v", "l", "l", "y")
         assertEquals(false, h.vim.visualMode)
