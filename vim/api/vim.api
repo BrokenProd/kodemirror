@@ -635,7 +635,6 @@ public final class com/monkopedia/kodemirror/vim/PromptOptions {
 	public final fun getSelectValueOnOpen ()Ljava/lang/Boolean;
 	public final fun getValue ()Ljava/lang/String;
 	public fun hashCode ()I
-	public final fun setValue (Ljava/lang/String;)V
 	public fun toString ()Ljava/lang/String;
 }
 

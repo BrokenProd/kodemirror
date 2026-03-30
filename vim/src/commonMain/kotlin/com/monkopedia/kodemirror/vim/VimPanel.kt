@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.vim
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
@@ -30,6 +31,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.view.LocalEditorSession
+import com.monkopedia.kodemirror.view.LocalEditorTheme
 import com.monkopedia.kodemirror.view.Panel
 
 /**
@@ -64,25 +66,39 @@ internal fun createVimDialogPanel(): Panel = Panel(top = false) {
     }
 }
 
-private val monoStyle = TextStyle(fontFamily = FontFamily.Monospace)
+/**
+ * Build a monospace text style using the theme's foreground color.
+ * Must be called from a composable context to read [LocalEditorTheme].
+ */
+@Composable
+private fun monoStyle(): TextStyle {
+    val theme = LocalEditorTheme.current
+    return TextStyle(fontFamily = FontFamily.Monospace, color = theme.foreground)
+}
 
 @Composable
 private fun VimPromptContent(prompt: PromptOptions) {
+    val style = monoStyle()
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
+        modifier = Modifier.fillMaxWidth()
+            .defaultMinSize(minHeight = 24.dp)
+            .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         BasicText(
             text = prompt.prefix + (prompt.value ?: ""),
-            style = monoStyle
+            style = style
         )
     }
 }
 
 @Composable
 private fun VimStatusContent(vim: VimState?) {
+    val style = monoStyle()
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
+        modifier = Modifier.fillMaxWidth()
+            .defaultMinSize(minHeight = 24.dp)
+            .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val modeText = if (vim != null) {
@@ -94,12 +110,12 @@ private fun VimStatusContent(vim: VimState?) {
         }
         BasicText(
             text = modeText,
-            style = monoStyle
+            style = style
         )
         Spacer(modifier = Modifier.weight(1f))
         BasicText(
             text = vim?.status ?: "",
-            style = monoStyle
+            style = style
         )
     }
 }

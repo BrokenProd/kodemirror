@@ -18,6 +18,9 @@
  */
 package com.monkopedia.kodemirror.vim
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import kotlin.math.abs
 
 // ---------------------------------------------------------------------------
@@ -51,7 +54,7 @@ private val vimToCmKeyMap: Map<String, String> = buildMap {
 
 internal var noremap = false
 internal val keyToKeyStack = mutableListOf<VimKeyCommand>()
-internal var virtualPrompt: PromptOptions? = null
+internal var virtualPrompt: PromptOptions? by androidx.compose.runtime.mutableStateOf(null)
 
 // ---------------------------------------------------------------------------
 // Default keymap length tracking (for mapclear)
@@ -793,22 +796,21 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
         if (command is KeyToExCommand) {
             exCommandDispatcher.processCommand(cm, command.exArgs.input)
         } else {
+            val initialValue = if (vim.visualMode) {
+                "'<,'>"
+            } else {
+                val repeat = vim.inputState.getRepeat()
+                if (repeat > 1) ".,.+${repeat - 1}" else null
+            }
             val promptOptions = PromptOptions(
                 onClose = { input ->
                     exCommandDispatcher.processCommand(cm, input.orEmpty())
                     getVimState(cm)?.let { clearInputState(cm) }
                     clearSearchHighlight(cm)
                 },
-                prefix = ":"
+                prefix = ":",
+                value = initialValue
             )
-            if (vim.visualMode) {
-                promptOptions.value = "'<,'>"
-            } else {
-                val repeat = vim.inputState.getRepeat()
-                if (repeat > 1) {
-                    promptOptions.value = ".,.+${repeat - 1}"
-                }
-            }
             showPrompt(cm, promptOptions)
         }
     }
@@ -1081,7 +1083,7 @@ internal fun sendKeyToPrompt(key: String) {
         "Backspace" -> {
             val current = prompt.value ?: ""
             if (current.isNotEmpty()) {
-                prompt.value = current.dropLast(1)
+                virtualPrompt = prompt.copy(value = current.dropLast(1))
             }
             return
         }
@@ -1097,7 +1099,7 @@ internal fun sendKeyToPrompt(key: String) {
             "bs" -> {
                 val current = prompt.value ?: ""
                 if (current.isNotEmpty()) {
-                    prompt.value = current.dropLast(1)
+                    virtualPrompt = prompt.copy(value = current.dropLast(1))
                 }
                 return
             }
@@ -1128,7 +1130,7 @@ internal fun sendKeyToPrompt(key: String) {
         virtualPrompt = null
         prompt.onClose?.invoke(prompt.value)
     } else {
-        prompt.value = (prompt.value ?: "") + effectiveKey
+        virtualPrompt = prompt.copy(value = (prompt.value ?: "") + effectiveKey)
     }
 }
 

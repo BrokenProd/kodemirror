@@ -449,7 +449,7 @@ data class PromptOptions(
     val desc: String? = null,
     val onKeyUp: ((event: VimKeyEvent) -> Boolean)? = null,
     val onKeyDown: ((event: VimKeyEvent) -> Boolean)? = null,
-    var value: String? = null,
+    val value: String? = null,
     val selectValueOnOpen: Boolean? = null
 )
 
