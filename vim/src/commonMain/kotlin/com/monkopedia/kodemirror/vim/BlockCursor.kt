@@ -18,8 +18,14 @@
  */
 package com.monkopedia.kodemirror.vim
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.RangeSet
@@ -28,6 +34,8 @@ import com.monkopedia.kodemirror.state.SelectionRange
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.MarkDecoration
+import com.monkopedia.kodemirror.view.WidgetDecorationSpec
+import com.monkopedia.kodemirror.view.WidgetType
 import kotlin.math.max
 
 /**
@@ -56,8 +64,15 @@ internal fun buildBlockCursorDecorations(state: EditorState, cm: VimEditor): Dec
         val isPrimary = range == state.selection.main
         val piece = measureBlockCursor(vim, cm, doc.length, range, isPrimary, state)
             ?: continue
-        if (piece.from < piece.to) {
-            builder.add(piece.from, piece.to, piece.decoration)
+        when (piece) {
+            is CursorPiece.Mark -> {
+                if (piece.from < piece.to) {
+                    builder.add(piece.from, piece.to, piece.decoration)
+                }
+            }
+            is CursorPiece.Widget -> {
+                builder.add(piece.pos, piece.pos, piece.decoration)
+            }
         }
     }
 
@@ -66,12 +81,21 @@ internal fun buildBlockCursorDecorations(state: EditorState, cm: VimEditor): Dec
 
 /**
  * A measured block cursor piece: the range to highlight and its decoration.
+ * For positions with content (from < to), a mark decoration is used.
+ * For empty positions (end-of-line, empty lines), a widget decoration is used.
  */
-private data class CursorPiece(
-    val from: DocPos,
-    val to: DocPos,
-    val decoration: MarkDecoration
-)
+private sealed class CursorPiece {
+    data class Mark(
+        val from: DocPos,
+        val to: DocPos,
+        val decoration: MarkDecoration
+    ) : CursorPiece()
+
+    data class Widget(
+        val pos: DocPos,
+        val decoration: Decoration
+    ) : CursorPiece()
+}
 
 /**
  * Determine the cursor position and decoration for a single selection range
@@ -113,29 +137,47 @@ private fun measureBlockCursor(
 
     // Compute the range: one character from head
     val from = head
+    val alpha = (hCoeff * 255).toInt().coerceIn(0, 255)
+    val bgColor = BLOCK_CURSOR_COLOR.copy(alpha = alpha / 255f)
+
     val charEnd = if (head.value < docLength) {
         val nextChar = state.sliceDoc(head, DocPos(head.value + 1))
         // Step past surrogate pairs
-        if (nextChar.isNotEmpty() && nextChar[0].isHighSurrogate() && head.value + 1 < docLength) {
+        if (nextChar.isNotEmpty() && nextChar[0].isHighSurrogate() &&
+            head.value + 1 < docLength
+        ) {
             DocPos(head.value + 2)
         } else if (nextChar == "\n" || nextChar == "\r" || nextChar.isEmpty()) {
-            // At end-of-line or end-of-document: cover one "virtual" space
-            // by marking a zero-width range (the decoration won't be visible,
-            // but the cursor layer in the composable can handle this)
-            head
+            // At end-of-line or end-of-document: use a widget decoration
+            // since there's no character to mark
+            null
         } else {
             DocPos(head.value + 1)
         }
     } else {
-        head
+        // Past end of document: use widget
+        null
+    }
+
+    if (charEnd == null) {
+        // Use a widget decoration for the cursor at end-of-line / empty line
+        val widget = BlockCursorWidget(bgColor, primary)
+        val decoration = Decoration.widget(
+            WidgetDecorationSpec(
+                widget = widget,
+                side = 1
+            )
+        )
+        return CursorPiece.Widget(
+            pos = DocPos(max(from.value, 0)),
+            decoration = decoration
+        )
     }
 
     // If from == charEnd, there's no character to highlight
     if (from == charEnd) return null
 
     // Create the mark decoration
-    val alpha = (hCoeff * 255).toInt().coerceIn(0, 255)
-    val bgColor = BLOCK_CURSOR_COLOR.copy(alpha = alpha / 255f)
     val decoration = Decoration.mark(
         style = SpanStyle(background = bgColor),
         cssClass = if (primary) {
@@ -145,9 +187,50 @@ private fun measureBlockCursor(
         }
     )
 
-    return CursorPiece(
+    return CursorPiece.Mark(
         from = DocPos(max(from.value, 0)),
         to = charEnd,
         decoration = decoration
     )
+}
+
+/**
+ * Width of the block cursor widget in dp. Approximates the width of one
+ * monospace character.
+ */
+private val BLOCK_CURSOR_WIDTH = 8.dp
+
+/**
+ * Height of the block cursor widget in dp. Approximates the height of one
+ * monospace character line.
+ */
+private val BLOCK_CURSOR_HEIGHT = 18.dp
+
+/**
+ * A widget that renders a fixed-size block cursor rectangle for positions
+ * where there is no character to highlight (empty lines, end of line).
+ */
+private class BlockCursorWidget(
+    private val color: Color,
+    private val primary: Boolean
+) : WidgetType() {
+    @Composable
+    override fun Content() {
+        Box(
+            modifier = Modifier
+                .size(width = BLOCK_CURSOR_WIDTH, height = BLOCK_CURSOR_HEIGHT)
+                .background(color)
+        )
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is BlockCursorWidget) return false
+        return color == other.color && primary == other.primary
+    }
+
+    override fun hashCode(): Int {
+        var result = color.hashCode()
+        result = 31 * result + primary.hashCode()
+        return result
+    }
 }

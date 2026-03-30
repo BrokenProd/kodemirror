@@ -252,11 +252,13 @@ internal class VimPluginValue(private val session: EditorSession) : PluginValue 
                 cm.overWriteSelection(charKey)
                 rebuildDecorations()
                 updateStatus()
+                syncPromptPanel()
                 return true
             } else if (event.key == Key.Backspace) {
                 com.monkopedia.kodemirror.commands.cursorCharLeft(cm.session)
                 rebuildDecorations()
                 updateStatus()
+                syncPromptPanel()
                 return true
             }
         }
@@ -265,6 +267,7 @@ internal class VimPluginValue(private val session: EditorSession) : PluginValue 
             rebuildDecorations()
             updateStatus()
         }
+        syncPromptPanel()
 
         return result
     }
@@ -298,9 +301,44 @@ internal class VimPluginValue(private val session: EditorSession) : PluginValue 
             rebuildDecorations()
             updateStatus()
         }
+        syncPromptPanel()
 
         return result
     }
+
+    /**
+     * Sync the panel visibility with the [virtualPrompt] state.
+     * Shows the panel when a prompt is active, hides it when dismissed.
+     * Also re-dispatches the effect on each keystroke while the prompt is
+     * open so that the panel composable recomposes with the latest value.
+     */
+    private fun syncPromptPanel() {
+        val promptActive = virtualPrompt != null
+        if (promptActive != promptPanelShown) {
+            promptPanelShown = promptActive
+            if (cm.statusbar == null) {
+                session.dispatch(
+                    TransactionSpec(
+                        effects = listOf(
+                            showVimPanel.of(promptActive)
+                        )
+                    )
+                )
+            }
+        } else if (promptActive) {
+            // The prompt is still active but the value may have changed.
+            // Dispatch a redundant effect to trigger recomposition so the
+            // panel re-reads the current prompt text.
+            session.dispatch(
+                TransactionSpec(
+                    effects = listOf(showVimPanel.of(true))
+                )
+            )
+        }
+    }
+
+    /** Whether the prompt panel is currently shown. */
+    private var promptPanelShown: Boolean = false
 
     private fun updateStatus() {
         val vim = cm.vim ?: return

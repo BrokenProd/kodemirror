@@ -36,27 +36,48 @@ import com.monkopedia.kodemirror.view.Panel
  * Create a status panel that always shows the current vim mode and status.
  */
 internal fun createStatusPanel(): Panel = Panel(top = false) {
-    val session = LocalEditorSession.current
-    val plugin = session.plugin(vimPlugin)
-    val cm = plugin?.cm
-    val vim = cm?.vim
-
-    VimStatusContent(vim)
+    val prompt = virtualPrompt
+    if (prompt != null) {
+        VimPromptContent(prompt)
+    } else {
+        val session = LocalEditorSession.current
+        val plugin = session.plugin(vimPlugin)
+        val cm = plugin?.cm
+        val vim = cm?.vim
+        VimStatusContent(vim)
+    }
 }
 
 /**
  * Create a dialog panel shown when an ex command or search prompt is active.
  */
 internal fun createVimDialogPanel(): Panel = Panel(top = false) {
-    val session = LocalEditorSession.current
-    val plugin = session.plugin(vimPlugin)
-    val cm = plugin?.cm
-    val vim = cm?.vim
-
-    VimStatusContent(vim)
+    val prompt = virtualPrompt
+    if (prompt != null) {
+        VimPromptContent(prompt)
+    } else {
+        val session = LocalEditorSession.current
+        val plugin = session.plugin(vimPlugin)
+        val cm = plugin?.cm
+        val vim = cm?.vim
+        VimStatusContent(vim)
+    }
 }
 
 private val monoStyle = TextStyle(fontFamily = FontFamily.Monospace)
+
+@Composable
+private fun VimPromptContent(prompt: PromptOptions) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        BasicText(
+            text = prompt.prefix + (prompt.value ?: ""),
+            style = monoStyle
+        )
+    }
+}
 
 @Composable
 private fun VimStatusContent(vim: VimState?) {
