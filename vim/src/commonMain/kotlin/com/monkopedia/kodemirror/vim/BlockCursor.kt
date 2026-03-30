@@ -24,8 +24,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.RangeSet
@@ -33,6 +33,7 @@ import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.SelectionRange
 import com.monkopedia.kodemirror.view.Decoration
 import com.monkopedia.kodemirror.view.DecorationSet
+import com.monkopedia.kodemirror.view.LocalContentTextStyle
 import com.monkopedia.kodemirror.view.MarkDecoration
 import com.monkopedia.kodemirror.view.WidgetDecorationSpec
 import com.monkopedia.kodemirror.view.WidgetType
@@ -195,20 +196,9 @@ private fun measureBlockCursor(
 }
 
 /**
- * Width of the block cursor widget in dp. Approximates the width of one
- * monospace character.
- */
-private val BLOCK_CURSOR_WIDTH = 8.dp
-
-/**
- * Height of the block cursor widget in dp. Approximates the height of one
- * monospace character line.
- */
-private val BLOCK_CURSOR_HEIGHT = 18.dp
-
-/**
- * A widget that renders a fixed-size block cursor rectangle for positions
- * where there is no character to highlight (empty lines, end of line).
+ * A widget that renders a block cursor rectangle for positions where there
+ * is no character to highlight (empty lines, end of line). Sizes itself to
+ * match the editor's font metrics so it aligns with mark-based cursors.
  */
 private class BlockCursorWidget(
     private val color: Color,
@@ -216,9 +206,16 @@ private class BlockCursorWidget(
 ) : WidgetType() {
     @Composable
     override fun Content() {
+        val textStyle = LocalContentTextStyle.current
+        val density = LocalDensity.current
+        // Derive cursor dimensions from the actual font metrics
+        val cursorHeight = textStyle.lineHeight
+        val charWidth = with(density) {
+            (textStyle.fontSize.toPx() * 0.6f).toDp()
+        }
         Box(
             modifier = Modifier
-                .size(width = BLOCK_CURSOR_WIDTH, height = BLOCK_CURSOR_HEIGHT)
+                .size(width = charWidth, height = with(density) { cursorHeight.toDp() })
                 .background(color)
         )
     }
