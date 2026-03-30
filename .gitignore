@@ -18,3 +18,5 @@ captures
 **/xcshareddata/WorkspaceSettings.xcsettings
 docs-site/docs/api/
 docs-site/site/
+node_modules/
+*.tgz
