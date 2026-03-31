@@ -67,19 +67,38 @@ internal fun buildBlockCursorDecorations(state: EditorState, cm: VimEditor): Dec
         val isPrimary = range == state.selection.main
         val piece = measureBlockCursor(vim, cm, doc.length, range, isPrimary, state)
             ?: continue
-        builder.add(piece.pos, piece.pos, piece.decoration)
+        when (piece) {
+            is CursorPiece.Mark -> {
+                if (piece.from < piece.to) {
+                    builder.add(piece.from, piece.to, piece.decoration)
+                }
+            }
+            is CursorPiece.Widget -> {
+                builder.add(piece.pos, piece.pos, piece.decoration)
+            }
+        }
     }
 
     return builder.finish()
 }
 
 /**
- * A measured block cursor: the position and widget decoration.
+ * A measured block cursor piece.
+ * [Mark] overlays a character with a colored background.
+ * [Widget] renders a standalone cursor for empty positions.
  */
-private data class CursorPiece(
-    val pos: DocPos,
-    val decoration: Decoration
-)
+private sealed class CursorPiece {
+    data class Mark(
+        val from: DocPos,
+        val to: DocPos,
+        val decoration: MarkDecoration
+    ) : CursorPiece()
+
+    data class Widget(
+        val pos: DocPos,
+        val decoration: Decoration
+    ) : CursorPiece()
+}
 
 /**
  * Determine the cursor position and decoration for a single selection range
@@ -143,20 +162,39 @@ private fun measureBlockCursor(
         null
     }
 
-    // Always use a widget decoration for the block cursor. This gives
-    // consistent height (lineHeight) across all positions — on characters,
-    // at end-of-line, and on empty lines. Mark decorations with
-    // SpanStyle(background) only cover glyph height, creating an
-    // inconsistent appearance.
-    val widget = BlockCursorWidget(bgColor, primary)
-    val decoration = Decoration.widget(
-        WidgetDecorationSpec(
-            widget = widget,
-            side = 1
+    if (charEnd == null) {
+        // End-of-line or empty line: use widget decoration since there's
+        // no character to overlay with a mark
+        val widget = BlockCursorWidget(bgColor, primary)
+        val decoration = Decoration.widget(
+            WidgetDecorationSpec(
+                widget = widget,
+                side = 1
+            )
         )
+        return CursorPiece.Widget(
+            pos = DocPos(max(from.value, 0)),
+            decoration = decoration
+        )
+    }
+
+    // If from == charEnd, there's no character to highlight
+    if (from == charEnd) return null
+
+    // On characters: use mark decoration which overlays the character
+    // with a colored background. The height covers the glyph area.
+    val decoration = Decoration.mark(
+        style = SpanStyle(background = bgColor),
+        cssClass = if (primary) {
+            "cm-fat-cursor cm-cursor-primary"
+        } else {
+            "cm-fat-cursor cm-cursor-secondary"
+        }
     )
-    return CursorPiece(
-        pos = DocPos(max(from.value, 0)),
+
+    return CursorPiece.Mark(
+        from = DocPos(max(from.value, 0)),
+        to = charEnd,
         decoration = decoration
     )
 }
@@ -172,20 +210,20 @@ private class BlockCursorWidget(
 ) : WidgetType() {
     @Composable
     override fun Content() {
+        // Measure a character to get exact dimensions matching the mark
+        // cursor's SpanStyle(background) rendering.
         val textStyle = LocalContentTextStyle.current
         val density = LocalDensity.current
         val measurer = rememberTextMeasurer()
-        // Measure a character to get the monospace cell width
-        val charWidth = remember(textStyle) {
+        val charSize = remember(textStyle) {
             val result = measurer.measure("M", textStyle)
-            with(density) { result.size.width.toDp() }
+            with(density) {
+                result.size.width.toDp() to result.size.height.toDp()
+            }
         }
-        // Use the line height for cursor height — this matches the
-        // KodeMirror native caret height and the row height.
-        val cursorHeight = with(density) { textStyle.lineHeight.toDp() }
         Box(
             modifier = Modifier
-                .size(width = charWidth, height = cursorHeight)
+                .size(width = charSize.first, height = charSize.second)
                 .background(color)
         )
     }
