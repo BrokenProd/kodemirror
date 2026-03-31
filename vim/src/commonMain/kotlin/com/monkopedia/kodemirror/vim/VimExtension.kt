@@ -199,6 +199,14 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
             vimSt.status = ""
             rebuildDecorations()
             updateStatus()
+            // Dispatch a state effect to trigger panel recomposition
+            // so the status bar updates to show the new mode.
+            session.dispatch(
+                TransactionSpec(
+                    effects = listOf(showVimPanel.of(cm.statusbar != null))
+                )
+            )
+            syncPromptPanel()
         }
         rebuildDecorations()
 
