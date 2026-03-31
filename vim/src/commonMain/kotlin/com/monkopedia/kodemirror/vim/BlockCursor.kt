@@ -67,38 +67,19 @@ internal fun buildBlockCursorDecorations(state: EditorState, cm: VimEditor): Dec
         val isPrimary = range == state.selection.main
         val piece = measureBlockCursor(vim, cm, doc.length, range, isPrimary, state)
             ?: continue
-        when (piece) {
-            is CursorPiece.Mark -> {
-                if (piece.from < piece.to) {
-                    builder.add(piece.from, piece.to, piece.decoration)
-                }
-            }
-            is CursorPiece.Widget -> {
-                builder.add(piece.pos, piece.pos, piece.decoration)
-            }
-        }
+        builder.add(piece.pos, piece.pos, piece.decoration)
     }
 
     return builder.finish()
 }
 
 /**
- * A measured block cursor piece: the range to highlight and its decoration.
- * For positions with content (from < to), a mark decoration is used.
- * For empty positions (end-of-line, empty lines), a widget decoration is used.
+ * A measured block cursor: the position and widget decoration.
  */
-private sealed class CursorPiece {
-    data class Mark(
-        val from: DocPos,
-        val to: DocPos,
-        val decoration: MarkDecoration
-    ) : CursorPiece()
-
-    data class Widget(
-        val pos: DocPos,
-        val decoration: Decoration
-    ) : CursorPiece()
-}
+private data class CursorPiece(
+    val pos: DocPos,
+    val decoration: Decoration
+)
 
 /**
  * Determine the cursor position and decoration for a single selection range
@@ -162,37 +143,20 @@ private fun measureBlockCursor(
         null
     }
 
-    if (charEnd == null) {
-        // Use a widget decoration for the cursor at end-of-line / empty line
-        val widget = BlockCursorWidget(bgColor, primary)
-        val decoration = Decoration.widget(
-            WidgetDecorationSpec(
-                widget = widget,
-                side = 1
-            )
+    // Always use a widget decoration for the block cursor. This gives
+    // consistent height (lineHeight) across all positions — on characters,
+    // at end-of-line, and on empty lines. Mark decorations with
+    // SpanStyle(background) only cover glyph height, creating an
+    // inconsistent appearance.
+    val widget = BlockCursorWidget(bgColor, primary)
+    val decoration = Decoration.widget(
+        WidgetDecorationSpec(
+            widget = widget,
+            side = 1
         )
-        return CursorPiece.Widget(
-            pos = DocPos(max(from.value, 0)),
-            decoration = decoration
-        )
-    }
-
-    // If from == charEnd, there's no character to highlight
-    if (from == charEnd) return null
-
-    // Create the mark decoration
-    val decoration = Decoration.mark(
-        style = SpanStyle(background = bgColor),
-        cssClass = if (primary) {
-            "cm-fat-cursor cm-cursor-primary"
-        } else {
-            "cm-fat-cursor cm-cursor-secondary"
-        }
     )
-
-    return CursorPiece.Mark(
-        from = DocPos(max(from.value, 0)),
-        to = charEnd,
+    return CursorPiece(
+        pos = DocPos(max(from.value, 0)),
         decoration = decoration
     )
 }
