@@ -28,7 +28,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.RangeSet
@@ -209,20 +208,20 @@ private class BlockCursorWidget(
 ) : WidgetType() {
     @Composable
     override fun Content() {
-        // Measure a real character to get exact dimensions that match the
-        // mark-based cursor (SpanStyle(background) on a character).
         val textStyle = LocalContentTextStyle.current
         val density = LocalDensity.current
         val measurer = rememberTextMeasurer()
-        val charSize = remember(textStyle) {
+        // Measure a character to get the monospace cell width
+        val charWidth = remember(textStyle) {
             val result = measurer.measure("M", textStyle)
-            with(density) {
-                result.size.width.toDp() to result.size.height.toDp()
-            }
+            with(density) { result.size.width.toDp() }
         }
+        // Use the line height for cursor height — this matches the
+        // KodeMirror native caret height and the row height.
+        val cursorHeight = with(density) { textStyle.lineHeight.toDp() }
         Box(
             modifier = Modifier
-                .size(width = charSize.first, height = charSize.second)
+                .size(width = charWidth, height = cursorHeight)
                 .background(color)
         )
     }
