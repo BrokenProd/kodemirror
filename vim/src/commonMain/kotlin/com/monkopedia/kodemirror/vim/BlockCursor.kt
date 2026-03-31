@@ -18,102 +18,51 @@
  */
 package com.monkopedia.kodemirror.vim
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.rememberTextMeasurer
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
-import com.monkopedia.kodemirror.state.RangeSet
-import com.monkopedia.kodemirror.state.RangeSetBuilder
 import com.monkopedia.kodemirror.state.SelectionRange
-import com.monkopedia.kodemirror.view.Decoration
-import com.monkopedia.kodemirror.view.DecorationSet
-import com.monkopedia.kodemirror.view.LocalContentTextStyle
-import com.monkopedia.kodemirror.view.MarkDecoration
-import com.monkopedia.kodemirror.view.WidgetDecorationSpec
-import com.monkopedia.kodemirror.view.WidgetType
+import com.monkopedia.kodemirror.view.BlockCursorSpec
 import kotlin.math.max
 
 /**
- * Default block cursor background color (salmon/pink, matching upstream
- * `#ff9696`).
- */
-private val BLOCK_CURSOR_COLOR = Color(0xFFFF9696)
-
-/**
- * Build block cursor decorations for the given editor state and vim state.
+ * Compute block cursor positions for the given editor state and vim state.
  *
- * Returns a [DecorationSet] containing mark decorations that highlight the
- * character(s) under the cursor in normal/visual/overwrite mode. Returns an
- * empty set in insert mode.
+ * Returns a list of [BlockCursorSpec] with document offsets and alpha values.
+ * The actual rendering is handled by the selection overlay in SelectionDrawing.kt
+ * which draws filled rectangles at full line height.
+ *
+ * Returns an empty list in insert mode (unless overwrite mode is active).
  */
-internal fun buildBlockCursorDecorations(state: EditorState, cm: VimEditor): DecorationSet {
-    val vim = cm.vim ?: return RangeSet.empty()
+internal fun computeBlockCursorPositions(state: EditorState, cm: VimEditor): List<BlockCursorSpec> {
+    val vim = cm.vim ?: return emptyList()
 
     // No block cursor in insert mode (unless overwrite)
-    if (vim.insertMode && !vim.overwrite) return RangeSet.empty()
+    if (vim.insertMode && !vim.overwrite) return emptyList()
 
-    val builder = RangeSetBuilder<Decoration>()
-    val doc = state.doc
+    val result = mutableListOf<BlockCursorSpec>()
+    val docLength = state.doc.length
 
     for (range in state.selection.ranges) {
         val isPrimary = range == state.selection.main
-        val piece = measureBlockCursor(vim, cm, doc.length, range, isPrimary, state)
-            ?: continue
-        when (piece) {
-            is CursorPiece.Mark -> {
-                if (piece.from < piece.to) {
-                    builder.add(piece.from, piece.to, piece.decoration)
-                }
-            }
-            is CursorPiece.Widget -> {
-                builder.add(piece.pos, piece.pos, piece.decoration)
-            }
-        }
+        val spec = measureBlockCursorPosition(vim, docLength, range, isPrimary, state)
+        if (spec != null) result.add(spec)
     }
 
-    return builder.finish()
+    return result
 }
 
 /**
- * A measured block cursor piece.
- * [Mark] overlays a character with a colored background.
- * [Widget] renders a standalone cursor for empty positions.
- */
-private sealed class CursorPiece {
-    data class Mark(
-        val from: DocPos,
-        val to: DocPos,
-        val decoration: MarkDecoration
-    ) : CursorPiece()
-
-    data class Widget(
-        val pos: DocPos,
-        val decoration: Decoration
-    ) : CursorPiece()
-}
-
-/**
- * Determine the cursor position and decoration for a single selection range
- * in block-cursor mode.
+ * Determine the cursor position for a single selection range in block-cursor mode.
  *
  * Matches the upstream `measureCursor` logic from `block-cursor.ts`.
  */
-private fun measureBlockCursor(
+private fun measureBlockCursorPosition(
     vim: VimState,
-    cm: VimEditor,
     docLength: Int,
     cursor: SelectionRange,
     primary: Boolean,
     state: EditorState
-): CursorPiece? {
+): BlockCursorSpec? {
     var head = cursor.head
 
     // In visual block mode, only show the primary cursor
@@ -131,111 +80,15 @@ private fun measureBlockCursor(
         }
     }
 
-    // Determine cursor opacity/size factor
-    val hCoeff = when {
+    // Determine cursor opacity
+    val alpha = when {
         vim.overwrite -> 0.2f
         vim.status.isNotEmpty() -> 0.5f
         else -> 1.0f
     }
 
-    // Compute the range: one character from head
-    val from = head
-    val alpha = (hCoeff * 255).toInt().coerceIn(0, 255)
-    val bgColor = BLOCK_CURSOR_COLOR.copy(alpha = alpha / 255f)
-
-    val charEnd = if (head.value < docLength) {
-        val nextChar = state.sliceDoc(head, DocPos(head.value + 1))
-        // Step past surrogate pairs
-        if (nextChar.isNotEmpty() && nextChar[0].isHighSurrogate() &&
-            head.value + 1 < docLength
-        ) {
-            DocPos(head.value + 2)
-        } else if (nextChar == "\n" || nextChar == "\r" || nextChar.isEmpty()) {
-            // At end-of-line or end-of-document: use a widget decoration
-            // since there's no character to mark
-            null
-        } else {
-            DocPos(head.value + 1)
-        }
-    } else {
-        // Past end of document: use widget
-        null
-    }
-
-    if (charEnd == null) {
-        // End-of-line or empty line: use widget decoration since there's
-        // no character to overlay with a mark
-        val widget = BlockCursorWidget(bgColor, primary)
-        val decoration = Decoration.widget(
-            WidgetDecorationSpec(
-                widget = widget,
-                side = 1
-            )
-        )
-        return CursorPiece.Widget(
-            pos = DocPos(max(from.value, 0)),
-            decoration = decoration
-        )
-    }
-
-    // If from == charEnd, there's no character to highlight
-    if (from == charEnd) return null
-
-    // On characters: use mark decoration which overlays the character
-    // with a colored background. The height covers the glyph area.
-    val decoration = Decoration.mark(
-        style = SpanStyle(background = bgColor),
-        cssClass = if (primary) {
-            "cm-fat-cursor cm-cursor-primary"
-        } else {
-            "cm-fat-cursor cm-cursor-secondary"
-        }
+    return BlockCursorSpec(
+        offset = max(head.value, 0),
+        alpha = alpha
     )
-
-    return CursorPiece.Mark(
-        from = DocPos(max(from.value, 0)),
-        to = charEnd,
-        decoration = decoration
-    )
-}
-
-/**
- * A widget that renders a block cursor rectangle for positions where there
- * is no character to highlight (empty lines, end of line). Sizes itself to
- * match the editor's font metrics so it aligns with mark-based cursors.
- */
-private class BlockCursorWidget(
-    private val color: Color,
-    private val primary: Boolean
-) : WidgetType() {
-    @Composable
-    override fun Content() {
-        // Measure a character to get exact dimensions matching the mark
-        // cursor's SpanStyle(background) rendering.
-        val textStyle = LocalContentTextStyle.current
-        val density = LocalDensity.current
-        val measurer = rememberTextMeasurer()
-        val charSize = remember(textStyle) {
-            val result = measurer.measure("M", textStyle)
-            with(density) {
-                result.size.width.toDp() to result.size.height.toDp()
-            }
-        }
-        Box(
-            modifier = Modifier
-                .size(width = charSize.first, height = charSize.second)
-                .background(color)
-        )
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (other !is BlockCursorWidget) return false
-        return color == other.color && primary == other.primary
-    }
-
-    override fun hashCode(): Int {
-        var result = color.hashCode()
-        result = 31 * result + primary.hashCode()
-        return result
-    }
 }

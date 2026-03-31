@@ -72,6 +72,24 @@ val keymap: Facet<List<KeyBinding>, List<KeyBinding>> = Facet.define(
  */
 val inputSuppressor: Facet<() -> Boolean, List<() -> Boolean>> = Facet.define()
 
+/**
+ * A block cursor position to render as an overlay rectangle.
+ *
+ * @param offset Document offset of the cursor position.
+ * @param alpha Opacity (0.0 to 1.0). Normal = 1.0, status pending = 0.5, overwrite = 0.2.
+ */
+data class BlockCursorSpec(val offset: Int, val alpha: Float = 1f)
+
+/**
+ * Facet for extensions that provide block cursor positions.
+ *
+ * Each provider returns a function that produces the current list of block
+ * cursor positions. The overlay draws filled rectangles at these positions,
+ * covering the full line height and one character width.
+ */
+val blockCursorProvider: Facet<() -> List<BlockCursorSpec>, List<() -> List<BlockCursorSpec>>> =
+    Facet.define()
+
 /** Convenience: create an extension from key bindings. */
 fun keymapOf(vararg bindings: KeyBinding): Extension = keymap.of(bindings.toList())
 

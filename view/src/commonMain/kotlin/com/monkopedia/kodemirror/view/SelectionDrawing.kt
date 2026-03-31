@@ -56,6 +56,9 @@ fun Modifier.drawSelectionOverlay(
     drawContent()
 }
 
+/** Default block cursor color (salmon/pink, matching upstream `#ff9696`). */
+private val BLOCK_CURSOR_COLOR = Color(0xFFFF9696)
+
 private fun DrawScope.drawLineSelection(
     state: EditorState,
     lineFrom: Int,
@@ -63,6 +66,12 @@ private fun DrawScope.drawLineSelection(
     theme: EditorTheme,
     textLayoutResult: TextLayoutResult?
 ) {
+    // Check for block cursors (vim normal/visual mode)
+    val blockCursors = state.facet(blockCursorProvider)
+        .flatMap { it.invoke() }
+        .filter { it.offset in lineFrom..lineTo }
+    val hasBlockCursors = blockCursors.isNotEmpty()
+
     val selection = state.selection
     for (range in selection.ranges) {
         val rangeFrom = range.from.value
@@ -84,11 +93,53 @@ private fun DrawScope.drawLineSelection(
                 )
             }
         }
-        // Always draw cursor at head position
-        if (rangeHead in lineFrom..lineTo) {
+        // Draw thin cursor only when block cursors are NOT active
+        if (!hasBlockCursors && rangeHead in lineFrom..lineTo) {
             drawLineCursor(rangeHead - lineFrom, theme.cursor, textLayoutResult)
         }
     }
+
+    // Draw block cursors at full line height
+    for (cursor in blockCursors) {
+        drawBlockCursor(
+            cursor.offset - lineFrom,
+            cursor.alpha,
+            textLayoutResult
+        )
+    }
+}
+
+private fun DrawScope.drawBlockCursor(
+    offsetInLine: Int,
+    alpha: Float,
+    textLayoutResult: TextLayoutResult?
+) {
+    val lineHeight = size.height
+    val textLen = textLayoutResult?.layoutInput?.text?.length ?: 0
+
+    val x: Float
+    val charWidth: Float
+
+    if (textLayoutResult != null && offsetInLine < textLen) {
+        // Character position: get exact bounds from text layout
+        x = textLayoutResult.getHorizontalPosition(offsetInLine, true)
+        val boundingBox = textLayoutResult.getBoundingBox(offsetInLine)
+        charWidth = boundingBox.width.coerceAtLeast(4f)
+    } else if (textLayoutResult != null && textLen > 0) {
+        // End of line: position after last character, use average char width
+        x = textLayoutResult.getHorizontalPosition(textLen, true)
+        charWidth = textLayoutResult.size.width.toFloat() / textLen
+    } else {
+        // Empty line: position at start, use fallback width
+        x = 0f
+        charWidth = lineHeight * 0.55f // approximate monospace char width
+    }
+
+    drawRect(
+        color = BLOCK_CURSOR_COLOR.copy(alpha = alpha),
+        topLeft = Offset(x, 0f),
+        size = Size(charWidth, lineHeight)
+    )
 }
 
 private fun DrawScope.drawLineCursor(

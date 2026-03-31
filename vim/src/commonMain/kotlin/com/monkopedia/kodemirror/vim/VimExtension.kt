@@ -43,6 +43,7 @@ import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.PluginValue
 import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
+import com.monkopedia.kodemirror.view.blockCursorProvider
 import com.monkopedia.kodemirror.view.inputSuppressor
 import com.monkopedia.kodemirror.view.keyEventLayoutKey
 import com.monkopedia.kodemirror.view.keymap
@@ -60,8 +61,17 @@ fun vim(status: Boolean = false): Extension {
         vimKeymap,
         vimPlugin.asExtension(),
         vimInputSuppressor,
+        vimBlockCursorProvider,
         if (status) showPanel.of(createStatusPanel()) else vimPanelField
     )
+}
+
+/**
+ * Provide block cursor positions to the selection overlay for rendering.
+ */
+private val vimBlockCursorProvider: Extension = blockCursorProvider.of {
+    val plugin = lastVimPlugin ?: return@of emptyList()
+    computeBlockCursorPositions(plugin.session.state, plugin.cm)
 }
 
 /**
@@ -158,7 +168,7 @@ internal val vimPlugin: ViewPlugin<VimPluginValue> = ViewPlugin.define(
     decorations = { plugin -> plugin.decorations }
 )
 
-internal class VimPluginValue(private val session: EditorSession) : PluginValue {
+internal class VimPluginValue(internal val session: EditorSession) : PluginValue {
     val cm: VimEditor = VimEditor(session)
     private val vimState: VimState
     var decorations: DecorationSet = RangeSet.empty()
@@ -224,7 +234,9 @@ internal class VimPluginValue(private val session: EditorSession) : PluginValue 
     }
 
     private fun rebuildDecorations() {
-        decorations = buildBlockCursorDecorations(session.state, cm)
+        // Block cursor is now drawn via the selection overlay (SelectionDrawing.kt)
+        // using blockCursorProvider facet. No decoration-based cursors needed.
+        decorations = RangeSet.empty()
     }
 
     fun handleKey(event: KeyEvent): Boolean {
