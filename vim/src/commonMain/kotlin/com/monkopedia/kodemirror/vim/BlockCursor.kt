@@ -22,10 +22,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.dp
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.RangeSet
@@ -206,17 +209,20 @@ private class BlockCursorWidget(
 ) : WidgetType() {
     @Composable
     override fun Content() {
+        // Measure a real character to get exact dimensions that match the
+        // mark-based cursor (SpanStyle(background) on a character).
         val textStyle = LocalContentTextStyle.current
         val density = LocalDensity.current
-        // Size to match the character cell: width ≈ 0.6 * fontSize (monospace),
-        // height = fontSize. The mark-based cursor uses SpanStyle(background)
-        // which covers the glyph height, so we match fontSize not lineHeight.
-        val fontSize = textStyle.fontSize
-        val charWidth = with(density) { (fontSize.toPx() * 0.6f).toDp() }
-        val charHeight = with(density) { fontSize.toDp() }
+        val measurer = rememberTextMeasurer()
+        val charSize = remember(textStyle) {
+            val result = measurer.measure("M", textStyle)
+            with(density) {
+                result.size.width.toDp() to result.size.height.toDp()
+            }
+        }
         Box(
             modifier = Modifier
-                .size(width = charWidth, height = charHeight)
+                .size(width = charSize.first, height = charSize.second)
                 .background(color)
         )
     }
