@@ -684,3 +684,56 @@ test.describe("Keymap: Standard - Undo/Redo", () => {
     await expectMatch(cm6, km);
   });
 });
+
+// ─── Tab Handling ─────────────────────────────────────────────────────────
+
+test.describe("Tab Handling", () => {
+  test.beforeEach(async ({ cm6, km }) => {
+    await cm6.focus();
+    if (km) await km.focus();
+  });
+
+  test("Tab key behavior matches between CM6 and KM", async ({
+    cm6,
+    km,
+  }) => {
+    // Position at start of a line with content
+    await pressOnBoth(cm6, km, "Control+Home");
+    await pressOnBoth(cm6, km, "ArrowDown", 2);
+    await pressOnBoth(cm6, km, "Home");
+
+    // Press Tab — behavior depends on indentWithTab config
+    // Both editors should do the same thing
+    await pressOnBoth(cm6, km, "Tab");
+    await expectMatch(cm6, km);
+  });
+
+  test("Tab then Shift-Tab round-trips", async ({ cm6, km }) => {
+    await pressOnBoth(cm6, km, "Control+Home");
+    await pressOnBoth(cm6, km, "ArrowDown", 2);
+    await pressOnBoth(cm6, km, "Home");
+
+    const before = await expectMatch(cm6, km);
+
+    await pressOnBoth(cm6, km, "Tab");
+    await pressOnBoth(cm6, km, "Shift+Tab");
+
+    // Should be back to original
+    await expectMatch(cm6, km);
+  });
+
+  test("multiple Tab presses increase indent consistently", async ({
+    cm6,
+    km,
+  }) => {
+    await pressOnBoth(cm6, km, "Control+Home");
+    await pressOnBoth(cm6, km, "ArrowDown", 2);
+    await pressOnBoth(cm6, km, "Home");
+
+    await pressOnBoth(cm6, km, "Tab");
+    await pressOnBoth(cm6, km, "Tab");
+    await pressOnBoth(cm6, km, "Tab");
+
+    await expectMatch(cm6, km);
+  });
+});
