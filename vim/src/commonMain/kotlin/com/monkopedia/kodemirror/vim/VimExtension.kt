@@ -199,9 +199,6 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
             vimSt.status = ""
             rebuildDecorations()
             updateStatus()
-            // Dispatch a no-op annotation to trigger a ViewUpdate, which
-            // causes the panel composable to recompose and read the new mode.
-            session.dispatch(TransactionSpec())
             syncPromptPanel()
         }
         rebuildDecorations()

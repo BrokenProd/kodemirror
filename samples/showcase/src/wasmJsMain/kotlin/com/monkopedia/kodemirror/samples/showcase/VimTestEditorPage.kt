@@ -29,7 +29,7 @@ import com.monkopedia.kodemirror.vim.vim
 fun VimTestEditorPage() {
     val session = rememberEditorSession(
         doc = SampleDocs.javascript,
-        extensions = showcaseSetup + javascript().extension + vim() + vimTestBridgeExtension
+        extensions = showcaseSetup + javascript().extension + vim(status = true) + vimTestBridgeExtension
     )
     Box(Modifier.fillMaxSize()) {
         KodeMirror(
