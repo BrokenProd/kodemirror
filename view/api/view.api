@@ -104,7 +104,8 @@ public final class com/monkopedia/kodemirror/view/Decoration$Companion {
 }
 
 public final class com/monkopedia/kodemirror/view/DecorationApplicationKt {
-	public static final fun buildLineContent-ZQWpm6o (IILjava/lang/String;Ljava/util/List;)Landroidx/compose/ui/text/AnnotatedString;
+	public static final fun buildLineContent-n90Ak9o (IILjava/lang/String;Ljava/util/List;I)Landroidx/compose/ui/text/AnnotatedString;
+	public static synthetic fun buildLineContent-n90Ak9o$default (IILjava/lang/String;Ljava/util/List;IILjava/lang/Object;)Landroidx/compose/ui/text/AnnotatedString;
 }
 
 public abstract interface class com/monkopedia/kodemirror/view/DecorationSource : com/monkopedia/kodemirror/view/PluginValue {
@@ -696,7 +697,7 @@ public final class com/monkopedia/kodemirror/view/ScrollTarget {
 }
 
 public final class com/monkopedia/kodemirror/view/SelectionDrawingKt {
-	public static final fun drawSelectionOverlay (Landroidx/compose/ui/Modifier;Lcom/monkopedia/kodemirror/state/EditorState;IILcom/monkopedia/kodemirror/view/EditorTheme;Landroidx/compose/ui/text/TextLayoutResult;Landroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun drawSelectionOverlay (Landroidx/compose/ui/Modifier;Lcom/monkopedia/kodemirror/state/EditorState;IILcom/monkopedia/kodemirror/view/EditorTheme;Landroidx/compose/ui/text/TextLayoutResult;[ILandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
 	public static final fun getDrawSelection ()Lcom/monkopedia/kodemirror/state/Extension;
 }
 

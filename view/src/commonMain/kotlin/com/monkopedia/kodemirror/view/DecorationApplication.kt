@@ -174,8 +174,7 @@ internal fun buildLineContentWithTabs(
     val expandedText: String
     val offsetMap: IntArray?
     if (hasTabs) {
-        println("[TAB-DEBUG] Line has tabs: lineText=${lineText.length} chars, tabSize=$tabSize")
-        println("[TAB-DEBUG] lineText repr: ${lineText.map { if (it == '\t') "\\t" else it.toString() }.joinToString("")}")
+        println("[TAB-DEBUG] Line has tabs: len=${lineText.length} tabSize=$tabSize")
         val expanded = StringBuilder()
         val map = IntArray(lineText.length + 1)
         var col = 0

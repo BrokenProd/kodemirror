@@ -50,22 +50,42 @@ fun Modifier.drawSelectionOverlay(
     lineFrom: Int,
     lineTo: Int,
     theme: EditorTheme,
-    textLayoutResult: TextLayoutResult? = null
+    textLayoutResult: TextLayoutResult? = null,
+    tabOffsetMap: IntArray? = null
 ): Modifier = this.drawWithContent {
-    drawLineSelection(state, lineFrom, lineTo, theme, textLayoutResult)
+    drawLineSelection(
+        state,
+        lineFrom,
+        lineTo,
+        theme,
+        textLayoutResult,
+        tabOffsetMap
+    )
     drawContent()
 }
 
 /** Default block cursor color (salmon/pink, matching upstream `#ff9696`). */
 private val BLOCK_CURSOR_COLOR = Color(0xFFFF9696)
 
+/**
+ * Map a document-relative offset to the expanded text offset,
+ * accounting for tab expansion. Returns the offset unchanged when
+ * there is no tab offset map.
+ */
+private fun mapOffset(docOffset: Int, lineLength: Int, tabOffsetMap: IntArray?): Int {
+    if (tabOffsetMap == null) return docOffset
+    return tabOffsetMap[docOffset.coerceIn(0, lineLength)]
+}
+
 private fun DrawScope.drawLineSelection(
     state: EditorState,
     lineFrom: Int,
     lineTo: Int,
     theme: EditorTheme,
-    textLayoutResult: TextLayoutResult?
+    textLayoutResult: TextLayoutResult?,
+    tabOffsetMap: IntArray?
 ) {
+    val lineLength = lineTo - lineFrom
     // Check for block cursors (vim normal/visual mode)
     val blockCursors = state.facet(blockCursorProvider)
         .flatMap { it.invoke() }
@@ -83,10 +103,23 @@ private fun DrawScope.drawLineSelection(
             val selTo = minOf(rangeTo, lineTo)
             if (selFrom < selTo || (selFrom == selTo && selFrom > lineFrom)) {
                 val extendsToNextLine = rangeTo > lineTo
+                val expandedLineLen = mapOffset(
+                    lineLength,
+                    lineLength,
+                    tabOffsetMap
+                )
                 drawLineSelectionRange(
-                    selFrom - lineFrom,
-                    selTo - lineFrom,
-                    lineTo - lineFrom,
+                    mapOffset(
+                        selFrom - lineFrom,
+                        lineLength,
+                        tabOffsetMap
+                    ),
+                    mapOffset(
+                        selTo - lineFrom,
+                        lineLength,
+                        tabOffsetMap
+                    ),
+                    expandedLineLen,
                     theme.selection,
                     textLayoutResult,
                     extendsToNextLine
@@ -95,14 +128,26 @@ private fun DrawScope.drawLineSelection(
         }
         // Draw thin cursor only when block cursors are NOT active
         if (!hasBlockCursors && rangeHead in lineFrom..lineTo) {
-            drawLineCursor(rangeHead - lineFrom, theme.cursor, textLayoutResult)
+            drawLineCursor(
+                mapOffset(
+                    rangeHead - lineFrom,
+                    lineLength,
+                    tabOffsetMap
+                ),
+                theme.cursor,
+                textLayoutResult
+            )
         }
     }
 
     // Draw block cursors at full line height
     for (cursor in blockCursors) {
         drawBlockCursor(
-            cursor.offset - lineFrom,
+            mapOffset(
+                cursor.offset - lineFrom,
+                lineLength,
+                tabOffsetMap
+            ),
             cursor.alpha,
             textLayoutResult
         )
