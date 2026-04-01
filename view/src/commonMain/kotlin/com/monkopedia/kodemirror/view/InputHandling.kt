@@ -219,7 +219,9 @@ fun handleKeyEvent(view: EditorSession, event: KeyEvent): Boolean {
     if (event.type != KeyEventType.KeyDown) return false
     val name = keyEventToName(event)
     val isShift = event.isShiftPressed
-    val bindings = view.state.facet(keymap)
+    // Reverse so later extensions (higher precedence) are checked first,
+    // matching CM6's behavior where later keymap extensions override earlier ones.
+    val bindings = view.state.facet(keymap).asReversed()
 
     // Build the name without Shift for shift-variant matching
     val nameWithoutShift = if (isShift) {
@@ -421,7 +423,7 @@ fun handleRawKeyEvent(
         null
     }
 
-    val bindings = view.state.facet(keymap)
+    val bindings = view.state.facet(keymap).asReversed()
     for (binding in bindings) {
         val bindingKey = resolveBindingKey(binding)
 
