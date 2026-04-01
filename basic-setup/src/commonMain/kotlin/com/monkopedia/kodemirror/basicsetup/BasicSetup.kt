@@ -48,6 +48,7 @@ import com.monkopedia.kodemirror.view.highlightSpecialChars
 import com.monkopedia.kodemirror.view.keymapOf
 import com.monkopedia.kodemirror.view.lineNumbers
 import com.monkopedia.kodemirror.view.rectangularSelection
+import com.monkopedia.kodemirror.view.tabRendering
 
 // Validates that a language extension is configured when using basicSetup/minimalSetup.
 // This catches the common mistake of setting up an editor without a language, which
@@ -81,6 +82,7 @@ private val setupValidation: StateField<Unit> = StateField.define(
 val minimalSetup: Extension = extensionListOf(
     setupValidation,
     highlightSpecialChars,
+    tabRendering,
     history(),
     drawSelection,
     syntaxHighlighting(defaultHighlightStyle, fallback = true),
@@ -106,6 +108,7 @@ val basicSetup: Extension = extensionListOf(
     lineNumbers,
     highlightActiveLineGutter,
     highlightSpecialChars,
+    tabRendering,
     history(),
     foldGutter(),
     drawSelection,

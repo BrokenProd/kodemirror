@@ -716,6 +716,10 @@ public final class com/monkopedia/kodemirror/view/StateSaversKt {
 	public static final fun rememberSaveableEditorSession (Ljava/lang/String;Lcom/monkopedia/kodemirror/state/Extension;Ljava/util/Map;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)Lcom/monkopedia/kodemirror/view/EditorSession;
 }
 
+public final class com/monkopedia/kodemirror/view/TabRenderingKt {
+	public static final fun getTabRendering ()Lcom/monkopedia/kodemirror/state/Extension;
+}
+
 public final class com/monkopedia/kodemirror/view/ThemeKey {
 	public fun <init> (Ljava/lang/Object;)V
 	public final fun getDefault ()Ljava/lang/Object;

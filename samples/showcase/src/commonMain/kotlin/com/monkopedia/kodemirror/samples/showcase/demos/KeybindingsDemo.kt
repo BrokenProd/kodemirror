@@ -71,6 +71,7 @@ import com.monkopedia.kodemirror.view.highlightSpecialChars
 import com.monkopedia.kodemirror.view.keymapOf
 import com.monkopedia.kodemirror.view.lineNumbers
 import com.monkopedia.kodemirror.view.rectangularSelection
+import com.monkopedia.kodemirror.view.tabRendering
 import com.monkopedia.kodemirror.view.rememberEditorSession
 
 private data class BindingInfo(
@@ -105,6 +106,7 @@ private val baseExtensions = extensionListOf(
     lineNumbers,
     highlightActiveLineGutter,
     highlightSpecialChars,
+    tabRendering,
     history(),
     foldGutter(),
     drawSelection,
