@@ -472,10 +472,12 @@ private fun EditorContent(
                 hiddenTextValue = TextFieldValue("")
                 return@BasicTextField
             }
+            // Block text input when editor is read-only
+            if (!session.editable) {
+                hiddenTextValue = TextFieldValue("")
+                return@BasicTextField
+            }
             // Check if a vim-like extension wants to suppress text input.
-            // In vim normal/visual mode, character keys should execute commands
-            // (not insert text). The inputSuppressor facet lets extensions
-            // signal that text input should be blocked.
             val shouldSuppress = session.state.facet(inputSuppressor)
                 .any { it.invoke() }
             if (shouldSuppress) {
@@ -529,7 +531,7 @@ private fun EditorContent(
                 val consumed = handleKeyEvent(session, event)
                 if (consumed) {
                     suppressInput[0] = true
-                } else if (event.type == KeyEventType.KeyDown) {
+                } else if (event.type == KeyEventType.KeyDown && session.editable) {
                     // When the keymap doesn't consume a printable character,
                     // insert it directly. On wasmJs with canvas focus, the
                     // browser doesn't generate a text input event on the

@@ -459,6 +459,7 @@ fun handleRawKeyEvent(
     }
 
     // Not consumed by keymap -- check if it should be inserted as text
+    if (!view.state.facet(editable)) return false
     val shouldSuppress = view.state.facet(inputSuppressor).any { it.invoke() }
     if (!shouldSuppress && normalizedKey.length == 1 &&
         !normalizedKey[0].isISOControl() &&
