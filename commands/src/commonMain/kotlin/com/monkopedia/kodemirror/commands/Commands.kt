@@ -572,34 +572,54 @@ val deleteCharBackwardStrict: (EditorSession) -> Boolean = { view ->
 
 /** Delete one word group backward. */
 val deleteGroupBackward: (EditorSession) -> Boolean = { view ->
-    deleteBy(view, forward = false) { state, sel ->
-        var pos = sel.head
-        val startGroup = groupAt(state, pos, -1)
-        while (pos > DocPos.ZERO) {
-            val prev = pos - 1
-            val group = groupAt(state, prev, -1)
-            if (group != startGroup) break
-            pos = prev
-        }
-        pos
-    }
+    deleteByGroup(view, forward = false)
 }
 
 /** Delete one word group forward. */
 val deleteGroupForward: (EditorSession) -> Boolean = { view ->
-    deleteBy(view, forward = true) { state, sel ->
+    deleteByGroup(view, forward = true)
+}
+
+/**
+ * Shared implementation for [deleteGroupBackward] and [deleteGroupForward].
+ * Matches the upstream CM6 `deleteByGroup` logic, using [findClusterBreak]
+ * for proper Unicode cluster handling and skipping groups of whitespace
+ * only when they consist of a single space.
+ */
+private fun deleteByGroup(view: EditorSession, forward: Boolean): Boolean =
+    deleteBy(view, forward) { state, sel ->
         var pos = sel.head
-        val endPos = state.doc.endPos
-        val startGroup = groupAt(state, pos, 1)
-        while (pos < endPos) {
-            val next = pos + 1
-            val group = groupAt(state, next, 1)
-            if (group != startGroup) break
+        val line = state.doc.lineAt(pos)
+        val categorize = state.charCategorizer(pos)
+        var cat: CharCategory? = null
+        while (true) {
+            if (pos == (if (forward) line.to else line.from)) {
+                if (pos == sel.head &&
+                    line.number != (
+                        if (forward) LineNumber(state.doc.lines) else LineNumber.FIRST
+                        )
+                ) {
+                    pos += if (forward) 1 else -1
+                }
+                break
+            }
+            val next = DocPos(
+                findClusterBreak(line.text, (pos - line.from), forward) +
+                    line.from.value
+            )
+            val nextCharFrom = minOf(pos, next)
+            val nextCharTo = maxOf(pos, next)
+            val nextChar = line.text.substring(
+                (nextCharFrom - line.from),
+                (nextCharTo - line.from)
+            )
+            val nextCat = categorize(nextChar)
+            if (cat != null && nextCat != cat) break
+            if (nextChar != " " || pos != sel.head) cat = nextCat
             pos = next
         }
         pos
     }
-}
 
 /**
  * Delete to the start of the next word group (Windows
