@@ -18,97 +18,14 @@
  */
 package com.monkopedia.kodemirror.view
 
-import androidx.compose.foundation.text.BasicText
-import androidx.compose.runtime.Composable
-import com.monkopedia.kodemirror.state.DocPos
-import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
-import com.monkopedia.kodemirror.state.LineNumber
-import com.monkopedia.kodemirror.state.RangeSet
-import com.monkopedia.kodemirror.state.RangeSetBuilder
+import com.monkopedia.kodemirror.state.ExtensionList
 
 /**
- * Extension that renders tab characters at the correct width based on
- * the editor's `tabSize` setting. Each `\t` is replaced with a widget
- * that renders the appropriate number of spaces to reach the next tab
- * stop column.
+ * Tab rendering extension.
  *
- * This extension is included in `minimalSetup` / `basicSetup` so that
- * tab characters always display at the correct width in Compose text.
+ * Tab characters are now expanded to spaces directly in [buildLineContent]
+ * based on the editor's `tabSize` setting. This extension is kept as a
+ * no-op for API compatibility but does no work.
  */
-val tabRendering: Extension = ViewPlugin.define(
-    create = { view -> TabRenderingPlugin(view) },
-    configure = {
-        copy(
-            decorations = { plugin ->
-                (plugin as? TabRenderingPlugin)?.decos
-                    ?: RangeSet.empty()
-            }
-        )
-    }
-).asExtension()
-
-private class TabRenderingPlugin(view: EditorSession) : PluginValue {
-    var decos: DecorationSet = buildTabDecos(view.state)
-
-    override fun update(update: ViewUpdate) {
-        if (update.docChanged) {
-            decos = buildTabDecos(update.state)
-        }
-    }
-}
-
-/**
- * Scan every line in the document, find tab characters, and build
- * replace decorations that substitute each tab with a space-widget
- * of the correct width.
- */
-private fun buildTabDecos(state: EditorState): DecorationSet {
-    val doc = state.doc
-    val tabSize = state.tabSize
-    val builder = RangeSetBuilder<Decoration>()
-
-    for (lineIdx in 1..doc.lines) {
-        val line = doc.line(LineNumber(lineIdx))
-        val text = line.text
-        if ('\t' !in text) continue
-
-        val lineStart = line.from.value
-        var col = 0
-        for (i in text.indices) {
-            val ch = text[i]
-            if (ch == '\t') {
-                val spaces = tabSize - (col % tabSize)
-                val pos = DocPos(lineStart + i)
-                builder.add(
-                    pos,
-                    pos + 1,
-                    Decoration.replace(
-                        ReplaceDecorationSpec(
-                            widget = TabWidget(spaces)
-                        )
-                    )
-                )
-                col += spaces
-            } else {
-                col++
-            }
-        }
-    }
-
-    return builder.finish()
-}
-
-private class TabWidget(val spaces: Int) : WidgetType() {
-    @Composable
-    override fun Content() {
-        BasicText(
-            text = " ".repeat(spaces),
-            style = LocalContentTextStyle.current
-        )
-    }
-
-    override fun equals(other: Any?): Boolean = other is TabWidget && spaces == other.spaces
-
-    override fun hashCode(): Int = spaces
-}
+val tabRendering: Extension = ExtensionList(emptyList())
