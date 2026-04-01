@@ -45,8 +45,39 @@ internal sealed class ColumnItem {
         val to: DocPos,
         val content: AnnotatedString,
         val lineDecorations: List<LineDecoration> = emptyList(),
-        val inlineWidgets: List<WidgetDecoration> = emptyList()
-    ) : ColumnItem()
+        val inlineWidgets: List<WidgetDecoration> = emptyList(),
+        /**
+         * Mapping from document offsets (relative to line start) to
+         * expanded text offsets. When tabs are expanded, the rendered
+         * text is longer than the document text. Index `i` gives the
+         * expanded offset for document-relative offset `i`.
+         * `null` when no expansion was needed (no tabs in the line).
+         */
+        val tabOffsetMap: IntArray? = null
+    ) : ColumnItem() {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is TextLine) return false
+            return lineNumber == other.lineNumber &&
+                from == other.from &&
+                to == other.to &&
+                content == other.content &&
+                lineDecorations == other.lineDecorations &&
+                inlineWidgets == other.inlineWidgets &&
+                tabOffsetMap.contentEquals(other.tabOffsetMap)
+        }
+
+        override fun hashCode(): Int {
+            var result = lineNumber.hashCode()
+            result = 31 * result + from.hashCode()
+            result = 31 * result + to.hashCode()
+            result = 31 * result + content.hashCode()
+            result = 31 * result + lineDecorations.hashCode()
+            result = 31 * result + inlineWidgets.hashCode()
+            result = 31 * result + (tabOffsetMap?.contentHashCode() ?: 0)
+            return result
+        }
+    }
 
     /**
      * A block widget placed before, after, or instead of a line.
@@ -63,6 +94,45 @@ internal sealed class ColumnItem {
 }
 
 /**
+ * Convert an expanded-text offset back to the original document-relative
+ * offset, using the tab offset map. Returns [expandedOffset] unchanged
+ * when [tabOffsetMap] is `null` (no tabs in the line).
+ */
+internal fun unmapTabOffset(expandedOffset: Int, tabOffsetMap: IntArray?): Int {
+    if (tabOffsetMap == null) return expandedOffset
+    // Binary search: find the largest doc offset whose mapped value
+    // is <= expandedOffset.
+    var lo = 0
+    var hi = tabOffsetMap.size - 1
+    while (lo < hi) {
+        val mid = (lo + hi + 1) / 2
+        if (tabOffsetMap[mid] <= expandedOffset) lo = mid else hi = mid - 1
+    }
+    return lo
+}
+
+/**
+ * Result of building line content with tab expansion info.
+ */
+internal data class LineContentResult(
+    val content: AnnotatedString,
+    val offsetMap: IntArray?
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is LineContentResult) return false
+        return content == other.content &&
+            offsetMap.contentEquals(other.offsetMap)
+    }
+
+    override fun hashCode(): Int {
+        var result = content.hashCode()
+        result = 31 * result + (offsetMap?.contentHashCode() ?: 0)
+        return result
+    }
+}
+
+/**
  * Build an [AnnotatedString] for one document line, applying [MarkDecoration]s
  * from [decorationSets].
  *
@@ -70,31 +140,96 @@ internal sealed class ColumnItem {
  * @param lineTo         End position of the line in the document.
  * @param lineText       The text content of the line.
  * @param decorationSets Active decoration sets.
+ * @param tabSize        Number of spaces per tab stop (default 4).
  */
 fun buildLineContent(
     lineFrom: DocPos,
     lineTo: DocPos,
     lineText: String,
-    decorationSets: List<DecorationSet>
-): AnnotatedString {
-    val builder = AnnotatedString.Builder(lineText)
+    decorationSets: List<DecorationSet>,
+    tabSize: Int = 4
+): AnnotatedString = buildLineContentWithTabs(
+    lineFrom,
+    lineTo,
+    lineText,
+    decorationSets,
+    tabSize
+).content
+
+/**
+ * Build line content with tab expansion, returning both the annotated
+ * string and the offset mapping for selection/cursor positioning.
+ */
+internal fun buildLineContentWithTabs(
+    lineFrom: DocPos,
+    lineTo: DocPos,
+    lineText: String,
+    decorationSets: List<DecorationSet>,
+    tabSize: Int = 4
+): LineContentResult {
+    val hasTabs = '\t' in lineText
+
+    // Expand tabs to spaces and build a mapping from original offsets
+    // to expanded offsets.
+    val expandedText: String
+    val offsetMap: IntArray?
+    if (hasTabs) {
+        println("[TAB-DEBUG] Line has tabs: lineText=${lineText.length} chars, tabSize=$tabSize")
+        println("[TAB-DEBUG] lineText repr: ${lineText.map { if (it == '\t') "\\t" else it.toString() }.joinToString("")}")
+        val expanded = StringBuilder()
+        val map = IntArray(lineText.length + 1)
+        var col = 0
+        for (i in lineText.indices) {
+            map[i] = expanded.length
+            if (lineText[i] == '\t') {
+                val spaces = tabSize - (col % tabSize)
+                println("[TAB-DEBUG] Tab at col=$col, expanding to $spaces spaces")
+                repeat(spaces) { expanded.append(' ') }
+                col += spaces
+            } else {
+                expanded.append(lineText[i])
+                col++
+            }
+        }
+        map[lineText.length] = expanded.length
+        expandedText = expanded.toString()
+        offsetMap = map
+        println("[TAB-DEBUG] Expanded: '${expandedText}' (${expandedText.length} chars)")
+    } else {
+        expandedText = lineText
+        offsetMap = null
+    }
+
+    val builder = AnnotatedString.Builder(expandedText)
     val lineFromVal = lineFrom.value
 
     // Collect all MarkDecorations that overlap this line
     for (set in decorationSets) {
         set.between(lineFrom, lineTo) { from, to, value ->
             if (value is MarkDecoration && value.spec.style != null) {
-                val startInLine = (from - lineFromVal).coerceIn(0, lineText.length)
-                val endInLine = (to - lineFromVal).coerceIn(0, lineText.length)
+                val startInLine =
+                    (from - lineFromVal).coerceIn(0, lineText.length)
+                val endInLine =
+                    (to - lineFromVal).coerceIn(0, lineText.length)
                 if (startInLine < endInLine) {
-                    builder.addStyle(value.spec.style, startInLine, endInLine)
+                    val mappedStart =
+                        offsetMap?.get(startInLine) ?: startInLine
+                    val mappedEnd =
+                        offsetMap?.get(endInLine) ?: endInLine
+                    if (mappedStart < mappedEnd) {
+                        builder.addStyle(
+                            value.spec.style,
+                            mappedStart,
+                            mappedEnd
+                        )
+                    }
                 }
             }
             null // continue iteration
         }
     }
 
-    return builder.toAnnotatedString()
+    return LineContentResult(builder.toAnnotatedString(), offsetMap)
 }
 
 /**
@@ -114,16 +249,28 @@ internal fun buildColumnItems(
 ): List<ColumnItem> {
     val items = mutableListOf<ColumnItem>()
     val doc = state.doc
+    val tabSize = state.tabSize
     val viewFrom = DocPos(viewport.from)
     val viewTo = DocPos(viewport.to)
 
-    // Collect replace decorations (fold ranges) sorted by start position
+    // Collect replace decorations (fold ranges) sorted by start position.
+    // Only include multi-line replacements; single-line replacements
+    // (e.g. tab characters) are handled inline by buildLineContent().
     data class ReplaceRange(val from: Int, val to: Int, val widget: WidgetType?)
     val replaceRanges = mutableListOf<ReplaceRange>()
     for (set in decorationSets) {
         set.between(viewFrom, viewTo) { from, to, value ->
             if (value is ReplaceDecoration && from < to) {
-                replaceRanges.add(ReplaceRange(from, to, value.spec.widget))
+                val fromLine = doc.lineAt(DocPos(from)).number
+                val toLine = doc.lineAt(
+                    DocPos(to.coerceAtMost(doc.length))
+                ).number
+                // Only treat as fold range if it spans multiple lines
+                if (fromLine != toLine) {
+                    replaceRanges.add(
+                        ReplaceRange(from, to, value.spec.widget)
+                    )
+                }
             }
             null
         }
@@ -209,21 +356,22 @@ internal fun buildColumnItems(
                 0,
                 truncPos.coerceAtMost(line.text.length)
             )
-            val baseContent = buildLineContent(
+            val result = buildLineContentWithTabs(
                 line.from,
                 line.from + truncText.length,
                 truncText,
-                decorationSets
+                decorationSets,
+                tabSize
             )
             val content = if (replaceOnLine.widget != null) {
                 AnnotatedString.Builder().apply {
-                    append(baseContent)
+                    append(result.content)
                     pushStyle(SpanStyle(color = Color.Gray))
                     append("\u2026")
                     pop()
                 }.toAnnotatedString()
             } else {
-                baseContent
+                result.content
             }
             val lineDecos = lineDecsByLine[lineNum] ?: emptyList()
             val inlineWidgets =
@@ -235,7 +383,8 @@ internal fun buildColumnItems(
                     line.from + truncText.length,
                     content,
                     lineDecos,
-                    inlineWidgets
+                    inlineWidgets,
+                    tabOffsetMap = result.offsetMap
                 )
             )
 
@@ -247,11 +396,12 @@ internal fun buildColumnItems(
             lineNum = endLine.number
         } else {
             // Normal line
-            val content = buildLineContent(
+            val result = buildLineContentWithTabs(
                 line.from,
                 line.to,
                 line.text,
-                decorationSets
+                decorationSets,
+                tabSize
             )
             val lineDecos = lineDecsByLine[lineNum] ?: emptyList()
             val inlineWidgets =
@@ -261,9 +411,10 @@ internal fun buildColumnItems(
                     lineNum,
                     line.from,
                     line.to,
-                    content,
+                    result.content,
                     lineDecos,
-                    inlineWidgets
+                    inlineWidgets,
+                    tabOffsetMap = result.offsetMap
                 )
             )
             lineNum = lineNum + 1

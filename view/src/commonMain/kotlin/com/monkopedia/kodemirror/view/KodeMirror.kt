@@ -624,7 +624,8 @@ private fun EditorContent(
                                     item.from.value,
                                     item.to.value,
                                     theme,
-                                    textLayout
+                                    textLayout,
+                                    item.tabOffsetMap
                                 )
                                 .onGloballyPositioned { contentCoords ->
                                     val layout = textLayout
@@ -657,8 +658,12 @@ private fun EditorContent(
                                     }
                                 }
                         ) {
+                            val renderContent = item.content
+                            if ('\t' in renderContent.text || item.tabOffsetMap != null) {
+                                println("[TAB-RENDER] Line ${item.lineNumber}: content='${renderContent.text}' len=${renderContent.text.length} hasTabMap=${item.tabOffsetMap != null}")
+                            }
                             BasicText(
-                                text = item.content,
+                                text = renderContent,
                                 style = contentStyle,
                                 onTextLayout = { result: TextLayoutResult ->
                                     textLayout = result
@@ -806,9 +811,15 @@ private fun posFromVisibleItems(
                 ?: return item.from.value // no layout yet, return line start
             val localY = offset.y - itemTop
             val localX = (offset.x - contentStartPx).coerceAtLeast(0f)
-            val charOffset = layout.getOffsetForPosition(Offset(localX, localY))
+            val expandedOffset = layout.getOffsetForPosition(
+                Offset(localX, localY)
+            )
+            val charOffset = unmapTabOffset(
+                expandedOffset,
+                item.tabOffsetMap
+            )
             return item.from.value +
-                charOffset.coerceIn(0, layout.layoutInput.text.length)
+                charOffset.coerceIn(0, item.to.value - item.from.value)
         }
     }
     return null
