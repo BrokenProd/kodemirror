@@ -61,6 +61,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -533,10 +535,15 @@ private fun EditorContent(
                     // browser doesn't generate a text input event on the
                     // BasicTextField's backing element, so onValueChange
                     // won't fire. This bridges the gap.
+                    // Don't insert for modified keys (Ctrl+A, Alt+X, etc.)
+                    // — those are shortcuts, not text input.
                     val char = keyEventLayoutKey(event)
                         ?: keyEventCharacter(event)?.toString()
                     if (char != null && char.length == 1 &&
-                        !char[0].isISOControl()
+                        !char[0].isISOControl() &&
+                        !event.isCtrlPressed &&
+                        !event.isMetaPressed &&
+                        !event.isAltPressed
                     ) {
                         val sel = session.state.selection.main
                         val newCursor = DocPos(sel.from.value + char.length)

@@ -133,38 +133,33 @@ private fun copyLines(view: EditorSession, forward: Boolean): Boolean {
     val blockText = state.sliceDoc(startLine.from, endLine.to)
 
     val changes: ChangeSpec
-    val newAnchor: DocPos
-    val newHead: DocPos
 
     if (forward) {
-        // Insert copy after the block
-        changes = ChangeSpec.Single(
-            endLine.to,
-            endLine.to,
-            InsertContent.StringContent(state.lineBreak + blockText)
-        )
-        val offset = endLine.to - startLine.from + state.lineBreak.length
-        newAnchor = sel.anchor + offset
-        newHead = sel.head + offset
-    } else {
-        // Insert copy before the block
+        // CM6 copyDown: insert copy BEFORE the block (at startLine.from).
+        // The cursor stays at its old position (default mapping) which now
+        // points into the copy. The original block shifts down.
         changes = ChangeSpec.Single(
             startLine.from,
             startLine.from,
             InsertContent.StringContent(blockText + state.lineBreak)
         )
-        // Keep selection on the original lines (which shift down)
-        newAnchor = sel.anchor
-        newHead = sel.head
+    } else {
+        // CM6 copyUp: insert copy AFTER the block (at endLine.to).
+        // The cursor stays at its old position (default mapping) which
+        // still points to the original block.
+        changes = ChangeSpec.Single(
+            endLine.to,
+            endLine.to,
+            InsertContent.StringContent(state.lineBreak + blockText)
+        )
     }
 
+    // No explicit selection — let the default mapping handle cursor
+    // position. The cursor stays at its old position relative to the
+    // insertion point.
     view.dispatch(
         TransactionSpec(
             changes = changes,
-            selection = SelectionSpec.CursorSpec(
-                newAnchor.coerceAtLeast(DocPos.ZERO),
-                newHead.coerceAtLeast(DocPos.ZERO)
-            ),
             scrollIntoView = true,
             userEvent = "input.copyline",
             annotations = listOf(Transaction.addToHistory.of(true))

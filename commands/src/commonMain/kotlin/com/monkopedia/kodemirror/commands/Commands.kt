@@ -220,13 +220,26 @@ val cursorLineBoundaryForward: (EditorSession) -> Boolean = { view ->
 
 /**
  * Move cursor to the line boundary in the backward direction.
- * In the absence of soft line wrapping, this is equivalent to
- * [cursorLineStart].
+ *
+ * Implements "smart home": if the cursor is not already at the first
+ * non-whitespace character on the line, it moves there instead of to
+ * column 0. If the cursor IS at the first non-whitespace character
+ * (or the line has no leading whitespace), it moves to column 0.
  */
 val cursorLineBoundaryBackward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
-        EditorSelection.cursor(line.from)
+        // Count leading whitespace
+        val lineText = view.state.doc.sliceString(
+            line.from,
+            DocPos(minOf(line.from.value + 100, line.to.value))
+        )
+        val indent = lineText.takeWhile { it == ' ' || it == '\t' }.length
+        if (indent > 0 && sel.head != line.from + indent) {
+            EditorSelection.cursor(line.from + indent)
+        } else {
+            EditorSelection.cursor(line.from)
+        }
     }
 }
 
@@ -264,29 +277,81 @@ val cursorDocEnd: (EditorSession) -> Boolean = { view ->
     updateSel(view) { _, _ -> EditorSelection.cursor(view.state.doc.endPos) }
 }
 
-/** Move cursor one page up (approximately 20 lines). */
+/** Move cursor one page up. */
 val cursorPageUp: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, v ->
-        var result = sel
-        repeat(PAGE_SIZE) {
-            result = moveVertically(v, result, forward = false)
-        }
-        result
+        moveByPage(v, sel, forward = false)
     }
 }
 
-/** Move cursor one page down (approximately 20 lines). */
+/** Move cursor one page down. */
 val cursorPageDown: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, v ->
-        var result = sel
-        repeat(PAGE_SIZE) {
-            result = moveVertically(v, result, forward = true)
-        }
-        result
+        moveByPage(v, sel, forward = true)
     }
 }
 
-private const val PAGE_SIZE = 20
+/**
+ * Move the cursor by one page worth of lines.
+ *
+ * Computes the visible line count from the first and last visible line
+ * coordinates. Falls back to a default of 20 lines when coordinates
+ * are unavailable.
+ */
+private fun moveByPage(
+    view: EditorSession,
+    sel: SelectionRange,
+    forward: Boolean,
+    extend: Boolean = false
+): SelectionRange {
+    val doc = view.state.doc
+    val currentLine = doc.lineAt(sel.head)
+    val goalCol = sel.goalColumn
+        ?: (sel.head.value - currentLine.from.value)
+
+    // Try to compute page size from editor coordinates
+    val pageLines = estimatePageSize(view, sel) ?: DEFAULT_PAGE_SIZE
+    val dir = if (forward) 1 else -1
+    val targetLineNum = (currentLine.number.value + dir * pageLines)
+        .coerceIn(1, doc.lines)
+    val targetLine = doc.line(LineNumber(targetLineNum))
+    val targetCol = goalCol.coerceAtMost(targetLine.text.length)
+    val newPos = DocPos(targetLine.from.value + targetCol)
+
+    val anchor = if (extend) sel.anchor else newPos
+    return if (extend) {
+        EditorSelection.range(anchor, newPos, goalColumn = goalCol)
+    } else {
+        EditorSelection.cursor(newPos, goalColumn = goalCol)
+    }
+}
+
+/**
+ * Estimate the number of lines visible in one "page" of the editor.
+ *
+ * Uses coordinates of two lines to determine line height, then divides
+ * the total visible area by line height.
+ */
+private fun estimatePageSize(view: EditorSession, sel: SelectionRange): Int? {
+    val doc = view.state.doc
+    val line = doc.lineAt(sel.head)
+    val coords = view.coordsAtPos(sel.head.value, 1) ?: return null
+    val lineHeight = coords.bottom - coords.top
+    if (lineHeight <= 0f) return null
+
+    // Get the position of the first line to compute visible area
+    val firstLineCoords = view.coordsAtPos(0, 1) ?: return null
+    val lastLine = doc.line(LineNumber(doc.lines))
+    val lastLineCoords = view.coordsAtPos(lastLine.from.value, 1) ?: return null
+
+    val totalHeight = lastLineCoords.bottom - firstLineCoords.top
+    val visibleLines = (totalHeight / lineHeight).toInt().coerceAtLeast(1)
+    // Use the smaller of visible lines and document lines as page size
+    // Subtract a margin (5 lines like CM6 does: "height - 5")
+    return (visibleLines - 1).coerceAtLeast(1)
+}
+
+private const val DEFAULT_PAGE_SIZE = 20
 
 // --- Selection commands ---
 
@@ -430,11 +495,25 @@ val selectLineBoundaryForward: (EditorSession) -> Boolean = { view ->
     }
 }
 
-/** Extend selection to the line boundary in the backward direction. */
+/**
+ * Extend selection to the line boundary in the backward direction.
+ *
+ * Uses the same "smart home" logic as [cursorLineBoundaryBackward].
+ */
 val selectLineBoundaryBackward: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val line = view.state.doc.lineAt(sel.head)
-        EditorSelection.range(sel.anchor, line.from)
+        val lineText = view.state.doc.sliceString(
+            line.from,
+            DocPos(minOf(line.from.value + 100, line.to.value))
+        )
+        val indent = lineText.takeWhile { it == ' ' || it == '\t' }.length
+        val target = if (indent > 0 && sel.head != line.from + indent) {
+            line.from + indent
+        } else {
+            line.from
+        }
+        EditorSelection.range(sel.anchor, target)
     }
 }
 
@@ -457,22 +536,14 @@ val selectLineBoundaryRight: (EditorSession) -> Boolean = { view ->
 /** Extend selection one page up. */
 val selectPageUp: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, v ->
-        var result = sel
-        repeat(PAGE_SIZE) {
-            result = moveVertically(v, result, forward = false, extend = true)
-        }
-        result
+        moveByPage(v, sel, forward = false, extend = true)
     }
 }
 
 /** Extend selection one page down. */
 val selectPageDown: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, v ->
-        var result = sel
-        repeat(PAGE_SIZE) {
-            result = moveVertically(v, result, forward = true, extend = true)
-        }
-        result
+        moveByPage(v, sel, forward = true, extend = true)
     }
 }
 

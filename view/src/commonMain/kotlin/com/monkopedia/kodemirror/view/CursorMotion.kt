@@ -71,6 +71,10 @@ fun moveByChar(
  * Move a selection range by one word group in [forward] direction.
  *
  * A "word" here is any maximal run of the same [CharCategory].
+ * When starting on whitespace, the movement skips the whitespace and
+ * then continues through the adjacent word/punctuation group, matching
+ * the CodeMirror 6 behavior where Ctrl-Right from a space skips to the
+ * end of the next word.
  */
 fun moveByGroup(
     state: EditorState,
@@ -83,14 +87,20 @@ fun moveByGroup(
     var pos = sel.head
     if (pos < DocPos.ZERO || pos > endPos) return sel
 
-    val startGroup = groupAt(state, pos, if (forward) 1 else -1)
+    var currentGroup = groupAt(state, pos, if (forward) 1 else -1)
     val dir = if (forward) 1 else -1
 
     while (true) {
         val next = pos + dir
         if (next < DocPos.ZERO || next > endPos) break
         val group = groupAt(state, next, -dir)
-        if (group != startGroup) break
+        // When starting on Space, update the target group to the first
+        // non-space category we encounter (skip whitespace then continue).
+        if (currentGroup == CharCategory.Space && group != CharCategory.Space) {
+            currentGroup = group
+        } else if (group != currentGroup) {
+            break
+        }
         pos = next
     }
 

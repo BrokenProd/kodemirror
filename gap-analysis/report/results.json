@@ -102,20 +102,20 @@
   },
   "suites": [
     {
-      "title": "search-panel-compare.spec.ts",
-      "file": "search-panel-compare.spec.ts",
+      "title": "keymap-commands.spec.ts",
+      "file": "keymap-commands.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Search Panel Comparison",
-          "file": "search-panel-compare.spec.ts",
-          "line": 6,
+          "title": "Keymap: Standard - Arrow Keys",
+          "file": "keymap-commands.spec.ts",
+          "line": 53,
           "column": 6,
           "specs": [
             {
-              "title": "search panel open - visual compare",
+              "title": "ArrowLeft moves cursor left",
               "ok": true,
               "tags": [],
               "tests": [
@@ -130,12 +130,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3183,
+                      "duration": 1209,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-30T19:04:51.816Z",
+                      "startTime": "2026-04-01T15:12:08.337Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -143,13 +143,13 @@
                   "status": "expected"
                 }
               ],
-              "id": "3a78b3c7e4b1534d61b8-d23ea98feee3b24feead",
-              "file": "search-panel-compare.spec.ts",
-              "line": 7,
+              "id": "04ba40e975f326cc48ce-9f2dd333b66f78643022",
+              "file": "keymap-commands.spec.ts",
+              "line": 59,
               "column": 7
             },
             {
-              "title": "find and replace panel - visual compare",
+              "title": "ArrowRight moves cursor right",
               "ok": true,
               "tags": [],
               "tests": [
@@ -164,12 +164,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3083,
+                      "duration": 1059,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-30T19:04:55.196Z",
+                      "startTime": "2026-04-01T15:12:09.714Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -177,13 +177,13 @@
                   "status": "expected"
                 }
               ],
-              "id": "3a78b3c7e4b1534d61b8-b8a714768da1ea6d472d",
-              "file": "search-panel-compare.spec.ts",
-              "line": 26,
+              "id": "04ba40e975f326cc48ce-442132fd77067431d24b",
+              "file": "keymap-commands.spec.ts",
+              "line": 66,
               "column": 7
             },
             {
-              "title": "search panel with query - visual compare",
+              "title": "ArrowUp moves cursor up",
               "ok": true,
               "tags": [],
               "tests": [
@@ -198,12 +198,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 4546,
+                      "duration": 1114,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-30T19:04:58.287Z",
+                      "startTime": "2026-04-01T15:12:10.785Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -211,9 +211,2129 @@
                   "status": "expected"
                 }
               ],
-              "id": "3a78b3c7e4b1534d61b8-f14f36491fef23609c3f",
-              "file": "search-panel-compare.spec.ts",
-              "line": 47,
+              "id": "04ba40e975f326cc48ce-2842f2bc90d6a9f37f80",
+              "file": "keymap-commands.spec.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "ArrowDown moves cursor down",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1045,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:11.910Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-8f13161de5395f1eef9b",
+              "file": "keymap-commands.spec.ts",
+              "line": 79,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Standard - Home/End",
+          "file": "keymap-commands.spec.ts",
+          "line": 86,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Home moves to line start",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1159,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:12.964Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-3f59ae94af1be5866577",
+              "file": "keymap-commands.spec.ts",
+              "line": 92,
+              "column": 7
+            },
+            {
+              "title": "End moves to line end",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1137,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:14.131Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-465e1890b306ec430634",
+              "file": "keymap-commands.spec.ts",
+              "line": 100,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-Home moves to document start",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1532,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:15.276Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-bd59af1d6eb40c964c45",
+              "file": "keymap-commands.spec.ts",
+              "line": 107,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-End moves to document end",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1191,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:16.814Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-10e7b64e249379bd0e88",
+              "file": "keymap-commands.spec.ts",
+              "line": 113,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Standard - PageUp/PageDown",
+          "file": "keymap-commands.spec.ts",
+          "line": 120,
+          "column": 6,
+          "specs": [
+            {
+              "title": "PageDown moves cursor down a page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 2133,
+                      "error": {
+                        "message": "Error: cursor pos mismatch\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m229\u001b[39m\nReceived: \u001b[31m228\u001b[39m",
+                        "stack": "Error: cursor pos mismatch\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m229\u001b[39m\nReceived: \u001b[31m228\u001b[39m\n    at expectMatch (/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:44:55)\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:129:5",
+                        "location": {
+                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts",
+                          "column": 55,
+                          "line": 44
+                        },
+                        "snippet": "  42 |     const kmState = await km.getState();\n  43 |     expect(kmState.doc, \"doc mismatch\").toBe(cm6State.doc);\n> 44 |     expect(kmState.cursor.pos, \"cursor pos mismatch\").toBe(\n     |                                                       ^\n  45 |       cm6State.cursor.pos\n  46 |     );\n  47 |   }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts",
+                            "column": 55,
+                            "line": 44
+                          },
+                          "message": "Error: cursor pos mismatch\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m229\u001b[39m\nReceived: \u001b[31m228\u001b[39m\n\n  42 |     const kmState = await km.getState();\n  43 |     expect(kmState.doc, \"doc mismatch\").toBe(cm6State.doc);\n> 44 |     expect(kmState.cursor.pos, \"cursor pos mismatch\").toBe(\n     |                                                       ^\n  45 |       cm6State.cursor.pos\n  46 |     );\n  47 |   }\n    at expectMatch (/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:44:55)\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:129:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:18.012Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/keymap-commands-Keymap-Sta-09b29-wn-moves-cursor-down-a-page-gap-analysis/test-failed-2.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/keymap-commands-Keymap-Sta-09b29-wn-moves-cursor-down-a-page-gap-analysis/test-failed-1.png"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts",
+                        "column": 55,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-ec725655eab447993749",
+              "file": "keymap-commands.spec.ts",
+              "line": 126,
+              "column": 7
+            },
+            {
+              "title": "PageUp moves cursor up a page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 2274,
+                      "error": {
+                        "message": "Error: cursor pos mismatch\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m1\u001b[39m",
+                        "stack": "Error: cursor pos mismatch\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m1\u001b[39m\n    at expectMatch (/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:44:55)\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:135:5",
+                        "location": {
+                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts",
+                          "column": 55,
+                          "line": 44
+                        },
+                        "snippet": "  42 |     const kmState = await km.getState();\n  43 |     expect(kmState.doc, \"doc mismatch\").toBe(cm6State.doc);\n> 44 |     expect(kmState.cursor.pos, \"cursor pos mismatch\").toBe(\n     |                                                       ^\n  45 |       cm6State.cursor.pos\n  46 |     );\n  47 |   }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts",
+                            "column": 55,
+                            "line": 44
+                          },
+                          "message": "Error: cursor pos mismatch\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m1\u001b[39m\n\n  42 |     const kmState = await km.getState();\n  43 |     expect(kmState.doc, \"doc mismatch\").toBe(cm6State.doc);\n> 44 |     expect(kmState.cursor.pos, \"cursor pos mismatch\").toBe(\n     |                                                       ^\n  45 |       cm6State.cursor.pos\n  46 |     );\n  47 |   }\n    at expectMatch (/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:44:55)\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:135:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:20.963Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/keymap-commands-Keymap-Sta-f1dd8-geUp-moves-cursor-up-a-page-gap-analysis/test-failed-2.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/keymap-commands-Keymap-Sta-f1dd8-geUp-moves-cursor-up-a-page-gap-analysis/test-failed-1.png"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts",
+                        "column": 55,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-974dc5b3e446118c46d3",
+              "file": "keymap-commands.spec.ts",
+              "line": 132,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Standard - Enter",
+          "file": "keymap-commands.spec.ts",
+          "line": 139,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Enter inserts newline",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1722,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:24.194Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-5306ac50d183ea7de237",
+              "file": "keymap-commands.spec.ts",
+              "line": 145,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Standard - Backspace/Delete",
+          "file": "keymap-commands.spec.ts",
+          "line": 152,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Backspace deletes char backward",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1325,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:26.107Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-02b262fe11461bd79689",
+              "file": "keymap-commands.spec.ts",
+              "line": 158,
+              "column": 7
+            },
+            {
+              "title": "Delete deletes char forward",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1281,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:27.445Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-a7e5de429de1719beca7",
+              "file": "keymap-commands.spec.ts",
+              "line": 165,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Standard - Word Movement",
+          "file": "keymap-commands.spec.ts",
+          "line": 172,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Ctrl-ArrowRight moves word right",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1080,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:28.741Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-a8e9df63c602a8edf1de",
+              "file": "keymap-commands.spec.ts",
+              "line": 178,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-ArrowRight twice",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1145,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:29.830Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-067f16c6ecc49fca34a4",
+              "file": "keymap-commands.spec.ts",
+              "line": 184,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-ArrowLeft moves word left",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1154,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:30.983Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-cc15794233fb52e07e77",
+              "file": "keymap-commands.spec.ts",
+              "line": 190,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-ArrowLeft twice",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1141,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:32.144Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-d94a1e5c6526cee4bee9",
+              "file": "keymap-commands.spec.ts",
+              "line": 197,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Standard - Word Delete",
+          "file": "keymap-commands.spec.ts",
+          "line": 205,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Ctrl-Backspace deletes word backward",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1808,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:33.293Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-51eb0ae5a16be5ac594e",
+              "file": "keymap-commands.spec.ts",
+              "line": 211,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-Backspace on typed text multiple times",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1878,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:35.109Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-394c44d286f2cf65c23c",
+              "file": "keymap-commands.spec.ts",
+              "line": 219,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-Delete deletes word forward",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1085,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:36.995Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-eb77d83f29e1110fa5a2",
+              "file": "keymap-commands.spec.ts",
+              "line": 229,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-Delete twice",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1102,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:38.087Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-52b6a05b0c564e73aeb2",
+              "file": "keymap-commands.spec.ts",
+              "line": 235,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-Backspace at line start crosses line boundary",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1202,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:39.197Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-42d32054ef8bc0e9ef42",
+              "file": "keymap-commands.spec.ts",
+              "line": 242,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-Delete at line end crosses line boundary",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1097,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:40.406Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-554ca358f07d9e2d2565",
+              "file": "keymap-commands.spec.ts",
+              "line": 253,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Default - Move Line",
+          "file": "keymap-commands.spec.ts",
+          "line": 263,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Alt-ArrowUp moves line up",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1105,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:41.510Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-72f3c5895972c46d11ed",
+              "file": "keymap-commands.spec.ts",
+              "line": 269,
+              "column": 7
+            },
+            {
+              "title": "Alt-ArrowDown moves line down",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1075,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:42.621Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-fc0fb49f9ea4ab899afb",
+              "file": "keymap-commands.spec.ts",
+              "line": 276,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Default - Copy Line",
+          "file": "keymap-commands.spec.ts",
+          "line": 284,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Shift-Alt-ArrowUp copies line up",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1127,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:43.703Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-feecdd41ac34ce919313",
+              "file": "keymap-commands.spec.ts",
+              "line": 290,
+              "column": 7
+            },
+            {
+              "title": "Shift-Alt-ArrowDown copies line down",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1122,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:44.837Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-d65066cc074ea252d29f",
+              "file": "keymap-commands.spec.ts",
+              "line": 297,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Default - Delete Line",
+          "file": "keymap-commands.spec.ts",
+          "line": 305,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Ctrl-Shift-k deletes current line",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1158,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:45.966Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-b62847b85228812e6359",
+              "file": "keymap-commands.spec.ts",
+              "line": 311,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Default - Indent",
+          "file": "keymap-commands.spec.ts",
+          "line": 319,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Ctrl-] indents line",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1099,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:47.130Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-8d2a77b7b52822e51740",
+              "file": "keymap-commands.spec.ts",
+              "line": 325,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-[ dedents line",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 1154,
+                      "error": {
+                        "message": "Error: cursor pos mismatch\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m48\u001b[39m\nReceived: \u001b[31m46\u001b[39m",
+                        "stack": "Error: cursor pos mismatch\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m48\u001b[39m\nReceived: \u001b[31m46\u001b[39m\n    at expectMatch (/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:44:55)\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:338:5",
+                        "location": {
+                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts",
+                          "column": 55,
+                          "line": 44
+                        },
+                        "snippet": "  42 |     const kmState = await km.getState();\n  43 |     expect(kmState.doc, \"doc mismatch\").toBe(cm6State.doc);\n> 44 |     expect(kmState.cursor.pos, \"cursor pos mismatch\").toBe(\n     |                                                       ^\n  45 |       cm6State.cursor.pos\n  46 |     );\n  47 |   }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts",
+                            "column": 55,
+                            "line": 44
+                          },
+                          "message": "Error: cursor pos mismatch\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m48\u001b[39m\nReceived: \u001b[31m46\u001b[39m\n\n  42 |     const kmState = await km.getState();\n  43 |     expect(kmState.doc, \"doc mismatch\").toBe(cm6State.doc);\n> 44 |     expect(kmState.cursor.pos, \"cursor pos mismatch\").toBe(\n     |                                                       ^\n  45 |       cm6State.cursor.pos\n  46 |     );\n  47 |   }\n    at expectMatch (/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:44:55)\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:338:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:48.235Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/keymap-commands-Keymap-Default---Indent-Ctrl--dedents-line-gap-analysis/test-failed-1.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/keymap-commands-Keymap-Default---Indent-Ctrl--dedents-line-gap-analysis/test-failed-2.png"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts",
+                        "column": 55,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-e8ebd96396b6174bf3d0",
+              "file": "keymap-commands.spec.ts",
+              "line": 332,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Default - Bracket Matching",
+          "file": "keymap-commands.spec.ts",
+          "line": 342,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Ctrl-Shift-\\ goes to matching bracket",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 2245,
+                      "error": {
+                        "message": "Error: cursor pos mismatch\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m121\u001b[39m\nReceived: \u001b[31m41\u001b[39m",
+                        "stack": "Error: cursor pos mismatch\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m121\u001b[39m\nReceived: \u001b[31m41\u001b[39m\n    at expectMatch (/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:44:55)\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:358:5",
+                        "location": {
+                          "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts",
+                          "column": 55,
+                          "line": 44
+                        },
+                        "snippet": "  42 |     const kmState = await km.getState();\n  43 |     expect(kmState.doc, \"doc mismatch\").toBe(cm6State.doc);\n> 44 |     expect(kmState.cursor.pos, \"cursor pos mismatch\").toBe(\n     |                                                       ^\n  45 |       cm6State.cursor.pos\n  46 |     );\n  47 |   }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts",
+                            "column": 55,
+                            "line": 44
+                          },
+                          "message": "Error: cursor pos mismatch\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m121\u001b[39m\nReceived: \u001b[31m41\u001b[39m\n\n  42 |     const kmState = await km.getState();\n  43 |     expect(kmState.doc, \"doc mismatch\").toBe(cm6State.doc);\n> 44 |     expect(kmState.cursor.pos, \"cursor pos mismatch\").toBe(\n     |                                                       ^\n  45 |       cm6State.cursor.pos\n  46 |     );\n  47 |   }\n    at expectMatch (/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:44:55)\n    at /home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts:358:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:50.134Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/keymap-commands-Keymap-Def-7b3ef-t--goes-to-matching-bracket-gap-analysis/test-failed-2.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/jmonk/git/kodemirror/gap-analysis/test-results/keymap-commands-Keymap-Def-7b3ef-t--goes-to-matching-bracket-gap-analysis/test-failed-1.png"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/jmonk/git/kodemirror/gap-analysis/tests/keymap-commands.spec.ts",
+                        "column": 55,
+                        "line": 44
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-565d15d05250cb27a73a",
+              "file": "keymap-commands.spec.ts",
+              "line": 348,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Default - Transpose",
+          "file": "keymap-commands.spec.ts",
+          "line": 362,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Ctrl-t transposes characters",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1653,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:53.265Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-440311541753061c665e",
+              "file": "keymap-commands.spec.ts",
+              "line": 368,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Tab/Shift-Tab",
+          "file": "keymap-commands.spec.ts",
+          "line": 378,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Tab indents (or inserts tab depending on config)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1618,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:55.082Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-c0d404d7150df09344de",
+              "file": "keymap-commands.spec.ts",
+              "line": 384,
+              "column": 7
+            },
+            {
+              "title": "Shift-Tab dedents",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1624,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:56.709Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-c9726ad0e6e002c17ff0",
+              "file": "keymap-commands.spec.ts",
+              "line": 396,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Emacs - Navigation",
+          "file": "keymap-commands.spec.ts",
+          "line": 408,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Ctrl-a goes to line start",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1178,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:58.342Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-8fbc7691d6c94c5f5381",
+              "file": "keymap-commands.spec.ts",
+              "line": 414,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-e goes to line end",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1596,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:12:59.529Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-b9b9b9e86a0d9a1d637b",
+              "file": "keymap-commands.spec.ts",
+              "line": 422,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-f moves char right",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1142,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:01.133Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-699e95bd29ab65b38d5d",
+              "file": "keymap-commands.spec.ts",
+              "line": 429,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-b moves char left",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1629,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:02.283Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-309e2462d734b8e7e59c",
+              "file": "keymap-commands.spec.ts",
+              "line": 435,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-p moves line up",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1790,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:03.918Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-cc020b2e871d80f130f9",
+              "file": "keymap-commands.spec.ts",
+              "line": 442,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-n moves line down",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1555,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:05.714Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-2326d33ec3f49295f5e8",
+              "file": "keymap-commands.spec.ts",
+              "line": 449,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Emacs - Editing",
+          "file": "keymap-commands.spec.ts",
+          "line": 456,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Ctrl-d deletes char forward",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1542,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:07.276Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-d2e543b9e1c34e56c922",
+              "file": "keymap-commands.spec.ts",
+              "line": 462,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-h deletes char backward",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1613,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:08.825Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-6c9f7fdad0fd980044bd",
+              "file": "keymap-commands.spec.ts",
+              "line": 468,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-k kills to end of line",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1566,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:10.445Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-a4eb6b48025b63c6baee",
+              "file": "keymap-commands.spec.ts",
+              "line": 475,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-t transposes characters (emacs)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1824,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:12.018Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-74a43b1448fdea52ebc3",
+              "file": "keymap-commands.spec.ts",
+              "line": 482,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Standard - Selection with Shift",
+          "file": "keymap-commands.spec.ts",
+          "line": 492,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Shift-ArrowRight extends selection right",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1096,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:13.849Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-0e2ced351204f483dbff",
+              "file": "keymap-commands.spec.ts",
+              "line": 498,
+              "column": 7
+            },
+            {
+              "title": "Shift-ArrowLeft extends selection left",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1135,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:14.953Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-d420c63b3c08ed2a6096",
+              "file": "keymap-commands.spec.ts",
+              "line": 509,
+              "column": 7
+            },
+            {
+              "title": "Shift-ArrowDown extends selection down",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1059,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:16.094Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-65b5763aa8c00b9d8ee5",
+              "file": "keymap-commands.spec.ts",
+              "line": 521,
+              "column": 7
+            },
+            {
+              "title": "Shift-ArrowUp extends selection up",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1122,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:17.160Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-2929d5a413539f8a27d0",
+              "file": "keymap-commands.spec.ts",
+              "line": 532,
+              "column": 7
+            },
+            {
+              "title": "Shift-Home selects to line start",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1063,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:18.289Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-c64d8eaab805f3c98981",
+              "file": "keymap-commands.spec.ts",
+              "line": 544,
+              "column": 7
+            },
+            {
+              "title": "Shift-End selects to line end",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1079,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:19.358Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-c3d178511a51ebe0f27c",
+              "file": "keymap-commands.spec.ts",
+              "line": 557,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-Shift-ArrowRight selects word right",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1057,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:20.447Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-ad396c8038e24435b0ea",
+              "file": "keymap-commands.spec.ts",
+              "line": 570,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-Shift-ArrowLeft selects word left",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1062,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:21.510Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-c6a13eeb7276fedb6f94",
+              "file": "keymap-commands.spec.ts",
+              "line": 581,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-Shift-Home selects to doc start",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1562,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:22.578Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-9bb347d0de339492a9ad",
+              "file": "keymap-commands.spec.ts",
+              "line": 593,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-Shift-End selects to doc end",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1024,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:24.148Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-f7d87e36d9396b096502",
+              "file": "keymap-commands.spec.ts",
+              "line": 604,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Standard - Select All",
+          "file": "keymap-commands.spec.ts",
+          "line": 618,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Ctrl-a selects all text",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1034,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:25.178Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-7c2e6f24dabee7f78c41",
+              "file": "keymap-commands.spec.ts",
+              "line": 624,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Keymap: Standard - Undo/Redo",
+          "file": "keymap-commands.spec.ts",
+          "line": 637,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Ctrl-z undoes last change",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1565,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:26.218Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-090711b507ea1d9a0b40",
+              "file": "keymap-commands.spec.ts",
+              "line": 643,
+              "column": 7
+            },
+            {
+              "title": "Ctrl-Shift-z redoes after undo",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "gap-analysis",
+                  "projectName": "gap-analysis",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1600,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-01T15:13:27.790Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "04ba40e975f326cc48ce-0879a78a332c26f14e44",
+              "file": "keymap-commands.spec.ts",
+              "line": 650,
               "column": 7
             }
           ]
@@ -223,11 +2343,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-03-30T19:04:51.130Z",
-    "duration": 11762.035,
-    "expected": 3,
+    "startTime": "2026-04-01T15:12:07.621Z",
+    "duration": 81862.01999999999,
+    "expected": 53,
     "skipped": 0,
-    "unexpected": 0,
+    "unexpected": 4,
     "flaky": 0
   }
 }

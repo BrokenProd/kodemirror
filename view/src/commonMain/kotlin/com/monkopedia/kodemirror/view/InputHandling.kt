@@ -166,11 +166,36 @@ private fun resolveBindingKey(binding: KeyBinding): String? {
         else -> null
     }
     val key = platformKey ?: binding.key ?: return null
-    return if ("Mod" in key) {
+    val resolved = if ("Mod" in key) {
         key.replace("Mod", if (isMac) "Meta" else "Ctrl")
     } else {
         key
     }
+    return normalizeKeyName(resolved)
+}
+
+/**
+ * Normalize modifier order in a key name to match [keyEventToName] output.
+ *
+ * Ensures modifiers always appear in the order Alt-Ctrl-Meta-Shift,
+ * regardless of the order they appear in the binding string.
+ */
+private fun normalizeKeyName(name: String): String {
+    val parts = name.split("-")
+    if (parts.size <= 1) return name
+    val modifiers = mutableListOf<String>()
+    val keyParts = mutableListOf<String>()
+    for (part in parts) {
+        when (part) {
+            "Alt", "Ctrl", "Meta", "Shift" -> modifiers.add(part)
+            else -> keyParts.add(part)
+        }
+    }
+    if (modifiers.isEmpty()) return name
+    // Sort modifiers in canonical order: Alt, Ctrl, Meta, Shift
+    val order = listOf("Alt", "Ctrl", "Meta", "Shift")
+    modifiers.sortBy { order.indexOf(it) }
+    return (modifiers + keyParts).joinToString("-")
 }
 
 /**
@@ -203,6 +228,37 @@ fun handleKeyEvent(view: EditorSession, event: KeyEvent): Boolean {
         null
     }
 
+    // CM6-style fallback: when Shift + modifier (Ctrl/Alt/Meta) is pressed
+    // and the layout key is a shifted symbol (e.g., "|" from Shift+\), also
+    // try matching with the unshifted base character and explicit Shift
+    // modifier. This makes bindings like "Ctrl-Shift-\" work even though
+    // the layout key is "|".
+    val physicalKeyName: String? = if (
+        isShift &&
+        (event.isCtrlPressed || event.isAltPressed || event.isMetaPressed)
+    ) {
+        val layoutKey = keyEventLayoutKey(event)
+        if (layoutKey != null && layoutKey.length == 1) {
+            val base = UNSHIFTED_SYMBOLS[layoutKey[0]]
+            if (base != null && base.toString() != layoutKey) {
+                // Build name with Shift + unshifted base
+                buildString {
+                    if (event.isAltPressed) append("Alt-")
+                    if (event.isCtrlPressed) append("Ctrl-")
+                    if (event.isMetaPressed) append("Meta-")
+                    append("Shift-")
+                    append(base)
+                }
+            } else {
+                null
+            }
+        } else {
+            null
+        }
+    } else {
+        null
+    }
+
     for (binding in bindings) {
         val bindingKey = resolveBindingKey(binding)
 
@@ -217,6 +273,12 @@ fun handleKeyEvent(view: EditorSession, event: KeyEvent): Boolean {
 
         // Direct match: full name matches binding key
         if (bindingKey == name) {
+            val result = binding.run?.invoke(view) ?: false
+            if (result) return true
+        }
+
+        // Physical key fallback: try the unshifted base key with Shift
+        if (physicalKeyName != null && bindingKey == physicalKeyName) {
             val result = binding.run?.invoke(view) ?: false
             if (result) return true
         }
@@ -359,6 +421,11 @@ private val SHIFTED_SYMBOLS = mapOf(
     ';' to ':', '\'' to '"', ',' to '<', '.' to '>', '/' to '?',
     '`' to '~'
 )
+
+// Reverse map: shifted symbol → unshifted base character.
+// Used by the keymap fallback when Shift + modifier keys are pressed.
+private val UNSHIFTED_SYMBOLS: Map<Char, Char> =
+    SHIFTED_SYMBOLS.entries.associate { (k, v) -> v to k }
 
 /**
  * Handle a tap/click at the given document-space [offset].

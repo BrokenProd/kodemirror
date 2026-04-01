@@ -113,8 +113,9 @@ class CursorMotionTest {
         val s = state("hello world")
         val sel = EditorSelection.cursor(DocPos(5))
         val moved = moveByGroup(s, sel, forward = true)
-        // Should move past the space
-        assertEquals(DocPos(6), moved.head)
+        // Starting on space: skip the space then continue through "world"
+        // (CM6 behavior: spaces are skipped, movement continues to next group end)
+        assertEquals(DocPos(11), moved.head)
     }
 
     @Test

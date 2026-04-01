@@ -47,7 +47,11 @@ val standardKeymap: List<KeyBinding> = listOf(
         run = cursorGroupRight,
         shift = selectGroupRight
     ),
-    KeyBinding(key = "Home", run = cursorLineStart, shift = selectLineStart),
+    KeyBinding(
+        key = "Home",
+        run = cursorLineBoundaryBackward,
+        shift = selectLineBoundaryBackward
+    ),
     KeyBinding(key = "End", run = cursorLineEnd, shift = selectLineEnd),
     KeyBinding(
         key = "Ctrl-Home",
@@ -107,9 +111,6 @@ val defaultKeymap: List<KeyBinding> = standardKeymap + commentKeymap + listOf(
 
     // Delete line
     KeyBinding(key = "Ctrl-Shift-k", run = deleteLine),
-
-    // Transpose
-    KeyBinding(key = "Ctrl-t", run = transposeChars),
 
     // Bracket matching
     KeyBinding(

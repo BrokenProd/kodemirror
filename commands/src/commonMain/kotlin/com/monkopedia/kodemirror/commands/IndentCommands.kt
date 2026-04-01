@@ -21,8 +21,10 @@ package com.monkopedia.kodemirror.commands
 import com.monkopedia.kodemirror.language.getIndentUnit
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.InsertContent
 import com.monkopedia.kodemirror.state.LineNumber
+import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.view.EditorSession
@@ -92,9 +94,23 @@ private fun changeIndent(view: EditorSession, add: Boolean): Boolean {
 
     if (changes.isEmpty()) return false
 
+    // Map cursor through changes with assoc=1 so cursor moves with
+    // inserted/removed indent, matching CM6 behavior.
+    val changeDesc = state.changes(ChangeSpec.Multi(changes))
+    val newSel = EditorSelection.create(
+        state.selection.ranges.map { r ->
+            EditorSelection.range(
+                changeDesc.mapPos(r.anchor, 1),
+                changeDesc.mapPos(r.head, 1)
+            )
+        },
+        state.selection.mainIndex
+    )
+
     view.dispatch(
         TransactionSpec(
             changes = ChangeSpec.Multi(changes),
+            selection = SelectionSpec.EditorSelectionSpec(newSel),
             scrollIntoView = true,
             userEvent = if (add) "indent.more" else "indent.less",
             annotations = listOf(Transaction.addToHistory.of(true))
