@@ -62,6 +62,7 @@ fun vim(status: Boolean = false): Extension {
         vimPlugin.asExtension(),
         vimInputSuppressor,
         vimBlockCursorProvider,
+        vimModeField,
         if (status) showPanel.of(createStatusPanel()) else vimPanelField
     )
 }
@@ -111,6 +112,20 @@ fun getCM(view: EditorSession): VimEditor? = getVimEditor(view)
 // ---------------------------------------------------------------------------
 // State effect for toggling the vim panel
 // ---------------------------------------------------------------------------
+
+internal val vimModeEffect: StateEffectType<String> = StateEffect.define()
+
+internal val vimModeField: StateField<String> = StateField.define {
+    create { _: EditorState -> "normal" }
+    update { value: String, tr: Transaction ->
+        var result = value
+        for (effect in tr.effects) {
+            val mode = effect.asType(vimModeEffect)
+            if (mode != null) result = mode.value
+        }
+        result
+    }
+}
 
 internal val showVimPanel: StateEffectType<Boolean> = StateEffect.define()
 
@@ -197,11 +212,27 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
                 }
             }
             vimSt.status = ""
+            session.dispatch(
+                TransactionSpec(
+                    effects = listOf(
+                        vimModeEffect.of(vimSt.mode ?: "normal")
+                    )
+                )
+            )
             rebuildDecorations()
             updateStatus()
             syncPromptPanel()
         }
         rebuildDecorations()
+
+        // Dispatch the initial mode so the state field has the correct value
+        session.dispatch(
+            TransactionSpec(
+                effects = listOf(
+                    vimModeEffect.of(vimState.mode ?: "normal")
+                )
+            )
+        )
 
         cm.on("dialog") {
             if (cm.statusbar != null) {

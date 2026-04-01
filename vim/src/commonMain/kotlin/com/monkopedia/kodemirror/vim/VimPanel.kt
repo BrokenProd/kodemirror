@@ -46,7 +46,8 @@ internal fun createStatusPanel(): Panel = Panel(top = false) {
         val plugin = session.plugin(vimPlugin)
         val cm = plugin?.cm
         val vim = cm?.vim
-        VimStatusContent(vim)
+        val modeFromField = session.state.field(vimModeField)
+        VimStatusContent(vim, modeFromField)
     }
 }
 
@@ -62,7 +63,8 @@ internal fun createVimDialogPanel(): Panel = Panel(top = false) {
         val plugin = session.plugin(vimPlugin)
         val cm = plugin?.cm
         val vim = cm?.vim
-        VimStatusContent(vim)
+        val modeFromField = session.state.field(vimModeField)
+        VimStatusContent(vim, modeFromField)
     }
 }
 
@@ -93,7 +95,7 @@ private fun VimPromptContent(prompt: PromptOptions) {
 }
 
 @Composable
-private fun VimStatusContent(vim: VimState?) {
+private fun VimStatusContent(vim: VimState?, modeFromField: String? = null) {
     val style = monoStyle()
     Row(
         modifier = Modifier.fillMaxWidth()
@@ -101,9 +103,9 @@ private fun VimStatusContent(vim: VimState?) {
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        val modeText = if (vim != null) {
-            val mode = (vim.mode ?: "normal").uppercase()
-            val suffix = if (vim.insertModeReturn) "(C-O)" else ""
+        val modeText = if (vim != null || modeFromField != null) {
+            val mode = (modeFromField ?: vim?.mode ?: "normal").uppercase()
+            val suffix = if (vim?.insertModeReturn == true) "(C-O)" else ""
             "--$mode$suffix--"
         } else {
             ""

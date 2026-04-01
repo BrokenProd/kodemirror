@@ -18,9 +18,6 @@
  */
 package com.monkopedia.kodemirror.vim
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-
 /**
  * A bookmark marker that tracks a position through document changes.
  */
@@ -379,7 +376,7 @@ class VimState {
     var insertEnd: Marker? = null
     var status: String = ""
     var exMode: Boolean = false
-    var mode: String? by androidx.compose.runtime.mutableStateOf<String?>(null)
+    var mode: String? = null
     var expectLiteralNext: Boolean = false
     var overwrite: Boolean = false
     var keyMap: String? = null
