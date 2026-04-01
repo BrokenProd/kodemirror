@@ -367,9 +367,6 @@ fun handleRawKeyEvent(
     // Ignore modifier-only keys
     if (key in setOf("Shift", "Control", "Alt", "Meta", "CapsLock")) return false
 
-    // Route through keymap's `any` handlers (like vim).
-    // The `any` handler expects a KeyEvent, but for raw keys we can't create one.
-    // Instead, directly call vim's handleKey via the key string.
     // Build the key name for keymap matching.
     val normalizedKey = if (shift && key.length == 1 && key[0].isLetter()) {
         key.uppercase()
@@ -379,19 +376,90 @@ fun handleRawKeyEvent(
         key
     }
 
+    // Build the full key name with modifiers (e.g., "Ctrl-Shift-\")
+    val fullName = buildString {
+        if (alt) append("Alt-")
+        if (ctrl) append("Ctrl-")
+        if (meta) append("Meta-")
+        if (shift) append("Shift-")
+        append(normalizedKey)
+    }
+
+    // Also build a physical-key fallback name for shifted symbols with
+    // modifiers. When Shift + another modifier is pressed and the key
+    // is a shifted symbol (e.g., "|" from Shift+\), try the unshifted
+    // base character with explicit Shift (e.g., "Ctrl-Shift-\").
+    val physicalName: String? = if (
+        shift && (ctrl || alt || meta) &&
+        normalizedKey.length == 1
+    ) {
+        val base = UNSHIFTED_SYMBOLS[normalizedKey[0]]
+        if (base != null && base.toString() != normalizedKey) {
+            buildString {
+                if (alt) append("Alt-")
+                if (ctrl) append("Ctrl-")
+                if (meta) append("Meta-")
+                append("Shift-")
+                append(base)
+            }
+        } else {
+            null
+        }
+    } else {
+        null
+    }
+
+    // Build name without shift for shift-variant matching
+    val nameWithoutShift: String? = if (shift) {
+        buildString {
+            if (alt) append("Alt-")
+            if (ctrl) append("Ctrl-")
+            if (meta) append("Meta-")
+            append(normalizedKey)
+        }
+    } else {
+        null
+    }
+
     val bindings = view.state.facet(keymap)
     for (binding in bindings) {
-        if (binding.any != null && resolveBindingKey(binding) == null) {
-            // This is a catch-all handler (like vim's).
-            // Call it with a synthetic raw key dispatch.
-            val result = binding.anyRaw?.invoke(view, normalizedKey, ctrl, alt, meta, shift)
-            if (result == true) return true
+        val bindingKey = resolveBindingKey(binding)
+
+        // Catch-all `any` handlers (like vim's)
+        if (bindingKey == null) {
+            if (binding.any != null) {
+                val result =
+                    binding.anyRaw?.invoke(view, normalizedKey, ctrl, alt, meta, shift)
+                if (result == true) return true
+            }
+            continue
+        }
+
+        // Direct match
+        if (bindingKey == fullName) {
+            val result = binding.run?.invoke(view) ?: false
+            if (result) return true
+        }
+
+        // Physical key fallback
+        if (physicalName != null && bindingKey == physicalName) {
+            val result = binding.run?.invoke(view) ?: false
+            if (result) return true
+        }
+
+        // Shift variant: key matches without Shift, call binding.shift
+        if (shift && nameWithoutShift != null &&
+            binding.shift != null && bindingKey == nameWithoutShift
+        ) {
+            val result = binding.shift.invoke(view)
+            if (result) return true
         }
     }
 
-    // Not consumed by keymap — check if it should be inserted as text
+    // Not consumed by keymap -- check if it should be inserted as text
     val shouldSuppress = view.state.facet(inputSuppressor).any { it.invoke() }
-    if (!shouldSuppress && normalizedKey.length == 1 && !normalizedKey[0].isISOControl() &&
+    if (!shouldSuppress && normalizedKey.length == 1 &&
+        !normalizedKey[0].isISOControl() &&
         !ctrl && !alt && !meta
     ) {
         val sel = view.state.selection.main

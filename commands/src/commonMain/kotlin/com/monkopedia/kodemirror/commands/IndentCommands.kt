@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.commands
 
 import com.monkopedia.kodemirror.language.getIndentUnit
+import com.monkopedia.kodemirror.language.indentString
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorSelection
@@ -27,6 +28,7 @@ import com.monkopedia.kodemirror.state.LineNumber
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
+import com.monkopedia.kodemirror.state.countColumn
 import com.monkopedia.kodemirror.view.EditorSession
 
 /**
@@ -47,7 +49,8 @@ private fun changeIndent(view: EditorSession, add: Boolean): Boolean {
     val state = view.state
     if (state.readOnly) return false
 
-    val indent = " ".repeat(getIndentUnit(state))
+    val indentSize = getIndentUnit(state)
+    val indent = " ".repeat(indentSize)
     val sel = state.selection.main
     val startLine = state.doc.lineAt(sel.from)
     // When the selection ends at the very start of a line and is non-empty,
@@ -76,26 +79,43 @@ private fun changeIndent(view: EditorSession, add: Boolean): Boolean {
                 )
             )
         } else {
+            // Match CM6's indentLess: compute the current column width of
+            // leading whitespace, then generate the new (shorter) indent
+            // string. Only replace the differing suffix so that the cursor
+            // stays in place when it's within the common prefix.
             val text = line.text
-            val removeLen = when {
-                text.startsWith(indent) -> indent.length
-                text.startsWith("\t") -> 1
-                else -> {
-                    // Remove as many leading spaces as possible (up to indent size)
-                    val spaces = text.takeWhile { it == ' ' }.length
-                    spaces.coerceAtMost(indent.length)
-                }
+            val space = text.takeWhile { it == ' ' || it == '\t' }
+            if (space.isEmpty()) continue
+            val col = countColumn(space, state.tabSize)
+            val newCol = (col - indentSize).coerceAtLeast(0)
+            val newIndent = indentString(state, newCol)
+            // Find common prefix length
+            var keep = 0
+            while (
+                keep < space.length && keep < newIndent.length &&
+                space[keep] == newIndent[keep]
+            ) {
+                keep++
             }
-            if (removeLen > 0) {
-                changes.add(ChangeSpec.Single(line.from, line.from + removeLen))
-            }
+            changes.add(
+                ChangeSpec.Single(
+                    line.from + keep,
+                    line.from + space.length,
+                    if (keep < newIndent.length) {
+                        InsertContent.StringContent(newIndent.substring(keep))
+                    } else {
+                        null
+                    }
+                )
+            )
         }
     }
 
     if (changes.isEmpty()) return false
 
-    // Map cursor through changes with assoc=1 so cursor moves with
-    // inserted/removed indent, matching CM6 behavior.
+    // CM6's changeBySelectedLine maps selection with assoc=1, so the
+    // cursor moves right on insertions and stays in place when the
+    // deletion is after the cursor (as with the suffix-only dedent).
     val changeDesc = state.changes(ChangeSpec.Multi(changes))
     val newSel = EditorSelection.create(
         state.selection.ranges.map { r ->

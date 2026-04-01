@@ -1193,10 +1193,12 @@ val cursorMatchingBracket: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val pos = sel.head
         val state = view.state
-        // Try character before cursor
-        val before = if (pos > DocPos.ZERO) matchBrackets(state, pos - 1, -1) else null
+        // Try character at cursor first (forward), then before cursor.
+        // This matches CM6's priority where the bracket at the cursor
+        // position is preferred over the one before it.
         val after = if (pos < state.doc.endPos) matchBrackets(state, pos, 1) else null
-        val match = before ?: after
+        val before = if (pos > DocPos.ZERO) matchBrackets(state, pos - 1, -1) else null
+        val match = after ?: before
         val end = match?.end
         if (end != null) {
             EditorSelection.cursor(end.to)
@@ -1211,9 +1213,9 @@ val selectMatchingBracket: (EditorSession) -> Boolean = { view ->
     updateSel(view) { sel, _ ->
         val pos = sel.head
         val state = view.state
-        val before = if (pos > DocPos.ZERO) matchBrackets(state, pos - 1, -1) else null
         val after = if (pos < state.doc.endPos) matchBrackets(state, pos, 1) else null
-        val match = before ?: after
+        val before = if (pos > DocPos.ZERO) matchBrackets(state, pos - 1, -1) else null
+        val match = after ?: before
         val end = match?.end
         if (end != null) {
             EditorSelection.range(sel.anchor, end.to)

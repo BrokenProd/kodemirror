@@ -72,8 +72,10 @@ class IndentCommandsTest {
 
     @Test
     fun testIndentLessWithTab() {
+        // Tab at col 0 has column width 4. Indent unit is 2, so dedent
+        // reduces to col 2 = "  " (2 spaces), matching CM6 behavior.
         val view = createView("\thello", 0, 6)
         indentLess(view)
-        assertEquals("hello", view.state.doc.toString())
+        assertEquals("  hello", view.state.doc.toString())
     }
 }
