@@ -40,6 +40,15 @@ kotlin {
         nodejs()
     }
 
+    // Native targets — compile but largely untested.
+    macosArm64()
+    macosX64()
+    iosArm64()
+    iosSimulatorArm64()
+    iosX64()
+
+    applyDefaultHierarchyTemplate()
+
     sourceSets {
         commonMain.dependencies {
         }
