@@ -86,6 +86,6 @@ nav:
       - Bidirectional Text: examples/bidi.md
       - Inverted Effects: examples/inverted-effect.md
       - Internationalization: examples/translate.md
-  - Live Demo: showcase/index.html
+  - Live Demo: demo.md
   - Reference:
       - reference/index.md
