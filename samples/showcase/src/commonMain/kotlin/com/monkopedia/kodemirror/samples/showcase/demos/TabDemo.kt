@@ -45,7 +45,7 @@ import com.monkopedia.kodemirror.view.keymapOf
 import com.monkopedia.kodemirror.view.rememberEditorSession
 
 private enum class TabMode(val label: String) {
-    INDENT("indentWithTab"),
+    INDENT("Indent with Tab"),
     INSERT("Insert literal tab")
 }
 
