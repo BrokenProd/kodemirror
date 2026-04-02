@@ -20,6 +20,7 @@ package com.monkopedia.kodemirror.lang.html
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class HtmlParserTest {
 
@@ -290,8 +291,8 @@ class HtmlParserTest {
         val tree = htmlLanguage.parser.parse(input)
         val str = treeToString(tree)
         // Mounted JS tree replaces ScriptText with parsed JS AST
-        assert(str.contains("Script(")) { "Expected JS AST in: $str" }
-        assert(str.contains("VariableDeclaration")) { "Expected VariableDeclaration in: $str" }
+        assertTrue(str.contains("Script("), "Expected JS AST in: $str")
+        assertTrue(str.contains("VariableDeclaration"), "Expected VariableDeclaration in: $str")
     }
 
     @Test
@@ -300,8 +301,8 @@ class HtmlParserTest {
         val tree = htmlLanguage.parser.parse(input)
         val str = treeToString(tree)
         // Mounted CSS tree replaces StyleText with parsed CSS AST
-        assert(str.contains("StyleSheet(")) { "Expected CSS AST in: $str" }
-        assert(str.contains("RuleSet")) { "Expected RuleSet in: $str" }
+        assertTrue(str.contains("StyleSheet("), "Expected CSS AST in: $str")
+        assertTrue(str.contains("RuleSet"), "Expected RuleSet in: $str")
     }
 
     @Test
@@ -324,8 +325,8 @@ class HtmlParserTest {
         val tree = htmlLanguage.parser.parse(input)
         val str = treeToString(tree)
         // Both inner parsers produce AST nodes
-        assert(str.contains("Script(")) { "Expected JS AST in: $str" }
-        assert(str.contains("StyleSheet(")) { "Expected CSS AST in: $str" }
+        assertTrue(str.contains("Script("), "Expected JS AST in: $str")
+        assertTrue(str.contains("StyleSheet("), "Expected CSS AST in: $str")
     }
 
     // === mixed.txt tests (without JS parser nesting) ===
