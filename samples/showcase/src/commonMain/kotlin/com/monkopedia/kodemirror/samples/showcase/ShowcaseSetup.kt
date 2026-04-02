@@ -15,14 +15,22 @@
  */
 package com.monkopedia.kodemirror.samples.showcase
 
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import com.monkopedia.kodemirror.basicsetup.basicSetup
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.themonedark.oneDark
+import com.monkopedia.kodemirror.view.editorContentStyle
 
 /**
  * Showcase-specific setup: [basicSetup] plus the [oneDark] theme,
  * matching how a CodeMirror project uses `basicSetup` + a theme extension.
- * The theme bundles both editor UI colors and syntax highlighting.
+ *
+ * Explicitly sets [FontFamily.Monospace] to ensure monospace rendering
+ * on all platforms. The [defaultEditorFontFamily] uses [SystemFont] names
+ * that don't reliably resolve on wasmJs (Skiko's canvas rendering needs
+ * fonts loaded through CSS or Compose resources).
  */
-val showcaseSetup: Extension = basicSetup + oneDark
+val showcaseSetup: Extension = basicSetup + oneDark +
+    editorContentStyle.of(TextStyle(fontFamily = FontFamily.Monospace))
