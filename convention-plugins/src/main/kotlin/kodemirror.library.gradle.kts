@@ -20,6 +20,7 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
+    id("com.android.library")
     id("org.jetbrains.kotlin.multiplatform")
     id("org.jlleitschuh.gradle.ktlint")
     id("com.diffplug.spotless")
@@ -32,8 +33,21 @@ plugins {
 group = "com.monkopedia.kodemirror"
 version = "0.1.0-SNAPSHOT"
 
+android {
+    namespace = "com.monkopedia.kodemirror.${project.name.replace("-", ".")}"
+    compileSdk = 36
+    defaultConfig {
+        minSdk = 24
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+}
+
 kotlin {
     jvm()
+    androidTarget()
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
@@ -55,6 +69,8 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+        // Android shares platform code with JVM
+        androidMain.get().dependsOn(jvmMain.get())
     }
 }
 

@@ -27,7 +27,6 @@ import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.platform.SystemFont
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -37,24 +36,20 @@ import com.monkopedia.kodemirror.state.Facet
 /**
  * Default font family for the editor.
  *
- * Provides a fallback chain from monospace fonts to sans-serif for
- * broad Unicode coverage (including Arabic and Hebrew). On wasmJs,
- * fonts must be loaded in the host page (e.g. via Google Fonts) for
- * Skiko to find them.
+ * Uses [FontFamily.Monospace] which is the platform's default monospace font.
+ * This works on all targets (JVM, Android, iOS, macOS, wasmJs).
  *
- * To use a custom font, provide an [editorContentStyle] extension with
- * a different [TextStyle.fontFamily][androidx.compose.ui.text.TextStyle].
+ * For better typography (JetBrains Mono, RTL support, etc.), provide a
+ * custom font via [editorContentStyle]:
+ * ```
+ * editorContentStyle.of(TextStyle(fontFamily = FontFamily(Font(Res.font.MyFont))))
+ * ```
+ *
+ * On wasmJs, [FontFamily.Monospace] may not resolve to the preferred font.
+ * The showcase uses `Font(Res.font.JetBrainsMono_Regular)` from bundled
+ * resources for proper monospace rendering.
  */
-val defaultEditorFontFamily: FontFamily = FontFamily(
-    SystemFont("JetBrains Mono"),
-    SystemFont("DejaVu Sans Mono"),
-    SystemFont("Noto Sans Mono"),
-    SystemFont("Noto Sans Arabic"),
-    SystemFont("Noto Sans Hebrew"),
-    SystemFont("Courier New"),
-    SystemFont("monospace"),
-    SystemFont("sans-serif")
-)
+val defaultEditorFontFamily: FontFamily = FontFamily.Monospace
 
 /**
  * A typed key for extensible theme properties. Modules define their own keys

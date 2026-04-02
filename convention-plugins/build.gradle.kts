@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    implementation("com.android.tools.build:gradle:${libs.versions.agp.get()}")
     implementation(libs.plugins.kotlinMultiplatform.get().let {
         "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version}"
     })
