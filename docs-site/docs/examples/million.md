@@ -4,6 +4,10 @@ Kodemirror is designed to handle documents with millions of lines
 efficiently. This page covers the data structures and techniques that
 make this possible.
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=million" loading="lazy"></iframe>
+</div>
+
 ## Efficient document representation
 
 The `Text` type uses a tree structure (not a flat string) so that

@@ -3,6 +3,10 @@
 Decorations add visual annotations to the editor — highlighting ranges,
 inserting widgets, styling lines — without modifying the document text.
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=decoration" loading="lazy"></iframe>
+</div>
+
 ## Mark decorations
 
 A mark decoration applies a `SpanStyle` to a range of text:

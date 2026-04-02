@@ -6,6 +6,10 @@ history needs to know how to invert them. The `invertedEffects` facet
 lets you register functions that produce the inverse of a transaction's
 effects.
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=inverted-effect" loading="lazy"></iframe>
+</div>
+
 ## When to use
 
 Use `invertedEffects` when your extension dispatches `StateEffect`s that

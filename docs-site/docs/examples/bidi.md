@@ -3,6 +3,10 @@
 Kodemirror supports bidirectional (BiDi) text for languages written
 right-to-left, such as Arabic and Hebrew.
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=bidi" loading="lazy"></iframe>
+</div>
+
 ## Direction
 
 The `Direction` enum represents text direction:

@@ -3,6 +3,10 @@
 You can modify the document programmatically by dispatching transactions
 with change specifications.
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=change" loading="lazy"></iframe>
+</div>
+
 ## Inserting text
 
 To insert text at a position, create a `ChangeSpec.Single` with `from`

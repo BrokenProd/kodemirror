@@ -5,6 +5,10 @@ and the `phrase()` method. This lets you localize built-in messages
 (tooltips, ARIA labels, panel headings, etc.) without forking the
 source.
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=translate" loading="lazy"></iframe>
+</div>
+
 ## The phrases facet
 
 Register translations with `EditorState.phrases`. The facet maps

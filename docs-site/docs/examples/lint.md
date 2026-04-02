@@ -3,6 +3,10 @@
 The `:lint` module displays diagnostics (errors, warnings, hints) as
 inline decorations and in an optional panel.
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=lint" loading="lazy"></iframe>
+</div>
+
 ## Basic setup
 
 Create a `linter` extension with a function that returns diagnostics:

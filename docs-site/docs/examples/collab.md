@@ -3,6 +3,10 @@
 The `:collab` module implements the client side of collaborative editing
 using operational transformation.
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=collab" loading="lazy"></iframe>
+</div>
+
 ## Setup
 
 Install the `collab()` extension with your starting document version:

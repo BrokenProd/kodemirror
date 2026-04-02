@@ -3,6 +3,10 @@
 This example shows how to build a `ViewPlugin` that applies alternating
 line decorations — a common pattern for line-level styling.
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=zebra" loading="lazy"></iframe>
+</div>
+
 ## The approach
 
 Use `Decoration.line()` with a `SpanStyle` background color, applied

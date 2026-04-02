@@ -3,6 +3,10 @@
 A split editor shows the same document in two side-by-side panes. Each
 pane is a `KodeMirror` composable sharing the same `EditorSession`.
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=split" loading="lazy"></iframe>
+</div>
+
 ## Basic split view
 
 ```kotlin

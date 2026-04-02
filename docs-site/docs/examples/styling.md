@@ -3,6 +3,10 @@
 Kodemirror replaces CSS-based theming with Kotlin data classes and
 Compose styling primitives.
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=styling" loading="lazy"></iframe>
+</div>
+
 ## Editor theme
 
 The `EditorTheme` data class controls the editor's visual appearance —

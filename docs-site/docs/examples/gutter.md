@@ -3,6 +3,10 @@
 The gutter system displays markers (line numbers, breakpoint indicators, etc.)
 alongside the editor content.
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=gutter" loading="lazy"></iframe>
+</div>
+
 ## Line numbers
 
 The simplest gutter is the built-in line number gutter:

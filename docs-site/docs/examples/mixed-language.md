@@ -4,6 +4,10 @@ Some documents contain multiple languages — for example, HTML with
 embedded JavaScript and CSS. Kodemirror supports this through the
 `parseMixed` wrapper.
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=mixed-language" loading="lazy"></iframe>
+</div>
+
 ## parseMixed
 
 The `parseMixed` function wraps a parser to scan its tree for regions

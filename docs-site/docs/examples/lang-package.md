@@ -4,6 +4,10 @@ This example shows how to define a language for Kodemirror, either using
 a Lezer grammar (for tree-sitter-style parsing) or a `StreamParser` (for
 simpler line-by-line tokenization).
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=lang-package" loading="lazy"></iframe>
+</div>
+
 ## Language and LanguageSupport
 
 A language package typically exports a `LanguageSupport` that bundles the

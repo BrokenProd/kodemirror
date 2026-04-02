@@ -181,6 +181,16 @@ val allDemos: List<DemoItem> = listOf(
 )
 
 @Composable
+fun EmbeddedDemo(id: String) {
+    val demo = allDemos.firstOrNull { it.id == id }
+    Surface(modifier = Modifier.fillMaxSize()) {
+        if (demo != null) {
+            demo.content()
+        }
+    }
+}
+
+@Composable
 fun ShowcaseApp() {
     var selectedId by remember { mutableStateOf(allDemos.first().id) }
     val selectedDemo = allDemos.first { it.id == selectedId }

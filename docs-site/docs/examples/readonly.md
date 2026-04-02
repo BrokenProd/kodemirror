@@ -3,6 +3,10 @@
 There are two ways to make an editor read-only: the `readOnly` facet
 on the state layer, and the `editable` facet on the view layer.
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=readonly" loading="lazy"></iframe>
+</div>
+
 ## Using readOnly
 
 The `readOnly` facet prevents the document from being modified through

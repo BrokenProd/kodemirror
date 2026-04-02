@@ -3,6 +3,10 @@
 Selections in Kodemirror can be cursors (empty ranges), single ranges,
 or multiple ranges for multi-cursor editing.
 
+<div class="demo-embed">
+<iframe src="../showcase/index.html?demo=selection" loading="lazy"></iframe>
+</div>
+
 ## Setting the cursor
 
 Dispatch a transaction with a `SelectionSpec.CursorSpec` to move the

@@ -25,6 +25,9 @@ import kotlinx.browser.document
 @JsFun("() => new URLSearchParams(window.location.search).get('test') || ''")
 private external fun getTestParam(): String
 
+@JsFun("() => new URLSearchParams(window.location.search).get('demo') || ''")
+private external fun getDemoParam(): String
+
 @JsFun("(cb) => document.fonts.ready.then(() => cb())")
 private external fun onFontsReady(callback: () -> Unit)
 
@@ -34,9 +37,11 @@ fun main() {
         val body = document.body ?: return@onFontsReady
         ComposeViewport(body) {
             MaterialTheme(colorScheme = darkColorScheme()) {
-                when (getTestParam()) {
-                    "true" -> TestEditorPage()
-                    "vim" -> VimTestEditorPage()
+                val demoParam = getDemoParam()
+                when {
+                    getTestParam() == "true" -> TestEditorPage()
+                    getTestParam() == "vim" -> VimTestEditorPage()
+                    demoParam.isNotEmpty() -> EmbeddedDemo(demoParam)
                     else -> ShowcaseApp()
                 }
             }
