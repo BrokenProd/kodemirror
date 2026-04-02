@@ -20,3 +20,7 @@ docs-site/docs/api/
 docs-site/site/
 node_modules/
 *.tgz
+package-lock.json
+playwright-report/
+test-results/
+gap-analysis/screenshots/
