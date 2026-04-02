@@ -74,7 +74,8 @@ private val BLOCK_CURSOR_COLOR = Color(0xFFFF9696)
  */
 private fun mapOffset(docOffset: Int, lineLength: Int, tabOffsetMap: IntArray?): Int {
     if (tabOffsetMap == null) return docOffset
-    return tabOffsetMap[docOffset.coerceIn(0, lineLength)]
+    val index = docOffset.coerceIn(0, minOf(lineLength, tabOffsetMap.size - 1))
+    return tabOffsetMap[index]
 }
 
 private fun DrawScope.drawLineSelection(

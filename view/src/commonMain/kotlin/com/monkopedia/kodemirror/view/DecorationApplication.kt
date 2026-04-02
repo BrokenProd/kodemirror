@@ -208,10 +208,16 @@ internal fun buildLineContentWithTabs(
                 val endInLine =
                     (to - lineFromVal).coerceIn(0, lineText.length)
                 if (startInLine < endInLine) {
-                    val mappedStart =
-                        offsetMap?.get(startInLine) ?: startInLine
-                    val mappedEnd =
-                        offsetMap?.get(endInLine) ?: endInLine
+                    val mappedStart = if (offsetMap != null && startInLine < offsetMap.size) {
+                        offsetMap[startInLine]
+                    } else {
+                        startInLine
+                    }
+                    val mappedEnd = if (offsetMap != null && endInLine < offsetMap.size) {
+                        offsetMap[endInLine]
+                    } else {
+                        endInLine
+                    }
                     if (mappedStart < mappedEnd) {
                         builder.addStyle(
                             value.spec.style,
