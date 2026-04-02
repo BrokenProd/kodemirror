@@ -15,6 +15,7 @@
  */
 package com.monkopedia.kodemirror.samples.showcase
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import com.monkopedia.kodemirror.basicsetup.basicSetup
@@ -22,15 +23,28 @@ import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.themonedark.oneDark
 import com.monkopedia.kodemirror.view.editorContentStyle
+import kodemirror.samples.showcase.generated.resources.JetBrainsMono_Regular
+import kodemirror.samples.showcase.generated.resources.Res
+import org.jetbrains.compose.resources.Font
 
 /**
- * Showcase-specific setup: [basicSetup] plus the [oneDark] theme,
- * matching how a CodeMirror project uses `basicSetup` + a theme extension.
- *
- * Explicitly sets [FontFamily.Monospace] to ensure monospace rendering
- * on all platforms. The [defaultEditorFontFamily] uses [SystemFont] names
- * that don't reliably resolve on wasmJs (Skiko's canvas rendering needs
- * fonts loaded through CSS or Compose resources).
+ * Base showcase setup without font override: [basicSetup] + [oneDark].
  */
-val showcaseSetup: Extension = basicSetup + oneDark +
-    editorContentStyle.of(TextStyle(fontFamily = FontFamily.Monospace))
+private val showcaseBase: Extension = basicSetup + oneDark
+
+/**
+ * Showcase-specific setup: [basicSetup] plus the [oneDark] theme and
+ * JetBrains Mono font loaded from bundled resources.
+ *
+ * This is a `@Composable` property because [Font] from Compose Resources
+ * requires a composable context. All showcase demo composables access this
+ * to get monospace rendering on wasmJs where [SystemFont] names don't
+ * resolve through CanvasKit's font manager.
+ */
+val showcaseSetup: Extension
+    @Composable get() {
+        val monoFont = FontFamily(Font(Res.font.JetBrainsMono_Regular))
+        return showcaseBase + editorContentStyle.of(
+            TextStyle(fontFamily = monoFont)
+        )
+    }

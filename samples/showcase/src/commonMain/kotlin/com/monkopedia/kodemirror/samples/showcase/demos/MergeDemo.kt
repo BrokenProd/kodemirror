@@ -36,16 +36,17 @@ import com.monkopedia.kodemirror.view.KodeMirror
 
 @Composable
 fun MergeDemo() {
-    val mergeView = remember {
+    val setup = showcaseSetup
+    val mergeView = remember(setup) {
         MergeView(
             MergeViewConfig(
                 a = EditorStateConfig(
                     doc = SampleDocs.mergeOriginal.asDoc(),
-                    extensions = showcaseSetup + javascript().extension
+                    extensions = setup + javascript().extension
                 ),
                 b = EditorStateConfig(
                     doc = SampleDocs.mergeModified.asDoc(),
-                    extensions = showcaseSetup + javascript().extension
+                    extensions = setup + javascript().extension
                 ),
                 highlightChanges = true,
                 gutter = true
