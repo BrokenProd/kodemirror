@@ -658,12 +658,8 @@ private fun EditorContent(
                                     }
                                 }
                         ) {
-                            val renderContent = item.content
-                            if ('\t' in renderContent.text || item.tabOffsetMap != null) {
-                                println("[TAB-RENDER] Line ${item.lineNumber}: content='${renderContent.text}' len=${renderContent.text.length} hasTabMap=${item.tabOffsetMap != null}")
-                            }
                             BasicText(
-                                text = renderContent,
+                                text = item.content,
                                 style = contentStyle,
                                 onTextLayout = { result: TextLayoutResult ->
                                     textLayout = result

@@ -60,12 +60,7 @@ fun TabDemo() {
             KeyBinding(
                 key = "Tab",
                 run = { session ->
-                    val pos = session.state.selection.main.head
-                    println("[TAB-DEMO] Insert literal tab at pos=$pos")
-                    session.insertAt(pos, "\t")
-                    val newDoc = session.state.doc.toString()
-                    val hasTab = '\t' in newDoc
-                    println("[TAB-DEMO] After insert: hasTab=$hasTab docLen=${newDoc.length}")
+                    session.insertAt(session.state.selection.main.head, "\t")
                     true
                 }
             )

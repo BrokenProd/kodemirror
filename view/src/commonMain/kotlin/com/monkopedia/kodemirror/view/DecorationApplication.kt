@@ -174,7 +174,6 @@ internal fun buildLineContentWithTabs(
     val expandedText: String
     val offsetMap: IntArray?
     if (hasTabs) {
-        println("[TAB-DEBUG] Line has tabs: len=${lineText.length} tabSize=$tabSize")
         val expanded = StringBuilder()
         val map = IntArray(lineText.length + 1)
         var col = 0
@@ -182,7 +181,6 @@ internal fun buildLineContentWithTabs(
             map[i] = expanded.length
             if (lineText[i] == '\t') {
                 val spaces = tabSize - (col % tabSize)
-                println("[TAB-DEBUG] Tab at col=$col, expanding to $spaces spaces")
                 repeat(spaces) { expanded.append(' ') }
                 col += spaces
             } else {
@@ -193,7 +191,6 @@ internal fun buildLineContentWithTabs(
         map[lineText.length] = expanded.length
         expandedText = expanded.toString()
         offsetMap = map
-        println("[TAB-DEBUG] Expanded: '${expandedText}' (${expandedText.length} chars)")
     } else {
         expandedText = lineText
         offsetMap = null
