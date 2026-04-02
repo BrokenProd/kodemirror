@@ -14,13 +14,27 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
       - uses: gradle/actions/setup-gradle@v4
-      - name: Lint and test
+      - name: Lint and test (JVM + wasmJs + Android)
         run: >-
           ./gradlew apiCheck jvmTest
+          testDebugUnitTest
           :state:wasmJsTest
           :collab:wasmJsTest
           :lezer-common:wasmJsTest
           :lezer-highlight:wasmJsTest
           :lezer-lr:wasmJsTest
+
+  check-apple:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Test (macOS native + iOS simulator)
+        run: >-
+          ./gradlew macosArm64Test iosSimulatorArm64Test
