@@ -5,7 +5,7 @@ embedded JavaScript and CSS. Kodemirror supports this through the
 `parseMixed` wrapper.
 
 <div class="demo-embed">
-<iframe src="../showcase/index.html?demo=mixed-language" loading="lazy"></iframe>
+<iframe src="../../showcase/index.html?demo=mixed-language" loading="lazy"></iframe>
 </div>
 
 ## parseMixed

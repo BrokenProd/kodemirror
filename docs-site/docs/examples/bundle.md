@@ -4,7 +4,7 @@ In upstream CodeMirror, you bundle your editor with Rollup or esbuild.
 In Kodemirror, you add Gradle dependencies.
 
 <div class="demo-embed">
-<iframe src="../showcase/index.html?demo=bundle" loading="lazy"></iframe>
+<iframe src="../../showcase/index.html?demo=bundle" loading="lazy"></iframe>
 </div>
 
 ## Adding Kodemirror to your project

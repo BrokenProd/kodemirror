@@ -4,7 +4,7 @@ Panels are UI strips displayed above or below the editor content. The
 search bar is a common example of a panel.
 
 <div class="demo-embed">
-<iframe src="../showcase/index.html?demo=panel" loading="lazy"></iframe>
+<iframe src="../../showcase/index.html?demo=panel" loading="lazy"></iframe>
 </div>
 
 ## Showing a panel

@@ -3,7 +3,7 @@
 Tooltips display floating UI anchored to a document position.
 
 <div class="demo-embed">
-<iframe src="../showcase/index.html?demo=tooltip" loading="lazy"></iframe>
+<iframe src="../../showcase/index.html?demo=tooltip" loading="lazy"></iframe>
 </div>
 
 ## Basic tooltip

@@ -3,7 +3,7 @@
 A minimal Kodemirror editor with common features enabled.
 
 <div class="demo-embed">
-<iframe src="../showcase/index.html?demo=basic" loading="lazy"></iframe>
+<iframe src="../../showcase/index.html?demo=basic" loading="lazy"></iframe>
 </div>
 
 ## Minimal editor

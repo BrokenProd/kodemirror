@@ -4,7 +4,7 @@ By default, the Tab key moves focus to the next UI element (standard
 Compose behavior). You can override this to indent code instead.
 
 <div class="demo-embed">
-<iframe src="../showcase/index.html?demo=tab" loading="lazy"></iframe>
+<iframe src="../../showcase/index.html?demo=tab" loading="lazy"></iframe>
 </div>
 
 ## Indent with Tab

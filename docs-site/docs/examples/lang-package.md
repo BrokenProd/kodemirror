@@ -5,7 +5,7 @@ a Lezer grammar (for tree-sitter-style parsing) or a `StreamParser` (for
 simpler line-by-line tokenization).
 
 <div class="demo-embed">
-<iframe src="../showcase/index.html?demo=lang-package" loading="lazy"></iframe>
+<iframe src="../../showcase/index.html?demo=lang-package" loading="lazy"></iframe>
 </div>
 
 ## Language and LanguageSupport

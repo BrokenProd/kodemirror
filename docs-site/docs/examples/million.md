@@ -5,7 +5,7 @@ efficiently. This page covers the data structures and techniques that
 make this possible.
 
 <div class="demo-embed">
-<iframe src="../showcase/index.html?demo=million" loading="lazy"></iframe>
+<iframe src="../../showcase/index.html?demo=million" loading="lazy"></iframe>
 </div>
 
 ## Efficient document representation

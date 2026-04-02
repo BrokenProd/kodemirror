@@ -6,7 +6,7 @@ and the `phrase()` method. This lets you localize built-in messages
 source.
 
 <div class="demo-embed">
-<iframe src="../showcase/index.html?demo=translate" loading="lazy"></iframe>
+<iframe src="../../showcase/index.html?demo=translate" loading="lazy"></iframe>
 </div>
 
 ## The phrases facet

@@ -4,7 +4,7 @@ Kodemirror replaces CSS-based theming with Kotlin data classes and
 Compose styling primitives.
 
 <div class="demo-embed">
-<iframe src="../showcase/index.html?demo=styling" loading="lazy"></iframe>
+<iframe src="../../showcase/index.html?demo=styling" loading="lazy"></iframe>
 </div>
 
 ## Editor theme

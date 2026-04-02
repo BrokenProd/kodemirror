@@ -5,7 +5,7 @@ change configuration at runtime — switch languages, toggle features,
 change themes — use `Compartment`.
 
 <div class="demo-embed">
-<iframe src="../showcase/index.html?demo=config" loading="lazy"></iframe>
+<iframe src="../../showcase/index.html?demo=config" loading="lazy"></iframe>
 </div>
 
 ## Compartments

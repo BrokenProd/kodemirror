@@ -7,7 +7,7 @@ lets you register functions that produce the inverse of a transaction's
 effects.
 
 <div class="demo-embed">
-<iframe src="../showcase/index.html?demo=inverted-effect" loading="lazy"></iframe>
+<iframe src="../../showcase/index.html?demo=inverted-effect" loading="lazy"></iframe>
 </div>
 
 ## When to use

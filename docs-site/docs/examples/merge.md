@@ -3,7 +3,7 @@
 The `:merge` module provides diff and merge views for comparing documents.
 
 <div class="demo-embed">
-<iframe src="../showcase/index.html?demo=merge" loading="lazy"></iframe>
+<iframe src="../../showcase/index.html?demo=merge" loading="lazy"></iframe>
 </div>
 
 ## Side-by-side diff

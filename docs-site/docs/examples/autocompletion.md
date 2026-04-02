@@ -4,7 +4,7 @@ The `:autocomplete` module provides a completion dropdown that appears
 as the user types.
 
 <div class="demo-embed">
-<iframe src="../showcase/index.html?demo=autocompletion" loading="lazy"></iframe>
+<iframe src="../../showcase/index.html?demo=autocompletion" loading="lazy"></iframe>
 </div>
 
 ## Basic setup
