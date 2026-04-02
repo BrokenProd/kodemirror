@@ -47,6 +47,7 @@ import com.monkopedia.kodemirror.view.WidgetDecorationSpec
 import com.monkopedia.kodemirror.view.WidgetType
 import com.monkopedia.kodemirror.view.rememberEditorSession
 
+// --8<-- [start:mark-decoration]
 private val highlightMark = Decoration.mark(
     MarkDecorationSpec(
         style = SpanStyle(
@@ -55,7 +56,9 @@ private val highlightMark = Decoration.mark(
         )
     )
 )
+// --8<-- [end:mark-decoration]
 
+// --8<-- [start:widget-type]
 private class InfoWidget : WidgetType() {
     @Composable
     override fun Content() {
@@ -68,6 +71,7 @@ private class InfoWidget : WidgetType() {
         )
     }
 }
+// --8<-- [end:widget-type]
 
 private fun buildDecorations(doc: Text): DecorationSet {
     val builder = RangeSetBuilder<Decoration>()
@@ -99,6 +103,7 @@ private fun buildDecorations(doc: Text): DecorationSet {
     return builder.finish()
 }
 
+// --8<-- [start:view-plugin]
 private class DecorationPlugin(
     session: EditorSession
 ) : PluginValue, DecorationSource {
@@ -114,6 +119,7 @@ private class DecorationPlugin(
 private val decorationPlugin = ViewPlugin.fromDecorationSource { session ->
     DecorationPlugin(session)
 }
+// --8<-- [end:view-plugin]
 
 @Composable
 fun DecorationDemo() {

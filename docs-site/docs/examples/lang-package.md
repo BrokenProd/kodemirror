@@ -52,52 +52,7 @@ For simpler languages, implement `StreamParser` for line-by-line
 tokenization:
 
 ```kotlin
-import com.monkopedia.kodemirror.language.*
-
-data class MyState(
-    val inString: Boolean = false
-)
-
-val myStreamParser = object : StreamParser<MyState> {
-    override val name = "myLang"
-
-    override fun startState(indentUnit: Int) = MyState()
-
-    override fun token(stream: StringStream, state: MyState): String? {
-        if (stream.eatSpace()) return null
-
-        // Keywords
-        val word = stream.match(Regex("\\w+"))
-        if (word != null) {
-            return when (word.value) {
-                "fun", "val", "var", "class" -> "keyword"
-                "true", "false" -> "bool"
-                else -> "variableName"
-            }
-        }
-
-        // String literals
-        if (stream.match("\"") != null) {
-            while (!stream.eol()) {
-                if (stream.next() == "\"") break
-            }
-            return "string"
-        }
-
-        // Comments
-        if (stream.match("//") != null) {
-            stream.skipToEnd()
-            return "comment"
-        }
-
-        stream.next()
-        return null
-    }
-
-    override fun copyState(state: MyState) = state.copy()
-}
-
-val myLang = StreamLanguage.define(myStreamParser)
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/LangPackageDemo.kt:stream-parser"
 ```
 
 ## StreamParser interface

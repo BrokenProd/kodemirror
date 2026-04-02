@@ -74,22 +74,7 @@ fun getCursorTooltips(state: EditorState): List<Tooltip> {
 Show a tooltip when the user hovers over text:
 
 ```kotlin
-val myHoverTooltip = hoverTooltip { view, pos ->
-    val word = view.state.wordAt(pos) ?: return@hoverTooltip null
-
-    val text = view.state.sliceDoc(word.from, word.to)
-    Tooltip(
-        pos = word.from,
-        above = true,
-        content = {
-            Text("Word: $text")
-        }
-    )
-}
-
-val state = EditorState.create(EditorStateConfig(
-    extensions = myHoverTooltip
-))
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/TooltipDemo.kt:hover-tooltip"
 ```
 
 `hoverTooltip` takes a function `(EditorSession, Int) -> Tooltip?` that

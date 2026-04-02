@@ -29,6 +29,7 @@ import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.editorTheme
 import com.monkopedia.kodemirror.view.rememberEditorSession
 
+// --8<-- [start:custom-theme]
 private val customTheme = EditorTheme(
     background = Color(0xFF1A1B26),
     foreground = Color(0xFFA9B1D6),
@@ -38,6 +39,7 @@ private val customTheme = EditorTheme(
     gutterBackground = Color(0xFF1A1B26),
     gutterForeground = Color(0xFF3B4261)
 )
+// --8<-- [end:custom-theme]
 
 @Composable
 fun StylingDemo() {
@@ -45,11 +47,13 @@ fun StylingDemo() {
         title = "Custom Styling",
         description = "Create a custom EditorTheme with Tokyo Night-inspired colors."
     ) {
+        // --8<-- [start:apply-theme]
         val session = rememberEditorSession(
             doc = SampleDocs.javascript,
             extensions = basicSetup + javascript().extension +
                 editorTheme.of(customTheme)
         )
+        // --8<-- [end:apply-theme]
         KodeMirror(
             session = session,
             modifier = Modifier.fillMaxSize()

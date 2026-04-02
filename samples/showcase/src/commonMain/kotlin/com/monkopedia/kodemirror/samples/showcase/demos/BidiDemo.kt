@@ -127,6 +127,7 @@ fun BidiDemo() {
         description = "perLineTextDirection enabled for mixed LTR/RTL content."
     ) {
         if (fontsReady) {
+            // --8<-- [start:bidi-setup]
             val session = rememberEditorSession(
                 doc = SampleDocs.bidi,
                 extensions = showcaseSetup + javascript().extension +
@@ -134,6 +135,7 @@ fun BidiDemo() {
                     editorContentStyle.of(TextStyle(fontFamily = monoFont)) +
                     rtlExt
             )
+            // --8<-- [end:bidi-setup]
             KodeMirror(
                 session = session,
                 modifier = Modifier.fillMaxSize()

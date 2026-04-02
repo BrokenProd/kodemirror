@@ -79,34 +79,7 @@ abstract class GutterMarker : RangeValue() {
 A complete pattern storing breakpoints in a `StateField`:
 
 ```kotlin
-val toggleBreakpoint = StateEffect.define<Int>()
-
-val breakpointState = StateField.define(
-    create = { emptySet<Int>() },
-    update = { breakpoints, tr ->
-        var result = breakpoints
-        for (effect in tr.effects) {
-            effect.asType(toggleBreakpoint)?.let { e ->
-                val line = e.value
-                result = if (line in result) result - line else result + line
-            }
-        }
-        result
-    }
-)
-
-val breakpointGutter = gutter(GutterConfig(
-    cssClass = "cm-breakpoints",
-    lineMarker = { view, lineFrom ->
-        val lineNumber = view.state.doc.lineAt(lineFrom).number
-        if (lineNumber in view.state.field(breakpointState)) {
-            BreakpointMarker()
-        } else null
-    },
-    lineMarkerChange = { update ->
-        update.effects.any { it.`is`(toggleBreakpoint) }
-    }
-))
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/GutterDemo.kt:breakpoint-gutter"
 ```
 
 Toggle a breakpoint by dispatching:

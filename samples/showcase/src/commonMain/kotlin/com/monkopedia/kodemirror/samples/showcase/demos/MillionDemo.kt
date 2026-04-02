@@ -32,6 +32,7 @@ fun MillionDemo() {
         title = "Large Document",
         description = "10,000 lines of text to test scrolling and rendering performance."
     ) {
+        // --8<-- [start:large-doc]
         val session = rememberEditorSession(
             doc = SampleDocs.largeDocument,
             extensions = showcaseSetup + javascript().extension
@@ -40,5 +41,6 @@ fun MillionDemo() {
             session = session,
             modifier = Modifier.fillMaxSize()
         )
+        // --8<-- [end:large-doc]
     }
 }

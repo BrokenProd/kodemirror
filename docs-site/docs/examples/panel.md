@@ -50,20 +50,7 @@ Compose components.
 Use the `showPanels` facet to display several panels at once:
 
 ```kotlin
-val topPanel = Panel(top = true) {
-    Row {
-        Text("File: ")
-        Text("untitled.kt", fontWeight = FontWeight.Bold)
-    }
-}
-
-val bottomPanel = Panel(top = false) {
-    Text("Line 1, Col 1")
-}
-
-val state = EditorState.create(EditorStateConfig(
-    extensions = showPanels.of(listOf(topPanel, bottomPanel))
-))
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/PanelDemo.kt:panel-definitions"
 ```
 
 ## Dynamic panels with StateField

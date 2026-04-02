@@ -35,6 +35,7 @@ import com.monkopedia.kodemirror.view.rememberEditorSession
 
 private val todoPattern = Regex("\\b(TODO|FIXME|HACK)\\b")
 
+// --8<-- [start:lint-source]
 private val myLinter: LintSource = { session ->
     val diagnostics = mutableListOf<Diagnostic>()
     val doc = session.state.doc
@@ -69,6 +70,7 @@ private val myLinter: LintSource = { session ->
     println("[LintDemo] linter returned ${diagnostics.size} diagnostics")
     diagnostics
 }
+// --8<-- [end:lint-source]
 
 private val lintDoc = """
     // TODO: refactor this function to be more readable

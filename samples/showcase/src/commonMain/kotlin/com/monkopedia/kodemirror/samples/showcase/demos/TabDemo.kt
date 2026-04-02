@@ -54,6 +54,7 @@ fun TabDemo() {
     var mode by remember { mutableStateOf(TabMode.INDENT) }
     val tabCompartment = remember { Compartment() }
 
+    // --8<-- [start:tab-extension]
     fun tabExtension(m: TabMode): Extension = when (m) {
         TabMode.INDENT -> keymapOf(indentWithTab)
         TabMode.INSERT -> keymapOf(
@@ -66,6 +67,7 @@ fun TabDemo() {
             )
         )
     }
+    // --8<-- [end:tab-extension]
 
     val session = rememberEditorSession(
         doc = SampleDocs.javascript,

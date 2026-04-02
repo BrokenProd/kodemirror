@@ -49,6 +49,7 @@ import com.monkopedia.kodemirror.view.selectAll
 fun SelectionDemo() {
     var selectionInfo by remember { mutableStateOf("No selection") }
 
+    // --8<-- [start:selection-listener]
     val session = rememberEditorSession(
         doc = SampleDocs.javascript,
         extensions = showcaseSetup + javascript().extension +
@@ -62,6 +63,7 @@ fun SelectionDemo() {
                 }
             }
     )
+    // --8<-- [end:selection-listener]
 
     DemoScaffold(
         title = "Selections",

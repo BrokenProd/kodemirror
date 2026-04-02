@@ -12,30 +12,7 @@ inline decorations and in an optional panel.
 Create a `linter` extension with a function that returns diagnostics:
 
 ```kotlin
-import com.monkopedia.kodemirror.lint.*
-
-val myLinter = linter { view ->
-    val diagnostics = mutableListOf<Diagnostic>()
-    val doc = view.state.doc
-
-    // Example: flag lines longer than 80 characters
-    for (i in 1..doc.lines) {
-        val line = doc.line(i)
-        if (line.length > 80) {
-            diagnostics.add(Diagnostic(
-                from = line.from + 80,
-                to = line.to,
-                severity = Severity.WARNING,
-                message = "Line exceeds 80 characters"
-            ))
-        }
-    }
-
-    diagnostics
-}
-
-// Add to your extensions:
-basicSetup + myLinter
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/LintDemo.kt:lint-source"
 ```
 
 ## Diagnostic properties

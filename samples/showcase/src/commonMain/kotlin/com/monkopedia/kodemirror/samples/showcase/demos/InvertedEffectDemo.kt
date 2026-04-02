@@ -41,6 +41,7 @@ import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.rememberEditorSession
 import com.monkopedia.kodemirror.view.rememberField
 
+// --8<-- [start:counter-field]
 private val addToCounter = StateEffect.define<Int>()
 
 private val counterField: StateField<Int> = StateField.define(
@@ -56,7 +57,9 @@ private val counterField: StateField<Int> = StateField.define(
         }
     )
 )
+// --8<-- [end:counter-field]
 
+// --8<-- [start:counter-extension]
 private val counterExtension = counterField +
     invertedEffects.of { tr ->
         val inverted = mutableListOf<StateEffect<*>>()
@@ -68,6 +71,7 @@ private val counterExtension = counterField +
         }
         inverted
     }
+// --8<-- [end:counter-extension]
 
 @Composable
 fun InvertedEffectDemo() {

@@ -62,6 +62,7 @@ fun ConfigDemo() {
     var lang by remember { mutableStateOf(LangChoice.JS) }
     var theme by remember { mutableStateOf(ThemeChoice.NONE) }
 
+    // --8<-- [start:compartment-setup]
     val langCompartment = remember { Compartment() }
     val themeCompartment = remember { Compartment() }
 
@@ -71,6 +72,7 @@ fun ConfigDemo() {
             langCompartment.of(lang.ext) +
             themeCompartment.of(theme.ext)
     )
+    // --8<-- [end:compartment-setup]
 
     DemoScaffold(
         title = "Configuration",
@@ -85,6 +87,7 @@ fun ConfigDemo() {
                         selected = lang == choice,
                         onClick = {
                             lang = choice
+                            // --8<-- [start:reconfigure-lang]
                             session.dispatch(
                                 TransactionSpec(
                                     effects = listOf(
@@ -92,6 +95,7 @@ fun ConfigDemo() {
                                     )
                                 )
                             )
+                            // --8<-- [end:reconfigure-lang]
                         },
                         label = { Text(choice.label) }
                     )

@@ -37,6 +37,7 @@ import com.monkopedia.kodemirror.view.KodeMirror
 @Composable
 fun MergeDemo() {
     val setup = showcaseSetup
+    // --8<-- [start:merge-view]
     val mergeView = remember(setup) {
         MergeView(
             MergeViewConfig(
@@ -53,6 +54,7 @@ fun MergeDemo() {
             )
         )
     }
+    // --8<-- [end:merge-view]
 
     DemoScaffold(
         title = "Merge View",

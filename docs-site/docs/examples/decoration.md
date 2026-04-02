@@ -12,18 +12,7 @@ inserting widgets, styling lines — without modifying the document text.
 A mark decoration applies a `SpanStyle` to a range of text:
 
 ```kotlin
-import com.monkopedia.kodemirror.view.*
-import com.monkopedia.kodemirror.state.*
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.font.FontWeight
-
-val highlightDeco = Decoration.mark(MarkDecorationSpec(
-    style = SpanStyle(
-        background = Color(0x40FFFF00),
-        fontWeight = FontWeight.Bold
-    )
-))
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/DecorationDemo.kt:mark-decoration"
 ```
 
 In upstream CodeMirror, marks add CSS classes. In Kodemirror, marks
@@ -128,31 +117,7 @@ For decorations that depend on view state (like viewport), use a
 `ViewPlugin`:
 
 ```kotlin
-class HighlightPlugin(state: EditorState) : PluginValue {
-    var decos: DecorationSet = buildDecos(state)
-        private set
-
-    override fun update(update: ViewUpdate) {
-        if (update.docChanged) {
-            decos = buildDecos(update.state)
-        }
-    }
-
-    private fun buildDecos(state: EditorState): DecorationSet {
-        val builder = RangeSetBuilder<Decoration>()
-        // ... add decorations
-        return builder.finish()
-    }
-}
-
-val highlightPlugin = ViewPlugin.define(
-    create = { view -> HighlightPlugin(view.state) },
-    configure = {
-        copy(decorations = { plugin ->
-            (plugin as? HighlightPlugin)?.decos ?: RangeSet.empty()
-        })
-    }
-)
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/DecorationDemo.kt:view-plugin"
 ```
 
 Include `highlightPlugin.asExtension()` in your extensions.

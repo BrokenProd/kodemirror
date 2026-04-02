@@ -43,6 +43,7 @@ import com.monkopedia.kodemirror.view.rememberEditorSession
 @Composable
 fun ReadOnlyDemo() {
     var isEditable by remember { mutableStateOf(true) }
+    // --8<-- [start:editable-compartment]
     val editableCompartment = remember { Compartment() }
 
     val session = rememberEditorSession(
@@ -50,6 +51,7 @@ fun ReadOnlyDemo() {
         extensions = showcaseSetup + javascript().extension +
             editableCompartment.of(editable.of(isEditable))
     )
+    // --8<-- [end:editable-compartment]
 
     DemoScaffold(
         title = "Read-Only Mode",

@@ -39,6 +39,7 @@ import com.monkopedia.kodemirror.view.ViewPlugin
 import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.rememberEditorSession
 
+// --8<-- [start:zebra-plugin]
 // Dark-theme stripe color matching CodeMirror reference (#34474788)
 private val stripe = Decoration.line(
     LineDecorationSpec(style = SpanStyle(background = Color(0x88344747)))
@@ -71,6 +72,7 @@ private class ZebraPlugin(
 private val zebraPlugin = ViewPlugin.fromDecorationSource { session ->
     ZebraPlugin(session = session, step = 2)
 }
+// --8<-- [end:zebra-plugin]
 
 @Composable
 fun ZebraDemo() {

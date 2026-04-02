@@ -49,6 +49,7 @@ fun SplitDemo() {
     ) {
         val sessions = remember { arrayOfNulls<EditorSession>(2) }
 
+        // --8<-- [start:sync-dispatch]
         fun syncDispatch(tr: Transaction, otherIndex: Int) {
             val other = sessions[otherIndex] ?: return
             if (!tr.changes.empty && tr.annotation(syncAnnotation) == null) {
@@ -66,6 +67,7 @@ fun SplitDemo() {
                 )
             }
         }
+        // --8<-- [end:sync-dispatch]
 
         val sessionLeft = rememberEditorSession(
             doc = SampleDocs.javascript,

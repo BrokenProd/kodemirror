@@ -54,12 +54,17 @@ fun ChangeDemo() {
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // --8<-- [start:insert-text]
                 Button(onClick = {
                     session.insertAt(DocPos.ZERO, "// Inserted header\n")
                 }) { Text("Insert at top") }
+                // --8<-- [end:insert-text]
+                // --8<-- [start:append-text]
                 Button(onClick = {
                     session.insertAt(session.state.doc.endPos, "\n// Appended footer")
                 }) { Text("Append at end") }
+                // --8<-- [end:append-text]
+                // --8<-- [start:replace-text]
                 Button(onClick = {
                     val firstLineEnd = session.state.doc.line(LineNumber(1)).to
                     session.dispatch(
@@ -71,6 +76,7 @@ fun ChangeDemo() {
                             )
                         }
                     )
+                // --8<-- [end:replace-text]
                 }) { Text("Replace line 1") }
                 Button(onClick = {
                     session.setDoc(SampleDocs.javascript)

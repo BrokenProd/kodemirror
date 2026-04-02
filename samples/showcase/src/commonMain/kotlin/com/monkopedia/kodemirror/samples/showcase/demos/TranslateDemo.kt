@@ -44,6 +44,7 @@ import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.rememberEditorSession
 
+// --8<-- [start:phrase-maps]
 private val spanishPhrases = mapOf(
     "Find" to "Buscar",
     "Replace" to "Reemplazar",
@@ -69,6 +70,7 @@ private val frenchPhrases = mapOf(
     "Folded lines" to "Lignes pliees",
     "Unfolded lines" to "Lignes depliees"
 )
+// --8<-- [end:phrase-maps]
 
 private enum class Lang(val label: String, val phrases: Map<String, String>) {
     EN("English", emptyMap()),

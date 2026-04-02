@@ -9,15 +9,7 @@ The `:merge` module provides diff and merge views for comparing documents.
 ## Side-by-side diff
 
 ```kotlin
-import com.monkopedia.kodemirror.merge.*
-
-val mergeView = MergeView(MergeViewConfig(
-    a = EditorStateConfig(doc = DocSpec.StringDoc(original)),
-    b = EditorStateConfig(doc = DocSpec.StringDoc(modified)),
-    highlightChanges = true,
-    gutter = true,
-    revertControls = RevertDirection.B_TO_A
-))
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/MergeDemo.kt:merge-view"
 ```
 
 ## Unified diff

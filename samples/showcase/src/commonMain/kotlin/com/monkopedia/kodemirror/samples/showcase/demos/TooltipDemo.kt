@@ -35,6 +35,7 @@ import com.monkopedia.kodemirror.view.Tooltip
 import com.monkopedia.kodemirror.view.hoverTooltip
 import com.monkopedia.kodemirror.view.rememberEditorSession
 
+// --8<-- [start:hover-tooltip]
 private val hoverInfo = hoverTooltip { session, pos ->
     val doc = session.state.doc
     val line = doc.lineAt(DocPos(pos))
@@ -61,6 +62,7 @@ private val hoverInfo = hoverTooltip { session, pos ->
         )
     }
 }
+// --8<-- [end:hover-tooltip]
 
 @Composable
 fun TooltipDemo() {

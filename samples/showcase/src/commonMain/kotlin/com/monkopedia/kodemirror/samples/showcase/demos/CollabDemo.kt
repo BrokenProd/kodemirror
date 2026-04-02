@@ -43,6 +43,7 @@ import com.monkopedia.kodemirror.view.rememberEditorSession
 
 @Composable
 fun CollabDemo() {
+    // --8<-- [start:collab-setup]
     val sessionA = rememberEditorSession(
         doc = SampleDocs.collabInitial,
         extensions = showcaseSetup + javascript().extension +
@@ -53,9 +54,11 @@ fun CollabDemo() {
         extensions = showcaseSetup + javascript().extension +
             collab(CollabConfig(clientID = "editor-b"))
     )
+    // --8<-- [end:collab-setup]
 
     val sharedUpdates = remember { mutableListOf<Update>() }
 
+    // --8<-- [start:sync-logic]
     fun syncOne(session: com.monkopedia.kodemirror.view.EditorSession) {
         val version = getSyncedVersion(session.state)
         val pending = sharedUpdates.drop(version)
@@ -76,6 +79,7 @@ fun CollabDemo() {
             )
         }
     }
+    // --8<-- [end:sync-logic]
 
     fun sync() {
         // Receive then send for each client in sequence,

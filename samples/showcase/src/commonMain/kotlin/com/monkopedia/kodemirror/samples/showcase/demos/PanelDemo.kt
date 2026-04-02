@@ -38,6 +38,7 @@ import com.monkopedia.kodemirror.view.showPanels
 
 @Composable
 fun PanelDemo() {
+    // --8<-- [start:panel-definitions]
     val topPanel = Panel(top = true) {
         Row(
             modifier = Modifier
@@ -66,6 +67,7 @@ fun PanelDemo() {
             )
         }
     }
+    // --8<-- [end:panel-definitions]
 
     DemoScaffold(
         title = "Panels",

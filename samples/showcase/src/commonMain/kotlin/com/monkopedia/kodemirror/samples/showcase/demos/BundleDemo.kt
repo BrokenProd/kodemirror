@@ -26,6 +26,7 @@ import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.editable
 import com.monkopedia.kodemirror.view.rememberEditorSession
 
+// --8<-- [start:gradle-config]
 private val GRADLE_CONFIG = """
     // build.gradle.kts
     kotlin:
@@ -44,6 +45,7 @@ private val GRADLE_CONFIG = """
           dependencies:
             - compose.desktop.currentOs
 """.trimIndent()
+// --8<-- [end:gradle-config]
 
 @Composable
 fun BundleDemo() {

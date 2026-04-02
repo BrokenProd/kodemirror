@@ -45,6 +45,7 @@ import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.gutter
 import com.monkopedia.kodemirror.view.rememberEditorSession
 
+// --8<-- [start:breakpoint-gutter]
 private val toggleBreakpoint = StateEffect.define<LineNumber>()
 
 private class BreakpointMarker : GutterMarker() {
@@ -91,6 +92,7 @@ private val breakpointGutter = gutter(
         }
     )
 )
+// --8<-- [end:breakpoint-gutter]
 
 @Composable
 fun GutterDemo() {

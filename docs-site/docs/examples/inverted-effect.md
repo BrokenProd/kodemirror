@@ -21,38 +21,14 @@ alongside the document changes.
 Suppose you track a counter that increments on certain edits:
 
 ```kotlin
-import com.monkopedia.kodemirror.state.*
-
-val addToCounter = StateEffect.define<Int>()
-
-val counterField = StateField.define(StateFieldSpec(
-    create = { 0 },
-    update = { value, tr ->
-        var result = value
-        for (effect in tr.effects) {
-            val e = effect.asType(addToCounter)
-            if (e != null) result += e.value
-        }
-        result
-    }
-))
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/InvertedEffectDemo.kt:counter-field"
 ```
 
 Now register an inverted-effects provider so that undoing a transaction
 that added +1 will add -1:
 
 ```kotlin
-val counterExtension = counterField +
-    invertedEffects.of { tr ->
-        val inverted = mutableListOf<StateEffect<*>>()
-        for (effect in tr.effects) {
-            val e = effect.asType(addToCounter)
-            if (e != null) {
-                inverted.add(addToCounter.of(-e.value))
-            }
-        }
-        inverted
-    }
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/InvertedEffectDemo.kt:counter-extension"
 ```
 
 When the history undoes a transaction that carried `addToCounter.of(1)`,

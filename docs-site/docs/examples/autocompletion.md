@@ -25,25 +25,7 @@ A `CompletionSource` is a function that takes a `CompletionContext` and
 returns a `CompletionResult` (or `null` if no completions apply):
 
 ```kotlin
-val myCompletions: CompletionSource = { context ->
-    val word = context.matchBefore(Regex("\\w*"))
-    if (word == null || (word.from == word.to && !context.explicit)) {
-        null
-    } else {
-        CompletionResult(
-            from = word.from,
-            options = listOf(
-                Completion(label = "hello", type = "keyword"),
-                Completion(label = "world", type = "variable", detail = "a greeting"),
-                Completion(
-                    label = "println",
-                    type = "function",
-                    info = "Print to standard output"
-                )
-            )
-        )
-    }
-}
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/AutocompletionDemo.kt:completion-source"
 ```
 
 ## Registering a completion source

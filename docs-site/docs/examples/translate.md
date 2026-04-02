@@ -72,30 +72,10 @@ view but not directly to the state.
 
 ## Complete example
 
+Phrase maps from the live demo:
+
 ```kotlin
-import com.monkopedia.kodemirror.state.*
-import com.monkopedia.kodemirror.view.*
-
-fun frenchEditor(): EditorSession {
-    val french = EditorState.phrases.of(mapOf(
-        "Find" to "Chercher",
-        "Replace" to "Remplacer",
-        "next" to "suivant",
-        "previous" to "précédent",
-        "all" to "tout",
-        "match case" to "respecter la casse",
-        "close" to "fermer",
-        "Fold line" to "Plier la ligne",
-        "Unfold line" to "Déplier la ligne"
-    ))
-
-    val state = EditorState.create(EditorStateConfig(
-        doc = "Bonjour le monde\n",
-        extensions = french
-    ))
-
-    return EditorSession(state)
-}
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/TranslateDemo.kt:phrase-maps"
 ```
 
 ## Key points

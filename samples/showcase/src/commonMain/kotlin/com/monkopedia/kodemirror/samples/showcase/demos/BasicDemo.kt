@@ -43,6 +43,7 @@ fun BasicDemo() {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.height(24.dp)
         )
+        // --8<-- [start:basic-setup]
         val session = rememberEditorSession(
             doc = SampleDocs.javascript,
             extensions = showcaseSetup + javascript().extension
@@ -51,5 +52,6 @@ fun BasicDemo() {
             session = session,
             modifier = Modifier.fillMaxSize()
         )
+        // --8<-- [end:basic-setup]
     }
 }

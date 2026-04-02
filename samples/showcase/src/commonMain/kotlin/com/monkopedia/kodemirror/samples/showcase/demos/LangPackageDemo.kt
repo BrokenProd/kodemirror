@@ -28,6 +28,7 @@ import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.rememberEditorSession
 
+// --8<-- [start:stream-parser]
 private data class SimpleState(val inString: Boolean = false)
 
 private val simpleParser = object : StreamParser<SimpleState> {
@@ -67,6 +68,7 @@ private val simpleParser = object : StreamParser<SimpleState> {
 }
 
 private val simpleLang = StreamLanguage.define(simpleParser)
+// --8<-- [end:stream-parser]
 
 private val sampleCode = """
     // A simple custom language

@@ -49,6 +49,7 @@ private val keywords = listOf(
     Completion(label = "Array.from", type = "function", detail = "Create array")
 )
 
+// --8<-- [start:completion-source]
 private val myCompletionSource: CompletionSource = { ctx ->
     val word = ctx.matchBefore(Regex("[\\w.]+"))
     if (word != null || ctx.explicit) {
@@ -61,6 +62,7 @@ private val myCompletionSource: CompletionSource = { ctx ->
         null
     }
 }
+// --8<-- [end:completion-source]
 
 @Composable
 fun AutocompletionDemo() {
@@ -69,6 +71,7 @@ fun AutocompletionDemo() {
         description = "Custom CompletionSource providing JavaScript keywords and builtins. " +
             "Type or press Ctrl+Space to trigger."
     ) {
+        // --8<-- [start:register-source]
         val session = rememberEditorSession(
             doc = SampleDocs.javascript,
             extensions = showcaseSetup + javascript().extension +
@@ -76,6 +79,7 @@ fun AutocompletionDemo() {
                     CompletionConfig(override = listOf(myCompletionSource))
                 )
         )
+        // --8<-- [end:register-source]
         KodeMirror(
             session = session,
             modifier = Modifier.fillMaxSize()

@@ -16,42 +16,7 @@ changes.
 ## Full implementation
 
 ```kotlin
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import com.monkopedia.kodemirror.state.*
-import com.monkopedia.kodemirror.view.*
-
-val stripeDecoration = Decoration.line(LineDecorationSpec(
-    style = SpanStyle(background = Color(0x10808080))
-))
-
-class ZebraPlugin(view: EditorSession) : PluginValue, DecorationSource {
-    override var decorations: DecorationSet = computeDecorations(view)
-        private set
-
-    override fun update(update: ViewUpdate) {
-        if (update.docChanged || update.viewportChanged) {
-            decorations = computeDecorations(update.view)
-        }
-    }
-
-    private fun computeDecorations(view: EditorSession): DecorationSet {
-        val builder = RangeSetBuilder<Decoration>()
-        val doc = view.state.doc
-
-        for (i in 1..doc.lines) {
-            if (i % 2 == 0) {
-                val line = doc.line(i)
-                builder.add(line.from, line.from, stripeDecoration)
-            }
-        }
-
-        return builder.finish()
-    }
-}
-
-val zebraStripes: Extension = ViewPlugin.fromClass(::ZebraPlugin)
-    .asExtension()
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/ZebraDemo.kt:zebra-plugin"
 ```
 
 ## Using it

@@ -32,10 +32,12 @@ fun MixedLanguageDemo() {
         title = "Mixed Languages",
         description = "HTML with embedded JavaScript and CSS, using nested language parsing."
     ) {
+        // --8<-- [start:mixed-language]
         val session = rememberEditorSession(
             doc = SampleDocs.html,
             extensions = showcaseSetup + html().extension
         )
+        // --8<-- [end:mixed-language]
         KodeMirror(
             session = session,
             modifier = Modifier.fillMaxSize()
