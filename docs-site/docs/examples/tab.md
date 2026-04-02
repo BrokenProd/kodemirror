@@ -7,46 +7,18 @@ Compose behavior). You can override this to indent code instead.
 <iframe src="../../showcase/index.html?demo=tab" loading="lazy"></iframe>
 </div>
 
-## Indent with Tab
+## Tab extension
 
-The `:commands` module provides `indentWithTab`, a key binding list
-that maps Tab to `indentMore` and Shift-Tab to `indentLess`:
-
-```kotlin
-import com.monkopedia.kodemirror.commands.indentWithTab
-import com.monkopedia.kodemirror.view.keymapOf
-
-// Add to your extensions:
-basicSetup + keymapOf(*indentWithTab.toTypedArray())
-```
-
-## What indentWithTab does
-
-`indentWithTab` is defined as:
+The demo defines a function that returns either an indent-with-tab
+extension or a literal-tab-insert extension:
 
 ```kotlin
-val indentWithTab: List<KeyBinding> = listOf(
-    KeyBinding(key = "Tab", run = indentMore),
-    KeyBinding(key = "Shift-Tab", run = indentLess)
-)
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/TabDemo.kt:tab-extension"
 ```
 
-- **Tab** — calls `indentMore`, which increases indentation of the
-  selected lines
-- **Shift-Tab** — calls `indentLess`, which decreases indentation
-
-## Insert literal tab
-
-If you want Tab to insert a tab character instead of adjusting
-indentation, use `insertTab`:
-
-```kotlin
-import com.monkopedia.kodemirror.commands.insertTab
-
-keymapOf(
-    KeyBinding(key = "Tab", run = insertTab)
-)
-```
+- **`TabMode.INDENT`** uses `indentWithTab` from the `:commands` module,
+  which maps Tab to `indentMore` and Shift-Tab to `indentLess`.
+- **`TabMode.INSERT`** inserts a literal tab character at the cursor.
 
 ## Accessibility note
 

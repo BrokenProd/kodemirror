@@ -9,15 +9,11 @@ using operational transformation.
 
 ## Setup
 
-Install the `collab()` extension with your starting document version:
+Install the `collab()` extension with your starting document version.
+Here the demo creates two editors that will synchronize:
 
 ```kotlin
-import com.monkopedia.kodemirror.collab.*
-
-val session = rememberEditorSession(
-    doc = initialDoc,
-    extensions = collab(CollabConfig(startVersion = serverVersion)) + // ...
-)
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/CollabDemo.kt:collab-setup"
 ```
 
 ## CollabConfig
@@ -36,19 +32,18 @@ data class CollabConfig(
 | `clientID` | Unique client identifier (auto-generated if `null`) |
 | `sharedEffects` | Extract effects from transactions to share with other clients |
 
-## Sending local changes
+## Synchronization logic
 
-After each transaction, check for updates to send to the server:
+The demo uses a shared update list as a simple "server". Each client
+sends its local changes and receives remote ones:
 
 ```kotlin
-fun onTransaction(view: EditorSession, tr: Transaction) {
-    view.dispatch(tr)
-    val updates = sendableUpdates(view.state)
-    if (updates.isNotEmpty()) {
-        sendToServer(updates)
-    }
-}
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/CollabDemo.kt:sync-logic"
 ```
+
+<!-- Manual code blocks below document the API types -->
+
+## SendableUpdate
 
 Each `SendableUpdate` contains:
 
@@ -61,16 +56,7 @@ data class SendableUpdate(
 )
 ```
 
-## Receiving remote changes
-
-When the server sends updates from other clients, apply them:
-
-```kotlin
-fun onServerUpdate(view: EditorSession, updates: List<Update>) {
-    val spec = receiveUpdates(view.state, updates)
-    view.dispatch(spec)
-}
-```
+## Update
 
 Each `Update` from the server:
 

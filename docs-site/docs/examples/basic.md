@@ -29,38 +29,16 @@ highlighting, or keybindings.
 ## Adding common extensions
 
 A more useful editor adds line numbers, a keymap, undo history,
-bracket matching, and syntax highlighting:
+bracket matching, and syntax highlighting. Here is the live demo's
+setup code:
 
 ```kotlin
-import com.monkopedia.kodemirror.commands.*
-import com.monkopedia.kodemirror.language.*
-import com.monkopedia.kodemirror.lang.javascript.javascript
-import com.monkopedia.kodemirror.search.highlightSelectionMatches
-import com.monkopedia.kodemirror.state.plus
-import com.monkopedia.kodemirror.view.*
-
-@Composable
-fun FullEditor() {
-    val session = rememberEditorSession(
-        doc = "function hello() {\n  return \"world\"\n}\n",
-        extensions = lineNumbers +
-            highlightActiveLine +
-            highlightSpecialChars +
-            history() +
-            bracketMatching() +
-            highlightSelectionMatches() +
-            defaultKeymapExtension() +
-            keymapOf(*indentWithTab.toTypedArray()) +
-            javascript() +
-            syntaxHighlighting(defaultHighlightStyle)
-    )
-
-    KodeMirror(
-        session = session,
-        modifier = Modifier.fillMaxSize()
-    )
-}
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/BasicDemo.kt:basic-setup"
 ```
+
+!!! note
+    The demo uses `showcaseSetup`, a pre-built extension bundle similar
+    to upstream's `basicSetup`. See `showcaseSetup` for what it includes.
 
 Each function call returns an `Extension` that plugs into the editor's
 configuration. Extensions compose freely — you can add or remove any of

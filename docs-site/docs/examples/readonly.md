@@ -40,25 +40,11 @@ val state = EditorState.create(EditorStateConfig(
 
 ## Toggling at runtime
 
-Use a `Compartment` to switch between read-only and editable at
+The demo uses a `Compartment` to toggle the `editable` facet at
 runtime:
 
 ```kotlin
-val readOnlyCompartment = Compartment()
-
-val state = EditorState.create(EditorStateConfig(
-    doc = "Toggle me.".asDoc(),
-    extensions = readOnlyCompartment.of(readOnly.of(false))
-))
-
-// Make read-only
-fun setReadOnly(view: EditorSession, isReadOnly: Boolean) {
-    view.dispatch(TransactionSpec(
-        effects = listOf(
-            readOnlyCompartment.reconfigure(readOnly.of(isReadOnly))
-        )
-    ))
-}
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/ReadOnlyDemo.kt:editable-compartment"
 ```
 
 ## Checking read-only status

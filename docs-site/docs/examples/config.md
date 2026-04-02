@@ -11,19 +11,10 @@ change themes — use `Compartment`.
 ## Compartments
 
 A `Compartment` wraps part of your extension configuration so it can be
-replaced later via an effect:
+replaced later via an effect. Here is the demo's compartment setup:
 
 ```kotlin
-import com.monkopedia.kodemirror.state.*
-import com.monkopedia.kodemirror.lang.javascript.javascript
-import com.monkopedia.kodemirror.lang.python.python
-
-val languageCompartment = Compartment()
-
-val session = rememberEditorSession(
-    doc = "print('hello')",
-    extensions = languageCompartment.of(python()) + // ... other extensions
-)
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/ConfigDemo.kt:compartment-setup"
 ```
 
 ## Switching configuration
@@ -32,12 +23,7 @@ To reconfigure at runtime, dispatch a transaction with the compartment's
 `reconfigure` effect:
 
 ```kotlin
-// Switch from Python to JavaScript
-session.dispatch(TransactionSpec(
-    effects = listOf(
-        languageCompartment.reconfigure(javascript())
-    )
-))
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/ConfigDemo.kt:reconfigure-lang"
 ```
 
 The editor re-parses the document with the new language and updates

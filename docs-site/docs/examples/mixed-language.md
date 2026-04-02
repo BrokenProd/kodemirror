@@ -8,9 +8,21 @@ embedded JavaScript and CSS. Kodemirror supports this through the
 <iframe src="../../showcase/index.html?demo=mixed-language" loading="lazy"></iframe>
 </div>
 
+## Using a mixed-language parser
+
+The simplest way to use mixed-language parsing is through a language
+package that already configures it, like `html()`:
+
+```kotlin
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/MixedLanguageDemo.kt:mixed-language"
+```
+
+The `html()` language support automatically nests JavaScript and CSS
+parsers inside `<script>` and `<style>` tags.
+
 ## parseMixed
 
-The `parseMixed` function wraps a parser to scan its tree for regions
+Under the hood, `parseMixed` wraps a parser to scan its tree for regions
 that should be parsed by a different language:
 
 ```kotlin

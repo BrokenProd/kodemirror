@@ -9,34 +9,26 @@ with change specifications.
 
 ## Inserting text
 
-To insert text at a position, create a `ChangeSpec.Single` with `from`
-set and no `to`:
+Insert text at the beginning of the document:
 
 ```kotlin
-import com.monkopedia.kodemirror.state.*
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/ChangeDemo.kt:insert-text"
+```
 
-// Insert "Hello " at position 0
-view.dispatch(TransactionSpec(
-    changes = ChangeSpec.Single(
-        from = 0,
-        insert = InsertContent.StringContent("Hello ")
-    )
-))
+## Appending text
+
+Append text at the end of the document:
+
+```kotlin
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/ChangeDemo.kt:append-text"
 ```
 
 ## Replacing a range
 
-Set both `from` and `to` to replace text:
+Replace the first line with new content:
 
 ```kotlin
-// Replace characters 5..10 with "world"
-view.dispatch(TransactionSpec(
-    changes = ChangeSpec.Single(
-        from = 5,
-        to = 10,
-        insert = InsertContent.StringContent("world")
-    )
-))
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/ChangeDemo.kt:replace-text"
 ```
 
 ## Deleting text

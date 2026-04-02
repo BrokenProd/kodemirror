@@ -18,14 +18,10 @@ enum class Direction { LTR, RTL }
 ## Per-line text direction
 
 Enable per-line direction detection so each line can independently be
-LTR or RTL:
+LTR or RTL. Here is the live demo's setup:
 
 ```kotlin
-import com.monkopedia.kodemirror.view.perLineTextDirection
-
-val state = EditorState.create(EditorStateConfig(
-    extensions = perLineTextDirection.of(true)
-))
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/BidiDemo.kt:bidi-setup"
 ```
 
 When enabled, the editor detects the dominant direction of each line

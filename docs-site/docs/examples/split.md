@@ -7,91 +7,25 @@ pane is a `KodeMirror` composable sharing the same `EditorSession`.
 <iframe src="../../showcase/index.html?demo=split" loading="lazy"></iframe>
 </div>
 
-## Basic split view
+## Synchronizing two editors
+
+The demo creates two separate editor sessions (with different themes)
+and uses a `syncDispatch` callback to forward changes between them via
+an annotation guard:
 
 ```kotlin
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.Composable
-import com.monkopedia.kodemirror.state.plus
-import com.monkopedia.kodemirror.view.*
-
-@Composable
-fun SplitEditor(initialDoc: String) {
-    val session = rememberEditorSession(
-        doc = initialDoc,
-        extensions = lineNumbers + // ... other extensions
-    )
-
-    Row(Modifier.fillMaxSize()) {
-        KodeMirror(
-            session = session,
-            modifier = Modifier.weight(1f)
-        )
-        KodeMirror(
-            session = session,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/SplitDemo.kt:sync-dispatch"
 ```
 
-Both editors render the same session. When either pane dispatches a
-transaction, the resulting state is applied to both views through
-recomposition.
-
-## How it works
-
-The `KodeMirror` composable signature:
-
-```kotlin
-@Composable
-fun KodeMirror(
-    session: EditorSession,
-    modifier: Modifier = Modifier
-)
-```
-
-Each composable call creates its own internal rendering state with
-independent scroll position. The shared `EditorSession` keeps the
-document content synchronized.
-
-## Independent extensions per pane
-
-You can give each pane different extensions by creating separate sessions
-that share the same document content:
-
-```kotlin
-@Composable
-fun SplitEditorWithDifferentConfigs(doc: String) {
-    val leftSession = rememberEditorSession(
-        doc = doc,
-        extensions = lineNumbers + // left pane extensions
-    )
-
-    val rightSession = rememberEditorSession(
-        doc = doc,
-        // right pane extensions (no line numbers)
-    )
-
-    Row(Modifier.fillMaxSize()) {
-        KodeMirror(
-            session = leftSession,
-            modifier = Modifier.weight(1f)
-        )
-        KodeMirror(
-            session = rightSession,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-```
+Each editor registers this callback so that edits in one pane are
+replicated to the other, while the `syncAnnotation` prevents infinite
+dispatch loops.
 
 !!! note
-    In this pattern, each pane has its own `EditorSession` so selections
-    and view-layer state are fully independent. The document content
-    is not automatically synchronized — changes in one pane won't appear
-    in the other. For true shared-document editing, use a single session
-    or the `:collab` module.
+    For true shared-document editing with cursor awareness, the
+    `:collab` module is a better fit. The sync-dispatch pattern shown
+    here is simpler but does not handle concurrent edits from multiple
+    users.
 
 ---
 

@@ -11,38 +11,16 @@ Compose styling primitives.
 
 The `EditorTheme` data class controls the editor's visual appearance —
 background, foreground, cursor, gutter, selection colors, and the text
-style:
+style. Here is the demo's Tokyo Night-inspired custom theme:
 
 ```kotlin
-import com.monkopedia.kodemirror.view.*
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.unit.sp
-
-val myTheme = EditorTheme(
-    background = Color(0xFF1E1E2E),
-    foreground = Color(0xFFCDD6F4),
-    cursor = Color(0xFFF5E0DC),
-    selection = Color(0xFF45475A),
-    activeLineBackground = Color(0x15CDD6F4),
-    gutterBackground = Color(0xFF1E1E2E),
-    gutterForeground = Color(0xFF6C7086),
-    gutterActiveForeground = Color(0xFFCDD6F4),
-    contentTextStyle = TextStyle(
-        fontFamily = FontFamily.Monospace,
-        fontSize = 14.sp,
-        lineHeight = (14 * 1.5).sp,
-        color = Color(0xFFCDD6F4)
-    ),
-    dark = true
-)
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/StylingDemo.kt:custom-theme"
 ```
 
 Apply it as an extension:
 
 ```kotlin
-editorTheme.of(myTheme)
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/StylingDemo.kt:apply-theme"
 ```
 
 ## Built-in themes

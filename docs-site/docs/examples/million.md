@@ -8,6 +8,14 @@ make this possible.
 <iframe src="../../showcase/index.html?demo=million" loading="lazy"></iframe>
 </div>
 
+## Creating a large document editor
+
+The demo creates a 10,000-line editor:
+
+```kotlin
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/MillionDemo.kt:large-doc"
+```
+
 ## Efficient document representation
 
 The `Text` type uses a tree structure (not a flat string) so that

@@ -55,6 +55,14 @@ view.dispatch(TransactionSpec(
 ))
 ```
 
+## Listening to selection changes
+
+The demo uses `onSelection` to display selection info:
+
+```kotlin
+--8<-- "samples/showcase/src/commonMain/kotlin/com/monkopedia/kodemirror/samples/showcase/demos/SelectionDemo.kt:selection-listener"
+```
+
 ## Reading the selection
 
 The current selection is available on the state:
