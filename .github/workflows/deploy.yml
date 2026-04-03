@@ -56,4 +56,4 @@ jobs:
         -Psigning.gnupg.passphrase='${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}'
         -Psigning.gnupg.keyName='${{ secrets.OSSRH_GPG_SECRET_KEY_ID }}'
         -PmavenCentralUsername='${{ secrets.OSSRH_USERNAME }}'
-        -PmavenCentralPassword='${{ secrets.OSSRH_PASSWORD }}'
+        -PmavenCentralPassword='${{ secrets.OSSRH_TOKEN }}'
