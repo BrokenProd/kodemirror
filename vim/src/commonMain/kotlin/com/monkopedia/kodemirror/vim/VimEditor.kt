@@ -274,7 +274,7 @@ class VimEditor(val session: EditorSession) {
     var statusbar: Any? = null
     var dialog: Any? = null
     var vimPlugin: Any? = null
-    var vim: VimState? = null
+    internal var vim: VimState? = null
     var currentNotificationClose: (() -> Unit)? = null
     var closeVimNotification: (() -> Unit)? = null
 

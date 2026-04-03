@@ -166,6 +166,7 @@ public class com/monkopedia/kodemirror/language/Language {
 	public final fun getExtension ()Lcom/monkopedia/kodemirror/state/Extension;
 	public final fun getName ()Ljava/lang/String;
 	public final fun getParser ()Lcom/monkopedia/kodemirror/lezer/common/Parser;
+	public fun getTree (Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/lezer/common/Tree;
 }
 
 public final class com/monkopedia/kodemirror/language/LanguageDescription {
@@ -256,6 +257,7 @@ public final class com/monkopedia/kodemirror/language/StreamLanguage : com/monko
 	public static final field Companion Lcom/monkopedia/kodemirror/language/StreamLanguage$Companion;
 	public synthetic fun <init> (Lcom/monkopedia/kodemirror/lezer/common/Parser;Ljava/lang/String;Lcom/monkopedia/kodemirror/language/StreamParser;Lcom/monkopedia/kodemirror/lezer/common/NodeProp;Lcom/monkopedia/kodemirror/language/TokenTable;Lcom/monkopedia/kodemirror/lezer/common/NodeType;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun getAllowsNesting ()Z
+	public fun getTree (Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/lezer/common/Tree;
 }
 
 public final class com/monkopedia/kodemirror/language/StreamLanguage$Companion {

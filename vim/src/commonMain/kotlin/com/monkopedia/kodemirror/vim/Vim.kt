@@ -87,7 +87,7 @@ object Vim : VimApiInterface {
     internal fun getVimGlobalState_(): VimGlobalState = vimGlobalState
 
     @Suppress("ktlint:standard:function-naming")
-    fun maybeInitVimState_(cm: VimEditor): VimState {
+    internal fun maybeInitVimState_(cm: VimEditor): VimState {
         return maybeInitVimState(cm)
     }
 
@@ -109,12 +109,7 @@ object Vim : VimApiInterface {
     }
 
     fun multiSelectHandleKey(cm: VimEditor, key: String, origin: String): Boolean {
-        val vim = maybeInitVimState(cm)
-        val visualBlock = vim.visualBlock || (vim.wasInVisualBlock == true)
-
-        if (visualBlock) {
-            return handleKey(cm, key, origin)
-        }
+        // TODO: Visual-block multi-cursor handling not yet implemented
         return handleKey(cm, key, origin)
     }
 
@@ -149,7 +144,7 @@ object Vim : VimApiInterface {
         updateLangmap(langmapString, remapCtrl)
     }
 
-    fun vimKeyFromEvent(
+    internal fun vimKeyFromEvent(
         key: String,
         ctrlKey: Boolean = false,
         altKey: Boolean = false,
@@ -169,19 +164,19 @@ object Vim : VimApiInterface {
         )
     }
 
-    fun defineMotion(name: String, fn: MotionFn) {
+    internal fun defineMotion(name: String, fn: MotionFn) {
         motions[name] = fn
     }
 
-    fun defineAction(name: String, fn: ActionFn) {
+    internal fun defineAction(name: String, fn: ActionFn) {
         actions[name] = fn
     }
 
-    fun defineOperator(name: String, fn: OperatorFn) {
+    internal fun defineOperator(name: String, fn: OperatorFn) {
         operators[name] = fn
     }
 
-    fun defineEx(name: String, prefix: String?, func: ExFn) {
+    internal fun defineEx(name: String, prefix: String?, func: ExFn) {
         val effectivePrefix = if (prefix.isNullOrEmpty()) name else prefix
         if (!name.startsWith(effectivePrefix)) {
             error("\"$effectivePrefix\" is not a prefix of \"$name\", command not registered")
@@ -216,7 +211,7 @@ object Vim : VimApiInterface {
         }
         // Remove user-defined mappings
         while (defaultKeymap.size > origLength) {
-            (defaultKeymap as MutableList).removeAt(0)
+            defaultKeymap.removeAt(0)
         }
         if (ctx != null) {
             for (i in userKeymap.indices.reversed()) {
@@ -475,7 +470,7 @@ object Vim : VimApiInterface {
         } else {
             command
         }
-        (defaultKeymap as MutableList).add(0, cmd)
+        defaultKeymap.add(0, cmd)
     }
 
     private fun initOptions() {

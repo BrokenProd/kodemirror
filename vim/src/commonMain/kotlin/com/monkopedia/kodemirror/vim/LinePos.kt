@@ -38,20 +38,20 @@ data class LinePos(val line: Int, val ch: Int, val sticky: String? = null) : Com
 }
 
 /** Create a LinePos, mirroring the CM5 `LinePos(line, ch)` constructor. */
-fun makeCursor(line: Int, ch: Int): LinePos = LinePos(line, ch)
+internal fun makeCursor(line: Int, ch: Int): LinePos = LinePos(line, ch)
 
 /** Returns true if [a] is before [b] in the document. */
-fun cursorIsBefore(a: LinePos, b: LinePos): Boolean =
+internal fun cursorIsBefore(a: LinePos, b: LinePos): Boolean =
     a.line < b.line || (a.line == b.line && a.ch < b.ch)
 
 /** Returns true if the two positions are equal (ignoring sticky). */
-fun cursorEqual(a: LinePos, b: LinePos): Boolean = a.line == b.line && a.ch == b.ch
+internal fun cursorEqual(a: LinePos, b: LinePos): Boolean = a.line == b.line && a.ch == b.ch
 
 /** Returns the earlier of two positions. */
-fun cursorMin(a: LinePos, b: LinePos): LinePos = if (cursorIsBefore(a, b)) a else b
+internal fun cursorMin(a: LinePos, b: LinePos): LinePos = if (cursorIsBefore(a, b)) a else b
 
 /** Returns the later of two positions. */
-fun cursorMax(a: LinePos, b: LinePos): LinePos = if (cursorIsBefore(a, b)) b else a
+internal fun cursorMax(a: LinePos, b: LinePos): LinePos = if (cursorIsBefore(a, b)) b else a
 
 /** Copy a LinePos, optionally overriding line or ch. */
 fun LinePos.copy(line: Int = this.line, ch: Int = this.ch): LinePos = LinePos(line, ch)
@@ -61,7 +61,7 @@ fun LinePos.copy(line: Int = this.line, ch: Int = this.ch): LinePos = LinePos(li
 // ---------------------------------------------------------------------------
 
 /** Convert a vim LinePos (0-based line, ch) to an absolute document offset. */
-fun indexFromPos(doc: Text, pos: LinePos): DocPos {
+internal fun indexFromPos(doc: Text, pos: LinePos): DocPos {
     var ch = pos.ch
     var lineNumber = pos.line + 1
     if (lineNumber < 1) {
@@ -79,7 +79,7 @@ fun indexFromPos(doc: Text, pos: LinePos): DocPos {
 }
 
 /** Convert an absolute document offset to a vim LinePos (0-based line, ch). */
-fun posFromIndex(doc: Text, offset: DocPos): LinePos {
+internal fun posFromIndex(doc: Text, offset: DocPos): LinePos {
     val line = doc.lineAt(offset)
     return LinePos(line.number.value - 1, offset.value - line.from.value)
 }

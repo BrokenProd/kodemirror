@@ -2215,10 +2215,9 @@ internal class ExCommandDispatcher {
                 return true
             }
         } else {
-            val keymap = defaultKeymap as MutableList
-            for (i in keymap.indices.reversed()) {
-                if (lhs == keymap[i].keys && keymap[i].context == ctx) {
-                    keymap.removeAt(i)
+            for (i in defaultKeymap.indices.reversed()) {
+                if (lhs == defaultKeymap[i].keys && defaultKeymap[i].context == ctx) {
+                    defaultKeymap.removeAt(i)
                     return true
                 }
             }
@@ -2228,7 +2227,7 @@ internal class ExCommandDispatcher {
 }
 
 internal fun mapCommand(command: VimKeyCommand) {
-    (defaultKeymap as MutableList).add(0, command)
+    defaultKeymap.add(0, command)
 }
 
 // Global ex command dispatcher

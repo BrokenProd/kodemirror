@@ -27,7 +27,7 @@ import com.monkopedia.kodemirror.state.extensionListOf
  * Facet that collects all [ViewPlugin] instances registered in the state's
  * extension configuration.  Each plugin contributes itself via [ViewPlugin.asExtension].
  */
-val viewPluginRegistry: Facet<ViewPlugin<*>, List<ViewPlugin<*>>> = Facet.define()
+internal val viewPluginRegistry: Facet<ViewPlugin<*>, List<ViewPlugin<*>>> = Facet.define()
 
 /** A plugin value is the mutable instance managed by a [ViewPlugin]. */
 interface PluginValue {

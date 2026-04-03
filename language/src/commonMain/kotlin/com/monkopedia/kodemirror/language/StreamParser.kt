@@ -34,6 +34,7 @@ import com.monkopedia.kodemirror.lezer.highlight.Tag
 import com.monkopedia.kodemirror.lezer.highlight.Tags as highlightTags
 import com.monkopedia.kodemirror.lezer.highlight.styleTagsList
 import com.monkopedia.kodemirror.state.DocPos
+import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Facet
 
 /**
@@ -138,6 +139,21 @@ class StreamLanguage<State> private constructor(
         return streamParser.indent(state, textAfter, cx)
     }
 
+    /**
+     * Parse the document in [state], threading the state's tabSize and
+     * indentUnit into the stream parser so tokens are measured correctly.
+     */
+    override fun getTree(state: EditorState): Tree {
+        val tabSize = state.tabSize
+        val unit = getIndentUnit(state)
+        val input = DocInput(state.doc)
+        val parse = StreamParse(this, input, listOf(TextRange(0, input.length)), tabSize, unit)
+        while (true) {
+            val done = parse.advance()
+            if (done != null) return done
+        }
+    }
+
     companion object {
         /** Define a stream language. */
         fun <State> define(spec: StreamParser<State>): StreamLanguage<State> {
@@ -209,11 +225,13 @@ private const val MAX_INDENT_SCAN_DIST = 10000
 private class StreamParse<State>(
     private val lang: StreamLanguage<State>,
     private val input: Input,
-    private val ranges: List<TextRange>
+    private val ranges: List<TextRange>,
+    private val tabSize: Int = 4,
+    private val indentUnit: Int = 2
 ) : PartialParse {
 
     private var state: State =
-        lang.streamParser.startState(4)
+        lang.streamParser.startState(indentUnit)
     override var parsedPos: Int = ranges.first().from
     override var stoppedAt: Int? = null
     private val to: Int = ranges.last().to
@@ -250,7 +268,7 @@ private class StreamParse<State>(
         val from = parsedPos
         val line = lineAfter(from)
         val end = from + line.length
-        val stream = StringStream(line, 4, 2)
+        val stream = StringStream(line, tabSize, indentUnit)
         if (stream.eol()) {
             lang.streamParser.blankLine(state, stream.indentUnit)
         } else {

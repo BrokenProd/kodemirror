@@ -75,7 +75,7 @@ private fun specialCharLabel(codePoint: Int): String = when {
     codePoint == 0x00AD -> "SHY"
     codePoint == 0x200B -> "ZWS"
     codePoint == 0xFEFF -> "BOM"
-    else -> "?".also { }
+    else -> "?"
 }
 
 private class SpecialCharWidget(val label: String, val codePoint: Int) : WidgetType() {

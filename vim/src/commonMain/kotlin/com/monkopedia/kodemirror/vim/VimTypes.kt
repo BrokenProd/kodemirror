@@ -133,7 +133,7 @@ data class MotionArgs(
 // Command types (the keymap entries)
 // ---------------------------------------------------------------------------
 
-sealed class VimKeyCommand {
+internal sealed class VimKeyCommand {
     abstract val keys: String
     abstract val context: String?
     open val interlaceInsertRepeat: Boolean? = null
@@ -143,7 +143,7 @@ sealed class VimKeyCommand {
     open val noremap: Boolean? = null
 }
 
-data class MotionCommand(
+internal data class MotionCommand(
     override val keys: String,
     val motion: String,
     val motionArgs: MotionArgs? = null,
@@ -152,7 +152,7 @@ data class MotionCommand(
     override val noremap: Boolean? = null
 ) : VimKeyCommand()
 
-data class OperatorCommand(
+internal data class OperatorCommand(
     override val keys: String,
     val operator: String,
     val operatorArgs: OperatorArgs? = null,
@@ -162,7 +162,7 @@ data class OperatorCommand(
     override val noremap: Boolean? = null
 ) : VimKeyCommand()
 
-data class ActionCommand(
+internal data class ActionCommand(
     override val keys: String,
     val action: String,
     val actionArgs: ActionArgs? = null,
@@ -175,14 +175,14 @@ data class ActionCommand(
     override val noremap: Boolean? = null
 ) : VimKeyCommand()
 
-data class SearchCommand(
+internal data class SearchCommand(
     override val keys: String,
     val searchArgs: SearchArgs,
     override val context: String? = null,
     override val noremap: Boolean? = null
 ) : VimKeyCommand()
 
-data class OperatorMotionCommand(
+internal data class OperatorMotionCommand(
     override val keys: String,
     val motion: String,
     val operator: String,
@@ -195,30 +195,30 @@ data class OperatorMotionCommand(
     override val noremap: Boolean? = null
 ) : VimKeyCommand()
 
-data class OperatorMotionArgs(
+internal data class OperatorMotionArgs(
     val visualLine: Boolean? = null
 )
 
-data class IdleCommand(
+internal data class IdleCommand(
     override val keys: String,
     override val context: String? = null,
     override val noremap: Boolean? = null
 ) : VimKeyCommand()
 
-data class ExCommandMapping(
+internal data class ExCommandMapping(
     override val keys: String,
     override val context: String? = null,
     override val noremap: Boolean? = null
 ) : VimKeyCommand()
 
-data class KeyToExCommand(
+internal data class KeyToExCommand(
     override val keys: String,
     val exArgs: ExParams,
     override val context: String? = null,
     override val noremap: Boolean? = null
 ) : VimKeyCommand()
 
-data class KeyToKeyCommand(
+internal data class KeyToKeyCommand(
     override val keys: String,
     val toKeys: String,
     override val context: String? = null,
@@ -229,7 +229,7 @@ data class KeyToKeyCommand(
 // Input state
 // ---------------------------------------------------------------------------
 
-class InputState {
+internal class InputState {
     val prefixRepeat: MutableList<String> = mutableListOf()
     val motionRepeat: MutableList<String> = mutableListOf()
     var operator: String? = null
@@ -283,7 +283,7 @@ class InputState {
     }
 }
 
-data class ChangeQueue(
+internal data class ChangeQueue(
     var inserted: String = "",
     val removed: MutableList<String> = mutableListOf()
 )
@@ -292,7 +292,7 @@ data class ChangeQueue(
 // Search state
 // ---------------------------------------------------------------------------
 
-class SearchState {
+internal class SearchState {
     private var reversed: Boolean = false
     private var query: Regex? = null
     var highlightTimeout: Int? = null
@@ -334,7 +334,7 @@ data class SearchOverlay(val query: Regex)
 // Insert mode changes
 // ---------------------------------------------------------------------------
 
-class InsertModeChanges {
+internal class InsertModeChanges {
     val changes: MutableList<Any> = mutableListOf() // String | InsertModeKey | Pair<String,Int?>
     var expectCursorActivityForChange: Boolean = false
     var visualBlock: Int? = null
@@ -349,7 +349,7 @@ data class InsertModeKey(val keyName: String)
 // Vim state (per-editor)
 // ---------------------------------------------------------------------------
 
-class VimState {
+internal class VimState {
     var onPasteFn: (() -> Unit)? = null
     var sel: LinePosRange = LinePosRange(LinePos(0, 0), LinePos(0, 0))
     var insertModeReturn: Boolean = false
@@ -383,7 +383,7 @@ class VimState {
     var textwidth: Int? = null
 }
 
-data class VimLastSelection(
+internal data class VimLastSelection(
     var anchorMark: Marker,
     var headMark: Marker,
     var visualLine: Boolean,
@@ -397,7 +397,7 @@ data class VimLastSelection(
 // Ex command params
 // ---------------------------------------------------------------------------
 
-data class ExParams(
+internal data class ExParams(
     var commandName: String = "",
     var argString: String = "",
     var input: String = "",
@@ -415,7 +415,7 @@ data class ExParams(
 // Ex command definition
 // ---------------------------------------------------------------------------
 
-data class ExCommandDefinition(
+internal data class ExCommandDefinition(
     val name: String,
     val shortName: String? = null,
     val possiblyAsync: Boolean? = null,
@@ -432,7 +432,7 @@ data class ExCommandDefinition(
 // Vim option
 // ---------------------------------------------------------------------------
 
-data class VimOption(
+internal data class VimOption(
     val type: String? = null,
     var defaultValue: Any? = null,
     var callback: ((Any?, VimEditor?) -> Any?)? = null,
@@ -443,7 +443,7 @@ data class VimOption(
 // Prompt options (for ex command line)
 // ---------------------------------------------------------------------------
 
-data class PromptOptions(
+internal data class PromptOptions(
     val onClose: ((String?) -> Unit)? = null,
     val prefix: String = "",
     val desc: String? = null,
@@ -453,7 +453,7 @@ data class PromptOptions(
     val selectValueOnOpen: Boolean? = null
 )
 
-data class VimKeyEvent(
+internal data class VimKeyEvent(
     val keyCode: Int = 0,
     val key: String = ""
 )
@@ -462,7 +462,7 @@ data class VimKeyEvent(
 // Function type aliases
 // ---------------------------------------------------------------------------
 
-typealias MotionFn = (
+internal typealias MotionFn = (
     cm: VimEditor,
     head: LinePos,
     motionArgs: MotionArgs,
@@ -470,7 +470,7 @@ typealias MotionFn = (
     inputState: InputState
 ) -> MotionResult?
 
-typealias OperatorFn = (
+internal typealias OperatorFn = (
     cm: VimEditor,
     args: OperatorArgs,
     ranges: List<LinePosRange>,
@@ -478,13 +478,13 @@ typealias OperatorFn = (
     newHead: LinePos?
 ) -> LinePos?
 
-typealias ActionFn = (
+internal typealias ActionFn = (
     cm: VimEditor,
     actionArgs: ActionArgs,
     vim: VimState
 ) -> Unit
 
-typealias ExFn = (
+internal typealias ExFn = (
     cm: VimEditor,
     params: ExParams
 ) -> Unit

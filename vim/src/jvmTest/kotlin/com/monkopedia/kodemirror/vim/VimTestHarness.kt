@@ -56,7 +56,7 @@ val DEFAULT_CODE = buildString {
 /**
  * Helper class providing vim test utilities, mirroring the upstream `helpers` object.
  */
-class VimHelpers(
+internal class VimHelpers(
     val cm: VimEditor,
     val vim: VimState
 ) {
@@ -209,7 +209,11 @@ internal fun typeKey(cm: VimEditor, key: String) {
  * }
  * ```
  */
-fun testVim(value: String = DEFAULT_CODE, cursor: LinePos? = null, fn: (VimHelpers) -> Unit) {
+internal fun testVim(
+    value: String = DEFAULT_CODE,
+    cursor: LinePos? = null,
+    fn: (VimHelpers) -> Unit
+) {
     // Create editor state
     val cursorOffset = if (cursor != null) {
         val lines = value.split("\n")

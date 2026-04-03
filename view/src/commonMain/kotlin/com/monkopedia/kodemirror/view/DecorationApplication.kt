@@ -24,8 +24,6 @@ import androidx.compose.ui.text.SpanStyle
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.LineNumber
-import com.monkopedia.kodemirror.state.RangeSet
-import com.monkopedia.kodemirror.state.SpanIterator
 
 /**
  * Represents one item in the LazyColumn that renders the editor content.
@@ -142,7 +140,7 @@ internal data class LineContentResult(
  * @param decorationSets Active decoration sets.
  * @param tabSize        Number of spaces per tab stop (default 4).
  */
-fun buildLineContent(
+internal fun buildLineContent(
     lineFrom: DocPos,
     lineTo: DocPos,
     lineText: String,
@@ -435,39 +433,4 @@ internal fun buildColumnItems(
     }
 
     return items
-}
-
-/**
- * Internal span iterator used for building annotated strings via
- * [RangeSet.spans].
- */
-private class MarkSpanIterator(
-    private val lineFrom: DocPos,
-    private val lineLength: Int,
-    private val builder: AnnotatedString.Builder
-) : SpanIterator<Decoration> {
-    override fun span(from: DocPos, to: DocPos, active: List<Decoration>, openStart: Int) {
-        val startInLine = (from - lineFrom).coerceIn(0, lineLength)
-        val endInLine = (to - lineFrom).coerceIn(0, lineLength)
-        if (startInLine >= endInLine) return
-
-        for (dec in active) {
-            if (dec is MarkDecoration) {
-                dec.spec.style?.let { style ->
-                    builder.addStyle(style, startInLine, endInLine)
-                }
-            }
-        }
-    }
-
-    override fun point(
-        from: DocPos,
-        to: DocPos,
-        value: Decoration,
-        active: List<Decoration>,
-        openStart: Int,
-        index: Int
-    ) {
-        // Inline widgets are handled separately by the composable
-    }
 }

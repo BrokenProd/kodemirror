@@ -52,13 +52,13 @@ data class DiffConfig(
     val override: ((String, String) -> List<Change>)? = null
 )
 
-private var currentScanLimit = 1_000_000_000
-private var currentTimeout = 0L
-private var crude = false
-
-// Reused across calls to avoid growing the vectors again and again
-private val frontier1 = Frontier()
-private val frontier2 = Frontier()
+private class DiffContext {
+    var scanLimit: Int = 1_000_000_000
+    var timeout: Long = 0L
+    var crude: Boolean = false
+    val frontier1 = Frontier()
+    val frontier2 = Frontier()
+}
 
 private class Frontier {
     var vec: IntArray = IntArray(0)
@@ -121,6 +121,7 @@ private class Frontier {
 }
 
 private fun findDiff(
+    ctx: DiffContext,
     a: String,
     fromA: Int,
     toA: Int,
@@ -166,16 +167,17 @@ private fun findDiff(
     if (half != null) {
         val (sharedA, sharedB, sharedLen) = half
         return (
-            findDiff(a, fA, sharedA, b, fB, sharedB) +
-                findDiff(a, sharedA + sharedLen, tA, b, sharedB + sharedLen, tB)
+            findDiff(ctx, a, fA, sharedA, b, fB, sharedB) +
+                findDiff(ctx, a, sharedA + sharedLen, tA, b, sharedB + sharedLen, tB)
             ).toMutableList()
     }
 
-    return findSnake(a, fA, tA, b, fB, tB)
+    return findSnake(ctx, a, fA, tA, b, fB, tB)
 }
 
 // Myers O(ND) algorithm
 private fun findSnake(
+    ctx: DiffContext,
     a: String,
     fromA: Int,
     toA: Int,
@@ -185,37 +187,38 @@ private fun findSnake(
 ): MutableList<Change> {
     val lenA = toA - fromA
     val lenB = toB - fromB
-    if (currentScanLimit < 1_000_000_000 && min(lenA, lenB) > currentScanLimit.toLong() * 16 ||
-        currentTimeout > 0 && currentTimeMillis() > currentTimeout
+    if (ctx.scanLimit < 1_000_000_000 && min(lenA, lenB) > ctx.scanLimit.toLong() * 16 ||
+        ctx.timeout > 0 && currentTimeMillis() > ctx.timeout
     ) {
-        if (min(lenA, lenB) > currentScanLimit.toLong() * 64) {
+        if (min(lenA, lenB) > ctx.scanLimit.toLong() * 64) {
             return mutableListOf(Change(fromA, toA, fromB, toB))
         }
-        return crudeMatch(a, fromA, toA, b, fromB, toB)
+        return crudeMatch(ctx, a, fromA, toA, b, fromB, toB)
     }
     val off = ceil((lenA + lenB) / 2.0).toInt()
-    frontier1.reset(off)
-    frontier2.reset(off)
+    ctx.frontier1.reset(off)
+    ctx.frontier2.reset(off)
     val match1 = { x: Int, y: Int -> a[fromA + x] == b[fromB + y] }
     val match2 = { x: Int, y: Int -> a[toA - x - 1] == b[toB - y - 1] }
-    val test1 = if ((lenA - lenB) % 2 != 0) frontier2 else null
-    val test2 = if (test1 != null) null else frontier1
+    val test1 = if ((lenA - lenB) % 2 != 0) ctx.frontier2 else null
+    val test2 = if (test1 != null) null else ctx.frontier1
     for (depth in 0 until off) {
-        if (depth > currentScanLimit ||
-            currentTimeout > 0 && (depth and 63) == 0 && currentTimeMillis() > currentTimeout
+        if (depth > ctx.scanLimit ||
+            ctx.timeout > 0 && (depth and 63) == 0 && currentTimeMillis() > ctx.timeout
         ) {
-            return crudeMatch(a, fromA, toA, b, fromB, toB)
+            return crudeMatch(ctx, a, fromA, toA, b, fromB, toB)
         }
-        val done = frontier1.advance(depth, lenA, lenB, off, test1, false, match1)
-            ?: frontier2.advance(depth, lenA, lenB, off, test2, true, match2)
+        val done = ctx.frontier1.advance(depth, lenA, lenB, off, test1, false, match1)
+            ?: ctx.frontier2.advance(depth, lenA, lenB, off, test2, true, match2)
         if (done != null) {
-            return bisect(a, fromA, toA, fromA + done[0], b, fromB, toB, fromB + done[1])
+            return bisect(ctx, a, fromA, toA, fromA + done[0], b, fromB, toB, fromB + done[1])
         }
     }
     return mutableListOf(Change(fromA, toA, fromB, toB))
 }
 
 private fun bisect(
+    ctx: DiffContext,
     a: String,
     fromA: Int,
     toA: Int,
@@ -231,7 +234,7 @@ private fun bisect(
     if (!validIndex(a, sA) && ++sA == toA) stop = true
     if (!validIndex(b, sB) && ++sB == toB) stop = true
     if (stop) return mutableListOf(Change(fromA, toA, fromB, toB))
-    return (findDiff(a, fromA, sA, b, fromB, sB) + findDiff(a, sA, toA, b, sB, toB))
+    return (findDiff(ctx, a, fromA, sA, b, fromB, sB) + findDiff(ctx, a, sA, toA, b, sB, toB))
         .toMutableList()
 }
 
@@ -343,6 +346,7 @@ private fun halfMatch(
 }
 
 private fun crudeMatch(
+    ctx: DiffContext,
     a: String,
     fromA: Int,
     toA: Int,
@@ -350,7 +354,7 @@ private fun crudeMatch(
     fromB: Int,
     toB: Int
 ): MutableList<Change> {
-    crude = true
+    ctx.crude = true
     val lenA = toA - fromA
     val lenB = toB - fromB
     val result: Triple<Int, Int, Int>?
@@ -363,8 +367,8 @@ private fun crudeMatch(
     if (result == null) return mutableListOf(Change(fromA, toA, fromB, toB))
     val (sharedA, sharedB, sharedLen) = result
     return (
-        findDiff(a, fromA, sharedA, b, fromB, sharedB) +
-            findDiff(a, sharedA + sharedLen, toA, b, sharedB + sharedLen, toB)
+        findDiff(ctx, a, fromA, sharedA, b, fromB, sharedB) +
+            findDiff(ctx, a, sharedA + sharedLen, toA, b, sharedB + sharedLen, toB)
         ).toMutableList()
 }
 
@@ -443,7 +447,7 @@ private fun normalize(a: String, b: String, changes: MutableList<Change>): Mutab
 private const val MAX_SCAN = 8
 
 private fun asciiWordChar(code: Int): Boolean =
-    (code in 49..57) || (code in 65..90) || (code in 97..122)
+    (code in 48..57) || (code in 65..90) || (code in 97..122)
 
 private fun wordCharAfter(s: String, pos: Int): Int {
     if (pos == s.length) return 0
@@ -648,21 +652,44 @@ private fun makePresentable(
 
 internal fun currentTimeMillis(): Long = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
 
-internal var lastDiffPrecise: Boolean = true
-    private set
+/**
+ * Compute the difference between two strings, returning the changes and whether the diff was
+ * precise (i.e. did not fall back to crude matching).
+ */
+internal fun diffWithPrecise(
+    a: String,
+    b: String,
+    config: DiffConfig = DiffConfig()
+): Pair<List<Change>, Boolean> {
+    val override = config.override
+    if (override != null) return Pair(override(a, b), true)
+    val ctx = DiffContext()
+    ctx.scanLimit = config.scanLimit shr 1
+    ctx.timeout = if (config.timeout > 0) currentTimeMillis() + config.timeout else 0
+    ctx.crude = false
+    val result = normalize(a, b, findDiff(ctx, a, 0, a.length, b, 0, b.length))
+    return Pair(result, !ctx.crude)
+}
 
 /**
  * Compute the difference between two strings.
  */
-fun diff(a: String, b: String, config: DiffConfig = DiffConfig()): List<Change> {
-    val override = config.override
-    if (override != null) return override(a, b)
-    currentScanLimit = (config.scanLimit) shr 1
-    currentTimeout = if (config.timeout > 0) currentTimeMillis() + config.timeout else 0
-    crude = false
-    val result = normalize(a, b, findDiff(a, 0, a.length, b, 0, b.length))
-    lastDiffPrecise = !crude
-    return result
+fun diff(a: String, b: String, config: DiffConfig = DiffConfig()): List<Change> =
+    diffWithPrecise(a, b, config).first
+
+/**
+ * Compute the difference between the given strings, and clean up the
+ * resulting diff for presentation to users by dropping short
+ * unchanged ranges, and aligning changes to word boundaries when
+ * appropriate. Returns the changes and whether the diff was precise.
+ */
+internal fun presentableDiffWithPrecise(
+    a: String,
+    b: String,
+    config: DiffConfig = DiffConfig()
+): Pair<List<Change>, Boolean> {
+    val (rawChanges, precise) = diffWithPrecise(a, b, config)
+    return Pair(makePresentable(rawChanges.toMutableList(), a, b), precise)
 }
 
 /**
@@ -671,7 +698,5 @@ fun diff(a: String, b: String, config: DiffConfig = DiffConfig()): List<Change> 
  * unchanged ranges, and aligning changes to word boundaries when
  * appropriate.
  */
-fun presentableDiff(a: String, b: String, config: DiffConfig = DiffConfig()): List<Change> {
-    val changes = diff(a, b, config).toMutableList()
-    return makePresentable(changes, a, b)
-}
+fun presentableDiff(a: String, b: String, config: DiffConfig = DiffConfig()): List<Change> =
+    presentableDiffWithPrecise(a, b, config).first

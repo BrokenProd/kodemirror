@@ -56,8 +56,8 @@ class Chunk(
          * Build a set of changed chunks for the given documents.
          */
         fun build(a: Text, b: Text, conf: DiffConfig = defaultDiffConfig): List<Chunk> {
-            val d = presentableDiff(a.toString(), b.toString(), conf)
-            return toChunks(d, a, b, 0, 0, lastDiffPrecise)
+            val (d, precise) = presentableDiffWithPrecise(a.toString(), b.toString(), conf)
+            return toChunks(d, a, b, 0, 0, precise)
         }
 
         /**
@@ -237,7 +237,7 @@ private fun findRangesForChange(
             if (ranges.isNotEmpty() && ranges.last().toA >= fromA) {
                 val last = ranges.last()
                 ranges[ranges.size - 1] = UpdateRange(
-                    last.fromA, last.fromB, toA, toB,
+                    last.fromA, toA, last.fromB, toB,
                     last.diffA + diffA, last.diffB + diffB
                 )
             } else {
@@ -273,12 +273,12 @@ private fun updateChunks(
         if (range == null) break
         val toA = range.toA + offA + range.diffA
         val toB = range.toB + offB + range.diffB
-        val d = presentableDiff(
+        val (d, precise) = presentableDiffWithPrecise(
             a.sliceString(fromA, toA),
             b.sliceString(fromB, toB),
             conf
         )
-        for (chunk in toChunks(d, a, b, fromA.value, fromB.value, lastDiffPrecise)) {
+        for (chunk in toChunks(d, a, b, fromA.value, fromB.value, precise)) {
             result.add(chunk)
         }
         offA += range.diffA

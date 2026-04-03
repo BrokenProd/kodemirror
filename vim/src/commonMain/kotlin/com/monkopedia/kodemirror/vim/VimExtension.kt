@@ -37,7 +37,6 @@ import com.monkopedia.kodemirror.state.Transaction
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.define
 import com.monkopedia.kodemirror.state.extensionListOf
-import com.monkopedia.kodemirror.view.DecorationSet
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.KeyBinding
 import com.monkopedia.kodemirror.view.PluginValue
@@ -180,14 +179,12 @@ private val vimKeymap: Extension = keymap.of(
 
 internal val vimPlugin: ViewPlugin<VimPluginValue> = ViewPlugin.define(
     create = { session -> VimPluginValue(session) },
-    decorations = { plugin -> plugin.decorations }
+    decorations = { _ -> RangeSet.empty() }
 )
 
 internal class VimPluginValue(internal val session: EditorSession) : PluginValue {
     val cm: VimEditor = VimEditor(session)
     private val vimState: VimState
-    var decorations: DecorationSet = RangeSet.empty()
-        private set
 
     init {
         lastVimPlugin = this
@@ -197,7 +194,6 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
 
         cm.on("vim-command-done") {
             cm.vim?.status = ""
-            rebuildDecorations()
             updateStatus()
         }
         cm.on("vim-mode-change") { args ->
@@ -219,11 +215,9 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
                     )
                 )
             )
-            rebuildDecorations()
             updateStatus()
             syncPromptPanel()
         }
-        rebuildDecorations()
 
         // Dispatch the initial mode so the state field has the correct value
         session.dispatch(
@@ -262,13 +256,6 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
         if (cm.curOp != null && cm.curOp?.isVimOp != true) {
             cm.onBeforeEndOperation()
         }
-        rebuildDecorations()
-    }
-
-    private fun rebuildDecorations() {
-        // Block cursor is now drawn via the selection overlay (SelectionDrawing.kt)
-        // using blockCursorProvider facet. No decoration-based cursors needed.
-        decorations = RangeSet.empty()
     }
 
     fun handleKey(event: KeyEvent): Boolean {
@@ -294,13 +281,11 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
             val charKey = extractCharFromEvent(event)
             if (charKey != null && charKey.length == 1 && !charKey.contains('\n')) {
                 cm.overWriteSelection(charKey)
-                rebuildDecorations()
                 updateStatus()
                 syncPromptPanel()
                 return true
             } else if (event.key == Key.Backspace) {
                 com.monkopedia.kodemirror.commands.cursorCharLeft(cm.session)
-                rebuildDecorations()
                 updateStatus()
                 syncPromptPanel()
                 return true
@@ -308,7 +293,6 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
         }
 
         if (result) {
-            rebuildDecorations()
             updateStatus()
         }
         syncPromptPanel()
@@ -342,7 +326,6 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
         Vim.maybeInitVimState_(cm)
 
         if (result) {
-            rebuildDecorations()
             updateStatus()
         }
         syncPromptPanel()

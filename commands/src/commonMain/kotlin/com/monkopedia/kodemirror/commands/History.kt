@@ -28,6 +28,7 @@ import com.monkopedia.kodemirror.state.EditorSelection
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
+import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.StateEffect
 import com.monkopedia.kodemirror.state.StateField
@@ -231,6 +232,10 @@ data class HistoryConfig(
     val minDepth: Int = 100
 )
 
+internal val historyConfig: Facet<HistoryConfig, HistoryConfig> = Facet.define(
+    combine = { configs -> configs.firstOrNull() ?: HistoryConfig() }
+)
+
 internal class HistoryState(
     val done: List<HistoryEvent>,
     val undone: List<HistoryEvent>,
@@ -388,6 +393,7 @@ private val _historyField: StateField<HistoryState> = StateField.define(
     StateFieldSpec(
         create = { HistoryState(emptyList(), emptyList()) },
         update = { value, tr ->
+            val config = tr.state.facet(historyConfig)
             val fromHist = tr.annotation(fromHistory)
             if (fromHist != null) {
                 val item = HistoryEvent.fromTransaction(tr, fromHist.selection)
@@ -398,7 +404,7 @@ private val _historyField: StateField<HistoryState> = StateField.define(
                     value.done
                 }
                 if (item != null) {
-                    other = updateBranch(other, other.size, 100, item)
+                    other = updateBranch(other, other.size, config.minDepth, item)
                 } else {
                     other = addSelection(other, tr.startState.selection)
                 }
@@ -428,14 +434,14 @@ private val _historyField: StateField<HistoryState> = StateField.define(
                 if (event != null) {
                     state = state.addChanges(
                         event, time, userEvent,
-                        DEFAULT_GROUP_DELAY, 100
+                        config.groupDelay, config.minDepth
                     )
                 } else if (tr.selection != null) {
                     state = state.addSelection(
                         tr.startState.selection,
                         time,
                         userEvent,
-                        DEFAULT_GROUP_DELAY
+                        config.groupDelay
                     )
                 }
             }
@@ -506,6 +512,7 @@ fun redoDepth(state: EditorState): Int {
 fun history(config: HistoryConfig = HistoryConfig()): Extension {
     return ExtensionList(
         listOf(
+            historyConfig.of(config),
             _historyField,
             keymapOf(
                 KeyBinding(

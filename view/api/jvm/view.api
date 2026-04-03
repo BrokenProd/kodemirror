@@ -2,10 +2,6 @@ public final class com/monkopedia/kodemirror/view/ActiveLineKt {
 	public static final fun getHighlightActiveLine ()Lcom/monkopedia/kodemirror/state/Extension;
 }
 
-public final class com/monkopedia/kodemirror/view/BidiKt {
-	public static final fun autoDirection (Ljava/lang/String;II)Lcom/monkopedia/kodemirror/view/Direction;
-}
-
 public final class com/monkopedia/kodemirror/view/BidiSpan {
 	public static final field $stable I
 	public fun <init> (III)V
@@ -105,11 +101,6 @@ public final class com/monkopedia/kodemirror/view/Decoration$Companion {
 	public static synthetic fun mark$default (Lcom/monkopedia/kodemirror/view/Decoration$Companion;Landroidx/compose/ui/text/SpanStyle;ZZZLjava/lang/String;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/MarkDecoration;
 	public final fun replace (Lcom/monkopedia/kodemirror/view/ReplaceDecorationSpec;)Lcom/monkopedia/kodemirror/view/ReplaceDecoration;
 	public final fun widget (Lcom/monkopedia/kodemirror/view/WidgetDecorationSpec;)Lcom/monkopedia/kodemirror/view/WidgetDecoration;
-}
-
-public final class com/monkopedia/kodemirror/view/DecorationApplicationKt {
-	public static final fun buildLineContent-n90Ak9o (IILjava/lang/String;Ljava/util/List;I)Landroidx/compose/ui/text/AnnotatedString;
-	public static synthetic fun buildLineContent-n90Ak9o$default (IILjava/lang/String;Ljava/util/List;IILjava/lang/Object;)Landroidx/compose/ui/text/AnnotatedString;
 }
 
 public abstract interface class com/monkopedia/kodemirror/view/DecorationSource : com/monkopedia/kodemirror/view/PluginValue {
@@ -366,18 +357,6 @@ public final class com/monkopedia/kodemirror/view/HighlightWhitespaceKt {
 	public static final fun getHighlightWhitespace ()Lcom/monkopedia/kodemirror/state/Extension;
 }
 
-public final class com/monkopedia/kodemirror/view/InputHandlingKt {
-	public static final fun getCurrentOs ()Ljava/lang/String;
-	public static final fun handleCharacterInput-34rOyRA (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/Object;)Z
-	public static final fun handleDrag-2x9bVx0 (Lcom/monkopedia/kodemirror/view/EditorSession;JJ)V
-	public static final fun handleKeyEvent-34rOyRA (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/Object;)Z
-	public static final fun handleRawKeyEvent (Lcom/monkopedia/kodemirror/view/EditorSession;Ljava/lang/String;ZZZZ)Z
-	public static final fun handleRectangularDrag-2x9bVx0 (Lcom/monkopedia/kodemirror/view/EditorSession;JJ)V
-	public static final fun handleTap-Uv8p0NA (Lcom/monkopedia/kodemirror/view/EditorSession;J)V
-	public static final fun keyEventToName-ZmokQxo (Ljava/lang/Object;)Ljava/lang/String;
-	public static final fun setCurrentOs (Ljava/lang/String;)V
-}
-
 public final class com/monkopedia/kodemirror/view/KeyBinding {
 	public static final field $stable I
 	public fun <init> ()V
@@ -429,8 +408,6 @@ public final class com/monkopedia/kodemirror/view/KeymapKt {
 	public static final fun keymapOf (Ljava/util/List;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun keymapOf (Lkotlin/jvm/functions/Function1;)Lcom/monkopedia/kodemirror/state/Extension;
 	public static final fun keymapOf ([Lcom/monkopedia/kodemirror/view/KeyBinding;)Lcom/monkopedia/kodemirror/state/Extension;
-	public static final fun normalizeKeyName (Ljava/lang/String;Z)Ljava/lang/String;
-	public static synthetic fun normalizeKeyName$default (Ljava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;
 }
 
 public final class com/monkopedia/kodemirror/view/KodeMirrorKt {
@@ -813,10 +790,6 @@ public final class com/monkopedia/kodemirror/view/ViewPlugin$Companion {
 	public static synthetic fun define$default (Lcom/monkopedia/kodemirror/view/ViewPlugin$Companion;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/ViewPlugin;
 	public static synthetic fun define$default (Lcom/monkopedia/kodemirror/view/ViewPlugin$Companion;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/view/ViewPlugin;
 	public final fun fromClass (Lkotlin/jvm/functions/Function0;)Lcom/monkopedia/kodemirror/view/ViewPlugin;
-}
-
-public final class com/monkopedia/kodemirror/view/ViewPluginKt {
-	public static final fun getViewPluginRegistry ()Lcom/monkopedia/kodemirror/state/Facet;
 }
 
 public final class com/monkopedia/kodemirror/view/ViewState {

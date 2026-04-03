@@ -25,7 +25,7 @@ package com.monkopedia.kodemirror.vim
  * `@replit/codemirror-vim` package.  Every entry from the JS source is
  * represented here in the same order.
  */
-val defaultKeymap: List<VimKeyCommand> = mutableListOf(
+internal val defaultKeymap: MutableList<VimKeyCommand> = mutableListOf(
     // -----------------------------------------------------------------------
     // Key-to-key mappings (must come first so they can override others)
     // -----------------------------------------------------------------------
@@ -816,7 +816,7 @@ val defaultKeymap: List<VimKeyCommand> = mutableListOf(
  * This is the Kotlin port of the `defaultExCommandMap` array from the upstream
  * `@replit/codemirror-vim` package.
  */
-val defaultExCommandMap: List<ExCommandDefinition> = listOf(
+internal val defaultExCommandMap: List<ExCommandDefinition> = listOf(
     ExCommandDefinition(name = "colorscheme", shortName = "colo"),
     ExCommandDefinition(name = "map"),
     ExCommandDefinition(name = "imap", shortName = "im"),

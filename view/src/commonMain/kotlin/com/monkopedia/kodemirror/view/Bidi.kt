@@ -295,7 +295,7 @@ private fun findNextStrong(types: IntArray, from: Int, paraLevel: Int): Int {
  * Detect the dominant direction in the given range of text.
  * Looks for the first strong bidi character (L or R/AL).
  */
-fun autoDirection(text: String, from: Int, to: Int): Direction {
+internal fun autoDirection(text: String, from: Int, to: Int): Direction {
     val end = min(to, text.length)
     for (i in from until end) {
         val type = charType(text[i].code)

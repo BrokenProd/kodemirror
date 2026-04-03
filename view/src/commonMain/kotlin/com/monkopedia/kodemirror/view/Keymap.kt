@@ -159,7 +159,7 @@ inline fun keymapOf(block: KeymapBuilder.() -> Unit): Extension =
  * @param name The key binding string to normalize.
  * @param mac If true, treat `mod` as `Meta`; otherwise as `Ctrl`.
  */
-fun normalizeKeyName(name: String, mac: Boolean = false): String {
+internal fun normalizeKeyName(name: String, mac: Boolean = false): String {
     // Split on `-` that is not at the very end of the string, so "Ctrl--" works.
     val parts = name.split(Regex("-(?!$)"))
     var result = parts.last()

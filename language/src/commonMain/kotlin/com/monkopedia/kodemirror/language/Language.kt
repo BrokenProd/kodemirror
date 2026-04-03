@@ -80,6 +80,13 @@ open class Language(
 
     /** Whether this language allows nesting other languages inside it. */
     open val allowsNesting: Boolean get() = true
+
+    /**
+     * Parse the document in [state] and return the resulting syntax tree.
+     * Subclasses may override to pass additional context (e.g. tabSize) to
+     * the underlying parser.
+     */
+    open fun getTree(state: EditorState): Tree = parser.parse(DocInput(state.doc))
 }
 
 /**
@@ -182,14 +189,14 @@ private class LanguageState(
     fun apply(tr: Transaction): LanguageState {
         if (!tr.docChanged) return this
         val lang = tr.state.facet(language) ?: return LanguageState(Tree.empty)
-        val newTree = lang.parser.parse(DocInput(tr.newDoc))
+        val newTree = lang.getTree(tr.state)
         return LanguageState(newTree)
     }
 
     companion object {
         fun init(state: EditorState): LanguageState {
             val lang = state.facet(language) ?: return LanguageState(Tree.empty)
-            val tree = lang.parser.parse(DocInput(state.doc))
+            val tree = lang.getTree(state)
             return LanguageState(tree)
         }
     }

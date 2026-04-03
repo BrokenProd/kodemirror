@@ -43,7 +43,7 @@ import com.monkopedia.kodemirror.state.asInsert
  * Produces something like `"Ctrl-Alt-Enter"` in the same format used by
  * [KeyBinding.key].
  */
-fun keyEventToName(event: KeyEvent): String {
+internal fun keyEventToName(event: KeyEvent): String {
     val parts = mutableListOf<String>()
     if (event.isAltPressed) parts.add("Alt")
     if (event.isCtrlPressed) parts.add("Ctrl")
@@ -204,7 +204,7 @@ private fun normalizeKeyName(name: String): String {
  *
  * Recognized values: `"Mac"`, `"Linux"`, `"Windows"`.
  */
-var currentOs: String = platformOsName()
+internal var currentOs: String = platformOsName()
 
 /**
  * Dispatch a key event to the view's key bindings.
@@ -215,7 +215,7 @@ var currentOs: String = platformOsName()
  * Checks platform-specific key overrides (mac/linux/win), the shift
  * variant, and the any handler.
  */
-fun handleKeyEvent(view: EditorSession, event: KeyEvent): Boolean {
+internal fun handleKeyEvent(view: EditorSession, event: KeyEvent): Boolean {
     if (event.type != KeyEventType.KeyDown) return false
     val name = keyEventToName(event)
     val isShift = event.isShiftPressed
@@ -330,7 +330,7 @@ private fun keyEventToNameWithoutShift(event: KeyEvent): String {
  *
  * @return true if a character was inserted (the event should be consumed).
  */
-fun handleCharacterInput(view: EditorSession, event: KeyEvent): Boolean {
+internal fun handleCharacterInput(view: EditorSession, event: KeyEvent): Boolean {
     if (event.type != KeyEventType.KeyDown) return false
     // Don't insert for modified keys (Ctrl+A, Alt+X, etc.)
     if (event.isCtrlPressed || event.isMetaPressed || event.isAltPressed) return false
@@ -358,7 +358,7 @@ fun handleCharacterInput(view: EditorSession, event: KeyEvent): Boolean {
  *
  * @return true if the key was handled (caller should preventDefault).
  */
-fun handleRawKeyEvent(
+internal fun handleRawKeyEvent(
     view: EditorSession,
     key: String,
     ctrl: Boolean,
@@ -504,7 +504,7 @@ private val UNSHIFTED_SYMBOLS: Map<Char, Char> =
  * Moves the cursor to the tapped position by dispatching a transaction that
  * sets the selection.
  */
-fun handleTap(view: EditorSession, offset: Offset) {
+internal fun handleTap(view: EditorSession, offset: Offset) {
     val pos = view.posAtCoords(offset.x, offset.y) ?: return
     view.dispatch(
         TransactionSpec(
@@ -520,7 +520,7 @@ fun handleTap(view: EditorSession, offset: Offset) {
  * @param start  The document-space coordinate where the drag started.
  * @param current The current drag position.
  */
-fun handleDrag(view: EditorSession, start: Offset, current: Offset) {
+internal fun handleDrag(view: EditorSession, start: Offset, current: Offset) {
     val anchor = view.posAtCoords(start.x, start.y) ?: return
     val head = view.posAtCoords(current.x, current.y) ?: return
     view.dispatch(
@@ -542,7 +542,7 @@ fun handleDrag(view: EditorSession, start: Offset, current: Offset) {
  * @param start   The document-space coordinate where the drag started.
  * @param current The current drag position.
  */
-fun handleRectangularDrag(view: EditorSession, start: Offset, current: Offset) {
+internal fun handleRectangularDrag(view: EditorSession, start: Offset, current: Offset) {
     val doc = view.state.doc
     val startPos = view.posAtCoords(start.x, start.y) ?: return
     val currentPos = view.posAtCoords(current.x, current.y) ?: return

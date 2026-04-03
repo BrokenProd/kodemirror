@@ -71,7 +71,11 @@ class TabExpansionTest {
         val newState = tr.state
         val line2 = newState.doc.line(LineNumber(2))
         val result = buildLineContentWithTabs(
-            line2.from, line2.to, line2.text, emptyList(), tabSize = 4
+            line2.from,
+            line2.to,
+            line2.text,
+            emptyList(),
+            tabSize = 4
         )
         assertEquals("    world", result.content.text)
         assertNotNull(result.offsetMap)
@@ -82,7 +86,11 @@ class TabExpansionTest {
         val state = EditorState.create(EditorStateConfig(doc = "\tx".asDoc()))
         val line = state.doc.line(LineNumber(1))
         val result = buildLineContentWithTabs(
-            line.from, line.to, line.text, emptyList(), tabSize = 4
+            line.from,
+            line.to,
+            line.text,
+            emptyList(),
+            tabSize = 4
         )
         assertEquals("    x", result.content.text)
     }
@@ -92,7 +100,11 @@ class TabExpansionTest {
         val state = EditorState.create(EditorStateConfig(doc = "abc\tx".asDoc()))
         val line = state.doc.line(LineNumber(1))
         val result = buildLineContentWithTabs(
-            line.from, line.to, line.text, emptyList(), tabSize = 4
+            line.from,
+            line.to,
+            line.text,
+            emptyList(),
+            tabSize = 4
         )
         assertEquals("abc x", result.content.text)
     }
@@ -104,7 +116,11 @@ class TabExpansionTest {
         )
         val line = state.doc.line(LineNumber(1))
         val result = buildLineContentWithTabs(
-            line.from, line.to, line.text, emptyList(), tabSize = 4
+            line.from,
+            line.to,
+            line.text,
+            emptyList(),
+            tabSize = 4
         )
         // "before" is 6 chars, tab at col 6, next stop is 8, so 2 spaces
         assertEquals("before  after", result.content.text)
@@ -117,7 +133,11 @@ class TabExpansionTest {
         )
         val line = state.doc.line(LineNumber(1))
         val result = buildLineContentWithTabs(
-            line.from, line.to, line.text, emptyList(), tabSize = 4
+            line.from,
+            line.to,
+            line.text,
+            emptyList(),
+            tabSize = 4
         )
         assertEquals("no tabs here", result.content.text)
     }
