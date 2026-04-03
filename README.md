@@ -1,22 +1,38 @@
 # KodeMirror
 
-A Kotlin Multiplatform port of [CodeMirror 6](https://codemirror.net/), providing a Compose Multiplatform code editor component with syntax highlighting, vim mode, search/replace, autocompletion, and more.
+[![CI](https://github.com/Monkopedia/kodemirror/actions/workflows/ci.yml/badge.svg)](https://github.com/Monkopedia/kodemirror/actions/workflows/ci.yml)
+[![Maven Central](https://img.shields.io/maven-central/v/com.monkopedia.kodemirror/view)](https://central.sonatype.com/namespace/com.monkopedia.kodemirror)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-[Documentation](https://monkopedia.github.io/kodemirror/) · [Live Demo](https://monkopedia.github.io/kodemirror/showcase/) · [API Reference](https://monkopedia.github.io/kodemirror/reference/)
+A native [Compose Multiplatform](https://www.jetbrains.com/compose-multiplatform/) code editor — no WebView, no JS bridges. Built as a ground-up Kotlin port of [CodeMirror 6](https://codemirror.net/), the industry-standard web editor.
+
+[Live Demo](https://monkopedia.github.io/kodemirror/showcase/) · [Documentation](https://monkopedia.github.io/kodemirror/) · [API Reference](https://monkopedia.github.io/kodemirror/reference/)
+
+## Why KodeMirror?
+
+Compose Multiplatform doesn't ship a code editor. Your options are embedding a WebView (heavy, hard to integrate) or building from scratch. KodeMirror gives you a real Compose component with the full feature set of CodeMirror 6:
+
+- **Syntax highlighting** for 20+ languages, plus 100+ via legacy modes
+- **Vim mode** with 600+ ported upstream tests
+- **Search/replace**, **autocompletion**, **linting**, **code folding**
+- **Collaborative editing** and **side-by-side diff/merge**
+- **Themes** — One Dark, Dracula, GitHub Light, Material Design
+- **Real keyboard input pipeline** — layout-aware key handling, no platform hacks
+
+All from shared Kotlin code across every Compose target.
+
+**[Try the live demo](https://monkopedia.github.io/kodemirror/showcase/)** to see it in action — syntax highlighting, vim mode, autocompletion, and more, all running in the browser.
 
 ## Platform Support
 
 | Platform | Status |
 |----------|--------|
-| wasmJs (Browser) | ✅ Tested — automated gap tests + manual browser testing |
-| JVM Desktop | 🔶 Unit tests pass, visual rendering lightly tested |
-| Android | 🔶 Unit tests pass, untested on devices |
-| iOS (arm64, simulatorArm64, x64) | 🔶 Compiles, experimental |
-| macOS native (arm64, x64) | 🔶 Compiles, experimental |
+| wasmJs (Browser) | **Tested** — automated gap tests + manual browser testing |
+| JVM Desktop | Unit tests pass, visual rendering lightly tested |
+| Android | Unit tests pass via CI, untested on devices |
+| iOS / macOS native | Compiles, experimental |
 
 ## Quick Start
-
-Add the BOM and modules you need:
 
 ```kotlin
 // build.gradle.kts
@@ -27,14 +43,12 @@ kotlin {
             implementation("com.monkopedia.kodemirror:view")
             implementation("com.monkopedia.kodemirror:commands")
             implementation("com.monkopedia.kodemirror:basic-setup")
-            // Language support (pick what you need)
+            // Pick your language(s)
             implementation("com.monkopedia.kodemirror:lang-javascript")
         }
     }
 }
 ```
-
-## Usage
 
 ```kotlin
 @Composable
@@ -47,35 +61,61 @@ fun Editor() {
 }
 ```
 
+### With Vim mode and a theme
+
+```kotlin
+@Composable
+fun VimEditor() {
+    val session = rememberEditorSession(
+        doc = "println(\"Hello, KodeMirror!\")",
+        extensions = basicSetup + kotlin().extension + vim() + oneDark
+    )
+    KodeMirror(session = session, modifier = Modifier.fillMaxSize())
+}
+```
+
 ## Modules
 
 ### Core
-- **state** — Editor state, transactions, selections, facets
-- **view** — Compose UI component, decorations, key handling
-- **language** — Language support infrastructure, syntax highlighting
-- **commands** — Standard editor commands (cursor movement, delete, indent, undo/redo)
-- **basic-setup** — Convenience bundle combining common extensions
+| Module | Description |
+|--------|-------------|
+| **state** | Editor state, transactions, selections, facets |
+| **view** | Compose UI component, decorations, key handling |
+| **language** | Language support infrastructure, syntax highlighting |
+| **commands** | Standard editor commands (cursor movement, delete, indent, undo/redo) |
+| **basic-setup** | Convenience bundle combining common extensions |
 
 ### Features
-- **search** — Find/replace panel, search commands
-- **autocomplete** — Completion popup and sources
-- **lint** — Diagnostic display and linting
-- **collab** — Collaborative editing support
-- **merge** — Side-by-side diff view
-- **vim** — Vim keybindings and modal editing
+| Module | Description |
+|--------|-------------|
+| **search** | Find/replace panel, search commands |
+| **autocomplete** | Completion popup and sources |
+| **lint** | Diagnostic display and linting |
+| **collab** | Collaborative editing support |
+| **merge** | Side-by-side diff view |
+| **vim** | Vim keybindings and modal editing |
 
-### Language Support
-JavaScript, TypeScript, HTML, CSS, Python, Java, Go, Rust, Markdown, JSON, YAML, XML, SQL, C++, PHP, and more — 20+ languages via dedicated modules plus 100+ via `legacy-modes`.
+### Languages
+
+JavaScript, TypeScript, HTML, CSS, Python, Java, Kotlin, Go, Rust, Markdown, JSON, YAML, XML, SQL, C++, PHP, and more — 20+ dedicated modules plus 100+ via `legacy-modes`.
 
 ### Themes
-- **theme-one-dark** — One Dark theme
-- **theme-dracula** — Dracula theme
-- **theme-github-light** — GitHub Light theme
-- **material-theme** — Material Design integration
 
-## Known Issues
+One Dark, Dracula, GitHub Light, and Material Design integration.
 
-See [open issues](https://github.com/Monkopedia/kodemirror/issues) for known bugs and planned improvements.
+## Known Limitations
+
+This is v0.1.0 — the API may evolve. Known issues to be aware of:
+
+- **Single editor per window** — multiple simultaneous `KodeMirror` instances share global state ([#6](https://github.com/Monkopedia/kodemirror/issues/6))
+- **Large files** — parsing is synchronous, so very large documents may lag on keystroke ([#7](https://github.com/Monkopedia/kodemirror/issues/7))
+- **Mobile/native** — Android and iOS targets compile and pass unit tests but are not battle-tested on real devices yet
+
+See [all open issues](https://github.com/Monkopedia/kodemirror/issues) for the full list.
+
+## Contributing
+
+Contributions are welcome! Please [open an issue](https://github.com/Monkopedia/kodemirror/issues/new) to discuss before submitting large changes.
 
 ## License
 
