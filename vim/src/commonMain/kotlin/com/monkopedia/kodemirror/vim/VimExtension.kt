@@ -62,6 +62,7 @@ fun vim(status: Boolean = false): Extension {
         vimInputSuppressor,
         vimBlockCursorProvider,
         vimModeField,
+        vimStatusField,
         if (status) showPanel.of(createStatusPanel()) else vimPanelField
     )
 }
@@ -114,13 +115,37 @@ fun getCM(view: EditorSession): VimEditor? = getVimEditor(view)
 
 internal val vimModeEffect: StateEffectType<String> = StateEffect.define()
 
-internal val vimModeField: StateField<String> = StateField.define {
+/**
+ * A [StateField] that tracks the current vim mode as a string.
+ *
+ * Possible values: `"normal"`, `"insert"`, `"visual"`, `"visual line"`,
+ * `"visual block"`.
+ */
+val vimModeField: StateField<String> = StateField.define {
     create { _: EditorState -> "normal" }
     update { value: String, tr: Transaction ->
         var result = value
         for (effect in tr.effects) {
             val mode = effect.asType(vimModeEffect)
             if (mode != null) result = mode.value
+        }
+        result
+    }
+}
+
+internal val vimStatusEffect: StateEffectType<String> = StateEffect.define()
+
+/**
+ * A [StateField] that tracks the current vim status string (pending key
+ * sequence or command output shown in the status bar).
+ */
+val vimStatusField: StateField<String> = StateField.define {
+    create { _: EditorState -> "" }
+    update { value: String, tr: Transaction ->
+        var result = value
+        for (effect in tr.effects) {
+            val status = effect.asType(vimStatusEffect)
+            if (status != null) result = status.value
         }
         result
     }
@@ -370,6 +395,11 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
     private fun updateStatus() {
         val vim = cm.vim ?: return
         status = vim.status
+        session.dispatch(
+            TransactionSpec(
+                effects = listOf(vimStatusEffect.of(status))
+            )
+        )
     }
 
     override fun destroy() {

@@ -27,6 +27,8 @@ import com.monkopedia.kodemirror.view.ViewUpdate
 import com.monkopedia.kodemirror.view.getPanel
 import com.monkopedia.kodemirror.vim.Vim
 import com.monkopedia.kodemirror.vim.getVimEditor
+import com.monkopedia.kodemirror.vim.vimModeField
+import com.monkopedia.kodemirror.vim.vimStatusField
 import kotlin.JsFun
 
 @JsFun(
@@ -121,20 +123,15 @@ private fun serializeVimState(session: EditorSession): String {
     val panelCount = getPanel(session).size
     val isSearchOpen = searchPanelOpen(state)
 
-    // Get vim mode info
-    val cm = getVimEditor(session)
-    val vimState = cm?.vim
-    val vimMode = when {
-        vimState == null -> "normal"
-        vimState.insertMode -> "insert"
-        vimState.visualMode -> when {
-            vimState.visualLine -> "visual-line"
-            vimState.visualBlock -> "visual-block"
-            else -> "visual"
-        }
-        else -> "normal"
+    // Get vim mode info from public state fields
+    val vimModeRaw = state.field(vimModeField)
+    // Map internal mode strings to test-facing names
+    val vimMode = when (vimModeRaw) {
+        "visual line" -> "visual-line"
+        "visual block" -> "visual-block"
+        else -> vimModeRaw
     }
-    val vimStatus = vimState?.status ?: ""
+    val vimStatus = state.field(vimStatusField)
 
     return buildString {
         append("{\"doc\":")
@@ -176,7 +173,7 @@ private class VimTestBridgePlugin(private val session: EditorSession) : PluginVa
 
         // Register live vim mode getter for the test driver
         registerInsertModeGetter {
-            getVimEditor(session)?.vim?.insertMode == true
+            session.state.field(vimModeField) == "insert"
         }
         // Register key handler for test-mode key injection.
         registerKeyHandler { key ->
@@ -192,13 +189,11 @@ private class VimTestBridgePlugin(private val session: EditorSession) : PluginVa
         // Use handleKey (not multiSelectHandleKey) so the virtual prompt
         // (ex command line, search prompt) receives keys when active.
         val consumed = Vim.handleKey(cm, key, "user")
-        // Re-init in case of exception recovery
-        Vim.maybeInitVimState_(cm)
 
         // In insert mode, if vim didn't consume the key and it's a single
         // character, insert it directly (normally Compose's text field does
         // this, but the bridge bypasses that path).
-        if (!consumed && cm.vim?.insertMode == true && key.length == 1) {
+        if (!consumed && session.state.field(vimModeField) == "insert" && key.length == 1) {
             insertTextAtCursor(key)
         }
 
@@ -208,7 +203,7 @@ private class VimTestBridgePlugin(private val session: EditorSession) : PluginVa
 
     private fun handleTypeText(text: String) {
         val cm = getVimEditor(session) ?: return
-        if (cm.vim?.insertMode == true) {
+        if (session.state.field(vimModeField) == "insert") {
             // In insert mode, insert text directly — Vim.handleKey returns
             // false for regular characters (they're handled by the editor's
             // native input), so we insert via dispatch.
@@ -216,8 +211,7 @@ private class VimTestBridgePlugin(private val session: EditorSession) : PluginVa
         } else {
             for (ch in text) {
                 val consumed = Vim.handleKey(cm, ch.toString(), "user")
-                Vim.maybeInitVimState_(cm)
-                if (!consumed && cm.vim?.insertMode == true) {
+                if (!consumed && session.state.field(vimModeField) == "insert") {
                     insertTextAtCursor(ch.toString())
                 }
             }
