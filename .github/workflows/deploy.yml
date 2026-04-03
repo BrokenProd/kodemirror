@@ -11,27 +11,31 @@ jobs:
   deploy:
     needs: build
     strategy:
+      fail-fast: false
       matrix:
         include:
+          # BOM
+          - target: :kodemirror-bom:publishMavenPublicationToMavenCentralRepository
+            os: ubuntu-latest
           # Ubuntu targets
-          - target: publishJvmPublicationToSonatypeRepository
+          - target: publishJvmPublicationToMavenCentralRepository
             os: ubuntu-latest
-          - target: publishAndroidReleasePublicationToSonatypeRepository
+          - target: publishAndroidReleasePublicationToMavenCentralRepository
             os: ubuntu-latest
-          - target: publishWasmJsPublicationToSonatypeRepository
+          - target: publishWasmJsPublicationToMavenCentralRepository
             os: ubuntu-latest
-          - target: publishKotlinMultiplatformPublicationToSonatypeRepository
+          - target: publishKotlinMultiplatformPublicationToMavenCentralRepository
             os: ubuntu-latest
           # macOS targets (need macOS runner for native compilation)
-          - target: publishIosArm64PublicationToSonatypeRepository
+          - target: publishIosArm64PublicationToMavenCentralRepository
             os: macos-latest
-          - target: publishIosSimulatorArm64PublicationToSonatypeRepository
+          - target: publishIosSimulatorArm64PublicationToMavenCentralRepository
             os: macos-latest
-          - target: publishIosX64PublicationToSonatypeRepository
+          - target: publishIosX64PublicationToMavenCentralRepository
             os: macos-latest
-          - target: publishMacosArm64PublicationToSonatypeRepository
+          - target: publishMacosArm64PublicationToMavenCentralRepository
             os: macos-latest
-          - target: publishMacosX64PublicationToSonatypeRepository
+          - target: publishMacosX64PublicationToMavenCentralRepository
             os: macos-latest
     runs-on: ${{ matrix.os }}
     steps:
@@ -49,8 +53,7 @@ jobs:
     - name: Gradle publish
       run: >-
         ./gradlew ${{ matrix.target }}
-        closeSonatypeStagingRepository
         -Psigning.gnupg.passphrase='${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}'
         -Psigning.gnupg.keyName='${{ secrets.OSSRH_GPG_SECRET_KEY_ID }}'
-        -PsonatypeUsername='${{ secrets.OSSRH_USERNAME }}'
-        -PsonatypePassword='${{ secrets.OSSRH_PASSWORD }}'
+        -PmavenCentralUsername='${{ secrets.OSSRH_USERNAME }}'
+        -PmavenCentralPassword='${{ secrets.OSSRH_PASSWORD }}'

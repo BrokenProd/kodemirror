@@ -28,6 +28,8 @@ plugins {
     id("org.jetbrains.kotlinx.kover")
     id("org.jetbrains.dokka")
     id("org.jetbrains.kotlinx.binary-compatibility-validator")
+    id("com.vanniktech.maven.publish")
+    signing
 }
 
 group = "com.monkopedia.kodemirror"
@@ -101,5 +103,47 @@ spotless {
     kotlin {
         target("src/**/*.kt")
         licenseHeaderFile(rootProject.file("spotless/license-header.kt"))
+    }
+}
+
+mavenPublishing {
+    pom {
+        name.set(project.name)
+        description.set("Kotlin Multiplatform port of CodeMirror 6 for Compose Multiplatform")
+        url.set("https://github.com/Monkopedia/kodemirror")
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+        developers {
+            developer {
+                id.set("monkopedia")
+                name.set("Jason Monk")
+                email.set("monkopedia@gmail.com")
+            }
+        }
+        scm {
+            connection.set("scm:git:git://github.com/Monkopedia/kodemirror.git")
+            developerConnection.set("scm:git:ssh://github.com/Monkopedia/kodemirror.git")
+            url.set("https://github.com/Monkopedia/kodemirror/")
+        }
+    }
+    publishToMavenCentral()
+    signAllPublications()
+}
+
+signing {
+    useGpgCmd()
+    sign(extensions.getByType<PublishingExtension>().publications)
+}
+
+afterEvaluate {
+    tasks.withType<Sign> {
+        val signingTask = this
+        tasks.withType<AbstractPublishToMaven> {
+            dependsOn(signingTask)
+        }
     }
 }

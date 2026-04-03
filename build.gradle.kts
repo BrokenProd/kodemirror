@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.kover)
     alias(libs.plugins.bcv) apply false
     alias(libs.plugins.dokka)
+    alias(libs.plugins.vanniktech.publish) apply false
 }
 
 dependencies {

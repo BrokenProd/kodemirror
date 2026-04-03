@@ -25,4 +25,7 @@ dependencies {
     implementation(libs.plugins.bcv.get().let {
         "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version}"
     })
+    implementation(libs.plugins.vanniktech.publish.get().let {
+        "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version}"
+    })
 }
