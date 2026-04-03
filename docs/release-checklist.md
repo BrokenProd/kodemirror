@@ -114,4 +114,5 @@ git push
 
 ### 9. Announce (optional)
 
-- Reddit: r/Kotlin
+- Post to relevant Reddit communities
+- Submit PR to [kmp-awesome](https://github.com/terrakok/kmp-awesome)
