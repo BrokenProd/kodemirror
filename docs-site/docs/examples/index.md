@@ -44,7 +44,7 @@ complete Kotlin snippets adapted from the upstream
 
 ## Complete sample
 
-- [Sample Editor](https://github.com/nicemonk/kodemirror/tree/main/samples/editor) —
+- [Sample Editor](https://github.com/Monkopedia/kodemirror/tree/main/samples/editor) —
   A full working Compose Desktop application with language switching,
   theme selection, and Material Design integration
 

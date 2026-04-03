@@ -21,24 +21,22 @@ In your module's `build.gradle.kts`, add the Kodemirror dependencies:
 ```kotlin
 dependencies {
     // Core
-    implementation("com.monkopedia.kodemirror:state:<version>")
-    implementation("com.monkopedia.kodemirror:view:<version>")
+    implementation("com.monkopedia.kodemirror:state:0.1.0")
+    implementation("com.monkopedia.kodemirror:view:0.1.0")
 
     // Commands (undo, redo, indentation, etc.)
-    implementation("com.monkopedia.kodemirror:commands:<version>")
+    implementation("com.monkopedia.kodemirror:commands:0.1.0")
 
     // Language support (pick the languages you need)
-    implementation("com.monkopedia.kodemirror:lang-javascript:<version>")
+    implementation("com.monkopedia.kodemirror:lang-javascript:0.1.0")
 
     // Optional: theme
-    implementation("com.monkopedia.kodemirror:theme-one-dark:<version>")
+    implementation("com.monkopedia.kodemirror:theme-one-dark:0.1.0")
 
     // Optional: all-in-one setup bundle
-    // implementation("com.monkopedia.kodemirror:basic-setup:<version>")
+    // implementation("com.monkopedia.kodemirror:basic-setup:0.1.0")
 }
 ```
-
-Replace `<version>` with the current release version.
 
 ## 3. Create a minimal editor
 
@@ -259,7 +257,7 @@ session.dispatch {
 ## 8. Sample project
 
 A complete working sample editor is available at
-[`samples/editor/`](https://github.com/nicemonk/kodemirror/tree/main/samples/editor)
+[`samples/editor/`](https://github.com/Monkopedia/kodemirror/tree/main/samples/editor)
 with tab switching between languages and themes.
 
 ## Next steps

@@ -71,6 +71,14 @@ Initial release of Kodemirror — a Kotlin Multiplatform port of CodeMirror 6.
 ### Removed
 - `StateEffect.is()` method (use `asType()` instead)
 
+### Fixed
+- Fixed `HistoryConfig` being silently ignored — config values are now stored via facet
+- Fixed `StreamParser` using hardcoded `tabSize=4`/`indentUnit=2` instead of reading from `EditorState`
+- Fixed `UpdateRange` argument order bug in merge module that corrupted chunk boundaries
+- Fixed `asciiWordChar` excluding digit '0' in merge diff algorithm
+- Fixed diff algorithm using mutable global state (now thread-safe via local `DiffContext`)
+- Reduced public API surface in `:view` and `:vim` modules — internal implementation types are now `internal`
+
 ### Internal
 - Made lezer-lr internal state `internal`
 - Filtered `ComposableSingletons` from public API dumps

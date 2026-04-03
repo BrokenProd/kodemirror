@@ -178,10 +178,10 @@ KodeMirror(session = session)
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("com.monkopedia.kodemirror:state:0.1.0-SNAPSHOT")
-    implementation("com.monkopedia.kodemirror:view:0.1.0-SNAPSHOT")
-    implementation("com.monkopedia.kodemirror:commands:0.1.0-SNAPSHOT")
-    implementation("com.monkopedia.kodemirror:lang-javascript:0.1.0-SNAPSHOT")
+    implementation("com.monkopedia.kodemirror:state:0.1.0")
+    implementation("com.monkopedia.kodemirror:view:0.1.0")
+    implementation("com.monkopedia.kodemirror:commands:0.1.0")
+    implementation("com.monkopedia.kodemirror:lang-javascript:0.1.0")
 }
 ```
 
