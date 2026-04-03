@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-04-03
+
+Initial release of Kodemirror — a Kotlin Multiplatform port of CodeMirror 6.
+
+### Highlights
+- Full Compose Multiplatform code editor component
+- Vim mode with 600+ ported upstream tests
+- Real browser keyboard input pipeline (no JS bridges)
+- 183 automated gap tests verifying CM6 parity
+- 57 keymap command tests covering all standard/emacs bindings
+- 20+ language modules plus 100+ legacy modes
+- Live interactive documentation with embedded demos
+
+### Platform Support
+- **wasmJs**: Fully tested with automated gap tests and manual browser testing
+- **JVM Desktop**: Unit tests pass, visual rendering lightly tested
+- **Android**: Unit tests pass via CI
+- **iOS / macOS native**: Compiles, experimental (CI on PR/manual trigger)
+
 ### Added
 - `extensionListOf(vararg Extension)` factory function
 - `operator fun Extension.plus(other: Extension)` for combining extensions
@@ -30,16 +49,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Decoration.mark(style: SpanStyle, ...)` convenience overload
 - `Decoration.line(style: SpanStyle, ...)` convenience overload
 - `operator fun StateField<T>.getValue(EditorState, KProperty)` property delegate
-- KDoc for top-level facets in `Extension.kt`
 - `editorThemeFromColors()` factory for Material Design color scheme integration
-- KDoc for all 137 legacy-mode StreamParser entry points
-- CodeMirror 6 migration guide
-- Getting Started tutorial
-- Expanded the-view guide with input pipeline, virtualization, and selection drawing
-- Extension index guide page
-- Troubleshooting guide page
-- Platform-specific setup snippets in bundle guide
-- FacetReader and PluginSpec.configure documentation
+- `inputSuppressor` facet for blocking text input (used by vim normal mode)
+- `blockCursorProvider` facet for overlay-based block cursor rendering
+- `keyEventLayoutKey()` public API for keyboard layout-aware key names
+- Tab character rendering via column-aware expansion in `buildLineContentWithTabs`
+- Vim mode status bar with `StateField`-based mode tracking
+- Vim `:` / `/` / `?` command prompt panel
+- Polished search panel with rounded corners and proper styling
 
 ### Changed
 - Renamed `tags` object to `Tags` (PascalCase convention)
@@ -47,15 +64,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Renamed `tagLanguage` to `jinjaTagLanguage` / `liquidTagLanguage`
 - Converted `Prec` lambda properties to functions
 - Made `phpHighlighting` and `angularHighlighting` public
-- Moved `vueHighlighting` from `VueParser.kt` to separate `VueHighlight.kt`
-- Converted `// /` comments to KDoc in `Text.kt` and `Column.kt`
-- Made `LeafBlock.content` and `LeafBlock.parsers` setters internal
+- Block cursor rendered via selection overlay (`DrawScope`) instead of decorations
+- Keymap precedence: later extensions override earlier ones (matching CM6)
+- `defaultEditorFontFamily` changed to `FontFamily.Monospace` (cross-platform)
 
 ### Removed
 - `StateEffect.is()` method (use `asType()` instead)
 
 ### Internal
-- Made lezer-lr internal state (`Stack`, `Parse`, `CachedToken`,
-  `InputStream`, `SimulatedStack`, `TokenCache`, `StackBufferCursor`,
-  and constant objects) `internal`
+- Made lezer-lr internal state `internal`
 - Filtered `ComposableSingletons` from public API dumps
+- Document-level key handler for wasmJs keyboard routing
+- `platformFocusInput()` / `platformRegisterKeyHandler()` expect/actual APIs
