@@ -38,11 +38,11 @@ import com.monkopedia.kodemirror.view.Panel
  * Create a status panel that always shows the current vim mode and status.
  */
 internal fun createStatusPanel(): Panel = Panel(top = false) {
-    val prompt = virtualPrompt
+    val session = LocalEditorSession.current
+    val prompt = session.state.field(virtualPromptField)
     if (prompt != null) {
         VimPromptContent(prompt)
     } else {
-        val session = LocalEditorSession.current
         val plugin = session.plugin(vimPlugin)
         val cm = plugin?.cm
         val vim = cm?.vim
@@ -55,11 +55,11 @@ internal fun createStatusPanel(): Panel = Panel(top = false) {
  * Create a dialog panel shown when an ex command or search prompt is active.
  */
 internal fun createVimDialogPanel(): Panel = Panel(top = false) {
-    val prompt = virtualPrompt
+    val session = LocalEditorSession.current
+    val prompt = session.state.field(virtualPromptField)
     if (prompt != null) {
         VimPromptContent(prompt)
     } else {
-        val session = LocalEditorSession.current
         val plugin = session.plugin(vimPlugin)
         val cm = plugin?.cm
         val vim = cm?.vim

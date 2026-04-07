@@ -18,9 +18,6 @@
  */
 package com.monkopedia.kodemirror.vim
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import kotlin.math.abs
 
 // ---------------------------------------------------------------------------
@@ -54,7 +51,7 @@ private val vimToCmKeyMap: Map<String, String> = buildMap {
 
 internal var noremap = false
 internal val keyToKeyStack = mutableListOf<VimKeyCommand>()
-internal var virtualPrompt: PromptOptions? by androidx.compose.runtime.mutableStateOf(null)
+internal var virtualPrompt: PromptOptions? = null
 
 // ---------------------------------------------------------------------------
 // Default keymap length tracking (for mapclear)
