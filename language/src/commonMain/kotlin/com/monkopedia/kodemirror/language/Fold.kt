@@ -376,6 +376,45 @@ fun foldGutter(): Extension = extensionListOf(
                             it.asType(foldEffect) != null || it.asType(unfoldEffect) != null
                         }
                     }
+            },
+            lineMarkerClick = { view, lineFrom ->
+                val state = view.state
+                val lineFromPos = DocPos(lineFrom)
+                val line = state.doc.lineAt(lineFromPos)
+                val folded = foldedRanges(state)
+                var wasFolded = false
+                folded.between(lineFromPos, line.to) { from, to, _ ->
+                    if (from >= lineFrom && DocPos(from) <= line.to) {
+                        view.dispatch(
+                            TransactionSpec(
+                                effects = listOf(
+                                    unfoldEffect.of(
+                                        FoldRange(DocPos(from), DocPos(to))
+                                    )
+                                )
+                            )
+                        )
+                        wasFolded = true
+                        false
+                    } else {
+                        true
+                    }
+                }
+                if (!wasFolded) {
+                    val range = foldable(state, lineFromPos)
+                    if (range != null) {
+                        view.dispatch(
+                            TransactionSpec(
+                                effects = listOf(foldEffect.of(range))
+                            )
+                        )
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    true
+                }
             }
         )
     )
