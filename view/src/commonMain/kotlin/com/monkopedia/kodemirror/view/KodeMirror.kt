@@ -745,6 +745,27 @@ private fun Modifier.drawEditorBackground(
 
 /**
  * Create and remember an [EditorSession] with the given document text and extensions.
+ *
+ * **Initial-value-only parameters:** [doc] and [extensions] are used only when the session
+ * is first created. Subsequent recompositions with different values have no effect — the
+ * session retains the state from its initial creation, including cursor position, selection,
+ * and undo history.
+ *
+ * This matches CodeMirror 6's model, where an [EditorState] (and the view that owns it) is
+ * created once and then mutated exclusively through transactions. To update the document or
+ * reconfigure extensions after creation, dispatch a transaction via [EditorSession.dispatch]:
+ *
+ * ```kotlin
+ * // Update document content
+ * session.dispatch(TransactionSpec(changes = ChangeSpec.Single(0, session.state.doc.length, newDoc.asInsert())))
+ *
+ * // Reconfigure extensions
+ * session.dispatch(TransactionSpec(effects = listOf(StateEffect.reconfigure(newExtensions))))
+ * ```
+ *
+ * @param doc        Initial document text. Ignored after first composition.
+ * @param extensions Initial set of extensions. Ignored after first composition.
+ * @param onUpdate   Callback invoked for every transaction dispatched to the session.
  */
 @Composable
 fun rememberEditorSession(
@@ -763,6 +784,17 @@ fun rememberEditorSession(
 
 /**
  * Create and remember an [EditorSession] from an [EditorStateConfig].
+ *
+ * **Initial-value-only parameter:** [config] is used only when the session is first created.
+ * Subsequent recompositions with a different [config] have no effect — the session retains
+ * the state from its initial creation, including cursor position, selection, and undo history.
+ *
+ * This matches CodeMirror 6's model, where an [EditorState] (and the view that owns it) is
+ * created once and then mutated exclusively through transactions. To update the document or
+ * reconfigure extensions after creation, dispatch a transaction via [EditorSession.dispatch].
+ *
+ * @param config   Initial editor state configuration. Ignored after first composition.
+ * @param onUpdate Callback invoked for every transaction dispatched to the session.
  */
 @Composable
 fun rememberEditorSession(
