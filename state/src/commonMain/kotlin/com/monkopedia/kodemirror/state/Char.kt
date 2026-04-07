@@ -149,14 +149,21 @@ private fun nextClusterBreak(str: String, pos: Int, includeExtending: Boolean): 
 }
 
 private fun prevClusterBreak(str: String, pos: Int, includeExtending: Boolean): Int {
-    @Suppress("NAME_SHADOWING")
-    var pos = pos
-    while (pos > 0) {
-        val found = nextClusterBreak(str, maxOf(pos - 2, 0), includeExtending)
-        if (found < pos) return found
-        pos--
+    if (pos == 0) return 0
+    // Grapheme clusters are bounded in length. Use a fixed lookback window of 16 code
+    // points (32 chars, since surrogate pairs occupy 2 chars each) and then scan forward
+    // with nextClusterBreak from the window start to find the last cluster break < pos.
+    val windowStart = maxOf(pos - 32, 0)
+    var clusterStart = windowStart
+    var result = windowStart
+    while (clusterStart < pos) {
+        val clusterEnd = nextClusterBreak(str, clusterStart, includeExtending)
+        if (clusterEnd >= pos) break
+        result = clusterEnd
+        if (clusterEnd == clusterStart) break // safety: avoid infinite loop
+        clusterStart = clusterEnd
     }
-    return 0
+    return result
 }
 
 internal fun isSurrogateLow(ch: Int): Boolean = ch in 0xDC00..0xDFFF
