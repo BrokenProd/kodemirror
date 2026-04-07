@@ -265,4 +265,4 @@ internal fun createAsyncLinterPlugin(
     create = { view -> AsyncLinterPlugin(view, source, config) }
 )
 
-internal fun currentTimeMillis(): Long = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+internal fun currentTimeMillis(): Long = kotlin.time.Clock.System.now().toEpochMilliseconds()

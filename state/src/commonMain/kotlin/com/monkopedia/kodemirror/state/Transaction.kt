@@ -309,7 +309,7 @@ class Transaction private constructor(
     }
 }
 
-internal fun currentTimeMillis(): Long = kotlinx.datetime.Clock.System.now()
+internal fun currentTimeMillis(): Long = kotlin.time.Clock.System.now()
     .toEpochMilliseconds()
 
 private fun joinRanges(a: IntArray, b: IntArray): IntArray {

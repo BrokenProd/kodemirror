@@ -650,7 +650,7 @@ private fun makePresentable(
     return changes
 }
 
-internal fun currentTimeMillis(): Long = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+internal fun currentTimeMillis(): Long = kotlin.time.Clock.System.now().toEpochMilliseconds()
 
 /**
  * Compute the difference between two strings, returning the changes and whether the diff was
