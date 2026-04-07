@@ -4,46 +4,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Workflow
 
-### Post-Task Completion
+### Task Workflow: Work → Review → Merge
 
-When implementation work is complete, ALWAYS invoke a `general-purpose` subagent with `model: sonnet`
-to handle the post-task workflow. See `docs/post-task-workflow.md` for the full pattern.
+All implementation work follows a two-phase agent workflow. See `docs/post-task-workflow.md`
+for the full pattern with prompt templates.
 
-The subagent should:
-1. Fix code style automatically (spotlessApply, ktlintFormat, manual fixes for remaining issues)
-2. Update API dumps (apiDump) so CI's apiCheck passes
-3. Run tests - if tests FAIL, try to fix them. Only stop and report if you don't have a clear direction.
-4. Commit changes with proper message format
-5. Push to remote
+**Phase 1 — Work agent** (worktree, can run in parallel):
+- Implements the change in an isolated worktree branch
+- Commits on its branch. Does NOT fix style, run tests, or push.
 
-Template invocation:
-```
-Task(subagent_type: "general-purpose", model: "sonnet", description: "Run post-task workflow") {
-  prompt: """
-    Complete the post-implementation workflow for [TASK_NAME]:
+**Phase 2 — Review agent** (foreground, one at a time):
+- Reviews the diff for correctness
+- Merges to main
+- Fixes style (spotlessApply, ktlintFormat)
+- Updates API dumps (apiDump)
+- Runs tests — fixes failures if clear, reports if not
+- Pushes to remote
 
-    1. Fix code style:
-       - Run ./gradlew spotlessApply
-       - Run ./gradlew ktlintFormat
-       - Fix remaining issues (long lines, empty files)
-
-    2. Update API dumps (CI runs apiCheck):
-       - Run ./gradlew apiDump
-       - This regenerates the api/*.api files that CI validates
-
-    3. Run tests (must match CI — see .github/workflows/ci.yml):
-       - Run ./gradlew jvmTest :state:wasmJsTest :collab:wasmJsTest :lezer-common:wasmJsTest :lezer-highlight:wasmJsTest :lezer-lr:wasmJsTest
-       - If FAIL: try to fix the failures yourself. Only STOP and report
-         if you don't have a clear direction for the fix.
-
-    4. Commit:
-       - git add .
-       - Commit with heredoc message including Co-Authored-By
-
-    5. Push:
-       - git push
-  """
-}
+**Key constraints:**
+- Multiple work agents can run in parallel (each in its own worktree)
+- Only ONE review agent runs at a time (serialized by the main agent)
+- Review agents fix minor issues (style, imports, small bugs) directly
+- Review agents reject and report substantive problems — don't rewrite implementations
 ```
 
 ### Screenshot Compare & Fix
@@ -55,12 +37,11 @@ When the user asks to compare screenshots or fix visual differences, follow the 
 2. **Compare** by reading both PNGs for each scenario
 3. **Build a fix list** — one `TaskCreate` per visual difference, with scenario/description/severity
 4. **Report the list** to the user before starting fixes
-5. **Fix loop** — for each item: fix code, run post-task workflow (commit+push), then re-capture and re-compare
+5. **Fix loop** — for each item: fix code via Work → Review → Merge workflow, then re-capture and re-compare
 6. **Repeat** until all scenarios match or a blocker is hit
 7. **Report final status** — what was fixed, what still differs, any blockers
 
-Each fix should be a single focused commit. If tests fail during the post-task workflow, try to fix them.
-Only stop and report if there's no clear direction for the fix.
+Each fix should be a single focused commit via the Work → Review → Merge workflow.
 
 ### TODO Loop
 
@@ -82,13 +63,9 @@ loop for each item in `docs/TODO.md`:
 4. **If actionable:** Implement the change. Keep changes focused to what the item describes — do
    not scope-creep into adjacent items.
 
-5. **After implementing:** Run the post-task workflow via a `general-purpose` subagent with
-   `model: sonnet` (see "Post-Task Completion" above). The subagent should:
-   - Fix code style (`spotlessApply`, `ktlintFormat`, manual fixes)
-   - Update API dumps (`apiDump`)
-   - Run tests (`./gradlew jvmTest :state:wasmJsTest :collab:wasmJsTest :lezer-common:wasmJsTest :lezer-highlight:wasmJsTest :lezer-lr:wasmJsTest`)
-   - If tests fail, try to fix them. If unfixable, mark the item `[BLOCKED]` with the failure info.
-   - If tests pass, commit with a descriptive message and push.
+5. **After implementing:** Follow the Work → Review → Merge workflow (see above). The work
+   agent implements in a worktree, then a review agent merges to main. If tests fail during
+   review and can't be fixed, mark the item `[BLOCKED]` with the failure info.
 
 6. **Mark the item `[DONE]`** in `docs/TODO.md` after a successful commit+push.
 

@@ -1,81 +1,125 @@
-# Post-Task Workflow Pattern
+# Task Workflow: Work → Review → Merge
 
-## Purpose
+## Overview
 
-After completing implementation work, use a `general-purpose` subagent to handle routine verification and commit tasks. The subagent should:
+All implementation work follows a two-phase agent workflow:
 
-1. **Automatically fix**: ktlint violations, license headers (spotless)
-2. **Fix test failures** if the fix is clear; only report back if there's no clear direction
-3. **Commit and push**: if all checks pass
+1. **Work agent** — implements the change in an isolated worktree branch
+2. **Review agent** — reviews the diff, fixes style/tests, merges to main, pushes
 
-## Subagent Prompt Template
+Multiple work agents can run in parallel (each in its own worktree). Review agents
+run **one at a time** — the main agent serializes them to avoid merge conflicts on main.
+
+## Phase 1: Work Agent
+
+Launch a work agent in a worktree to implement the task. The agent gets an isolated
+copy of the repo and commits on its own branch.
 
 ```
-Complete the post-implementation workflow for [TASK_DESCRIPTION]:
+Agent(
+  subagent_type: "general-purpose",
+  model: "sonnet",  // or "opus" for complex tasks
+  isolation: "worktree",
+  run_in_background: true,  // parallel OK
+  description: "Implement [TASK]",
+  prompt: """
+    [TASK DESCRIPTION]
 
-1. Fix code style:
-   - Run `./gradlew spotlessApply` to fix license headers
-   - Run `./gradlew ktlintFormat` to fix auto-correctable ktlint violations
-   - If ktlint still fails, read the error report and manually fix remaining issues (line length, etc.)
+    Build environment: JAVA_HOME=/usr/lib/jvm/java-21-openjdk before any ./gradlew command.
 
-2. Run tests (must match CI command):
-   - Run `./gradlew jvmTest :state:wasmJsTest :collab:wasmJsTest :lezer-common:wasmJsTest :lezer-highlight:wasmJsTest :lezer-lr:wasmJsTest`
-   - If tests FAIL, try to fix them. Only STOP and report if you don't have a clear direction.
-   - If linting fails after step 1, fix any remaining issues
-
-3. Commit changes:
-   - Stage all changes with `git add .`
-   - Create a commit with message:
-     ```
-     [COMMIT_MESSAGE]
-
-     Co-Authored-By: Claude [MODEL] <noreply@anthropic.com>
-     ```
-   - Use a heredoc for the commit message to ensure proper formatting
-
-4. Push to remote:
-   - Run `git push`
-
-IMPORTANT: If tests fail in step 2, try to fix them yourself. Only STOP and report if you don't have a clear direction for the fix. Do not commit or push until tests pass.
+    When done, commit your changes with a descriptive message. Do NOT push.
+    Do NOT run style fixes, apiDump, or tests — the review agent handles that.
+  """
+)
 ```
 
-## Usage Example
+**Key rules for work agents:**
+- Commit changes on the worktree branch
+- Do NOT fix style, run apiDump, or run tests — that's the review agent's job
+- Do NOT push
+- Multiple work agents can run in parallel
 
-```kotlin
-// After implementing a feature:
-invoke Task {
-    subagent_type = "general-purpose"
-    description = "Run post-task workflow"
-    prompt = """
-        Complete the post-implementation workflow for Phase 1 state module port:
+## Phase 2: Review Agent
 
-        1. Fix code style:
-           - Run `./gradlew spotlessApply` to fix license headers
-           - Run `./gradlew ktlintFormat` to fix auto-correctable ktlint violations
-           - If ktlint still fails, read the error report and manually fix remaining issues
+After a work agent completes, launch a **foreground** review agent to verify and merge.
+Only one review agent runs at a time.
 
-        2. Run tests (must match CI command):
-           - Run `./gradlew jvmTest :state:wasmJsTest :collab:wasmJsTest :lezer-common:wasmJsTest :lezer-highlight:wasmJsTest :lezer-lr:wasmJsTest`
-           - If tests FAIL, try to fix them. Only STOP and report if you
-             don't have a clear direction for the fix.
-           - If linting fails, fix any remaining issues
+```
+Agent(
+  subagent_type: "general-purpose",
+  model: "sonnet",
+  description: "Review and merge [TASK]",
+  prompt: """
+    Review and merge the changes from branch [BRANCH] in worktree [WORKTREE_PATH].
 
-        3. Commit changes:
-           - Stage all changes with `git add .`
-           - Create commit: "Phase 1: Port @codemirror/state module\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+    1. Review the diff:
+       - Run: git diff main...[BRANCH]
+       - Check for correctness, obvious bugs, unnecessary changes
+       - If the changes are fundamentally wrong, STOP and report why
 
-        4. Push to remote:
-           - Run `git push`
-    """
-}
+    2. Merge to main:
+       - git checkout main
+       - git merge [BRANCH]
+
+    3. Fix code style:
+       - Run: JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew spotlessApply
+       - Run: JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew ktlintFormat
+       - Fix any remaining issues manually (long lines, empty files)
+
+    4. Update API dumps:
+       - Run: JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew apiDump
+
+    5. Run tests:
+       - Run: JAVA_HOME=/usr/lib/jvm/java-21-openjdk ./gradlew jvmTest :state:wasmJsTest :collab:wasmJsTest :lezer-common:wasmJsTest :lezer-highlight:wasmJsTest :lezer-lr:wasmJsTest
+       - If tests FAIL: try to fix them. Only STOP and report if there's no
+         clear direction for the fix.
+
+    6. Commit and push:
+       - Amend or create a new commit as appropriate
+       - git push
+
+    7. Close related GitHub issues:
+       - If the task fixes a GitHub issue, comment on it noting the fix
+         and what release it will be in (e.g. "Fixed in 0.2.0-SNAPSHOT,
+         will ship in the next release."), then close the issue.
+       - Use: gh issue comment NUMBER --body "MESSAGE"
+       - Use: gh issue close NUMBER
+
+    IMPORTANT: If review finds substantive issues (wrong approach, missing cases,
+    broken logic), STOP and report. Don't try to rewrite the implementation —
+    that's a new work agent's job. Minor fixes (style, imports, small bugs) are
+    fine to fix in-place.
+  """
+)
+```
+
+**Key rules for review agents:**
+- Run in **foreground** (not background) — this serializes them
+- Fix minor issues (style, imports, small bugs) directly
+- Reject and report substantive problems — don't rewrite implementations
+- Only one review agent merges to main at a time
+
+## Orchestration Pattern
+
+The main agent orchestrates like this:
+
+```
+# Launch multiple work agents in parallel (background, worktree)
+work1 = Agent(worktree, background) → "Implement feature A"
+work2 = Agent(worktree, background) → "Implement feature B"
+
+# As each completes, review serially (foreground)
+# work1 completes first:
+Agent(foreground) → "Review and merge work1's branch"
+
+# work2 completes:
+Agent(foreground) → "Review and merge work2's branch"
 ```
 
 ## Error Handling
 
-- **ktlint/spotless failures**: Subagent reads error reports and fixes them (wrap long lines, add content to empty files, etc.)
-- **Test failures**: Subagent tries to fix them. Only escalates to outer agent if the fix direction is unclear.
-- **Git conflicts**: Subagent reports and stops (outer agent handles)
-
-## Rationale
-
-This pattern delegates as much as possible to the subagent. Style issues are fixed automatically. Test failures should be attempted — the subagent has full access to read code and make fixes. Only truly ambiguous failures (unclear root cause, multiple possible fixes, architectural questions) should be escalated.
+- **Style/lint failures**: Review agent fixes them automatically
+- **Test failures**: Review agent tries to fix. If unclear, reports back.
+- **Merge conflicts**: Review agent reports. Main agent decides resolution.
+- **Bad implementation**: Review agent reports issues. Main agent launches a new work agent.
+- **Review agent itself fails**: Main agent reads the output and either retries or fixes manually.
