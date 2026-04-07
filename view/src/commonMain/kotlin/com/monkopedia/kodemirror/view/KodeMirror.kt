@@ -369,6 +369,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                     }
                     .pointerInput(session) {
                         awaitPointerEventScope {
+                            var lastHoverDocPos: Int? = -1
                             while (true) {
                                 val event = awaitPointerEvent(
                                     PointerEventPass.Main
@@ -376,12 +377,16 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                 val pos = event.changes
                                     .firstOrNull()?.position
                                 if (pos != null) {
-                                    val hoverTooltips =
-                                        impl.pluginHost
-                                            ?.collectHoverPlugins()
-                                            ?: emptyList()
-                                    for (plugin in hoverTooltips) {
-                                        plugin.updateHover(pos.x, pos.y)
+                                    val docPos = session.posAtCoords(pos.x, pos.y)
+                                    if (docPos != lastHoverDocPos) {
+                                        lastHoverDocPos = docPos
+                                        val hoverTooltips =
+                                            impl.pluginHost
+                                                ?.collectHoverPlugins()
+                                                ?: emptyList()
+                                        for (plugin in hoverTooltips) {
+                                            plugin.updateHoverAtPos(docPos)
+                                        }
                                     }
                                 }
                             }
