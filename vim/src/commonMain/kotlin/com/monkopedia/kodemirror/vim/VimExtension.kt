@@ -63,6 +63,7 @@ fun vim(status: Boolean = false): Extension {
         vimBlockCursorProvider,
         vimModeField,
         vimStatusField,
+        virtualPromptField,
         if (status) showPanel.of(createStatusPanel()) else vimPanelField
     )
 }
@@ -146,6 +147,24 @@ val vimStatusField: StateField<String> = StateField.define {
         for (effect in tr.effects) {
             val status = effect.asType(vimStatusEffect)
             if (status != null) result = status.value
+        }
+        result
+    }
+}
+
+internal val virtualPromptEffect: StateEffectType<PromptOptions?> = StateEffect.define()
+
+/**
+ * A [StateField] that tracks the active virtual prompt (used in headless/test
+ * mode when no real dialog UI is available). Null when no prompt is open.
+ */
+internal val virtualPromptField: StateField<PromptOptions?> = StateField.define {
+    create { _: EditorState -> null }
+    update { value: PromptOptions?, tr: Transaction ->
+        var result = value
+        for (effect in tr.effects) {
+            val prompt = effect.asType(virtualPromptEffect)
+            if (prompt != null) result = prompt.value
         }
         result
     }
@@ -359,34 +378,24 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
     }
 
     /**
-     * Sync the panel visibility with the [virtualPrompt] state.
-     * Shows the panel when a prompt is active, hides it when dismissed.
-     * Also re-dispatches the effect on each keystroke while the prompt is
-     * open so that the panel composable recomposes with the latest value.
+     * Sync the panel visibility and [virtualPromptField] with the current
+     * [virtualPrompt] global. Shows the panel when a prompt is active, hides
+     * it when dismissed. Dispatches [virtualPromptEffect] on every call so
+     * that the panel composable recomposes with the latest prompt value.
      */
     private fun syncPromptPanel() {
-        val promptActive = virtualPrompt != null
+        val currentPrompt = virtualPrompt
+        val promptActive = currentPrompt != null
+        // Always dispatch the current prompt value so the StateField stays
+        // in sync and the panel composable recomposes when the value changes.
+        val effects = mutableListOf<StateEffect<*>>(virtualPromptEffect.of(currentPrompt))
         if (promptActive != promptPanelShown) {
             promptPanelShown = promptActive
             if (cm.statusbar == null) {
-                session.dispatch(
-                    TransactionSpec(
-                        effects = listOf(
-                            showVimPanel.of(promptActive)
-                        )
-                    )
-                )
+                effects.add(showVimPanel.of(promptActive))
             }
-        } else if (promptActive) {
-            // The prompt is still active but the value may have changed.
-            // Dispatch a redundant effect to trigger recomposition so the
-            // panel re-reads the current prompt text.
-            session.dispatch(
-                TransactionSpec(
-                    effects = listOf(showVimPanel.of(true))
-                )
-            )
         }
+        session.dispatch(TransactionSpec(effects = effects))
     }
 
     /** Whether the prompt panel is currently shown. */
