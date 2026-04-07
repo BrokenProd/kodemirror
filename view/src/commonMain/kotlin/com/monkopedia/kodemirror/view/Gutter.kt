@@ -19,6 +19,7 @@
 package com.monkopedia.kodemirror.view
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -64,8 +65,14 @@ data class GutterConfig(
     val type: GutterType? = null,
     /** Called for each visible line to get the marker, or null. */
     val lineMarker: ((EditorSession, Int) -> GutterMarker?)? = null,
-    /** Called when the gutter is clicked. */
+    /** Returns true when the gutter markers need to be recalculated. */
     val lineMarkerChange: ((ViewUpdate) -> Boolean)? = null,
+    /**
+     * Called when the gutter is clicked for a given line.
+     * Receives the session and the line-start position.
+     * Returns true if the click was handled.
+     */
+    val lineMarkerClick: ((EditorSession, Int) -> Boolean)? = null,
     /** Padding on the right of gutter content. */
     val renderEmptyElements: Boolean = false,
     /** Initial marker for the gutter (shown before any lines). */
@@ -129,8 +136,18 @@ fun GutterView(session: EditorSession, lineNumber: Int, modifier: Modifier = Mod
                 }
             } else if (config.lineMarker != null) {
                 // Other gutter columns (fold gutter, etc.)
+                val clickHandler = config.lineMarkerClick
                 Box(
-                    modifier = Modifier.width(theme.layout.customGutterWidth),
+                    modifier = Modifier.width(theme.layout.customGutterWidth)
+                        .let { mod ->
+                            if (clickHandler != null) {
+                                mod.clickable {
+                                    clickHandler(session, line.from.value)
+                                }
+                            } else {
+                                mod
+                            }
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     val marker = config.lineMarker.invoke(session, line.from.value)
