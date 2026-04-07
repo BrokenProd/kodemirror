@@ -176,7 +176,11 @@ internal class HoverTooltipPlugin(
 
     fun updateHover(x: Float, y: Float) {
         val pos = session.posAtCoords(x, y)
-        _currentTooltip.value = if (pos != null) source(session, pos) else null
+        updateHoverAtPos(pos)
+    }
+
+    fun updateHoverAtPos(docPos: Int?) {
+        _currentTooltip.value = if (docPos != null) source(session, docPos) else null
     }
 
     fun clearHover() {

@@ -51,6 +51,16 @@ data class LineLayout(
 internal class LineLayoutCache {
     private val cache = mutableMapOf<Int, LineLayout>()
 
+    /**
+     * Sorted-by-topPx view of [cache]. Null when the cache has been mutated
+     * and the sorted list needs to be recomputed.
+     */
+    private var sortedCache: List<LineLayout>? = null
+
+    /** Return [sortedCache], computing and caching it if needed. */
+    private fun sorted(): List<LineLayout> =
+        sortedCache ?: cache.values.sortedBy { it.topPx }.also { sortedCache = it }
+
     /** Store (or replace) the layout result for a line. */
     fun store(
         lineNumber: Int,
@@ -60,6 +70,7 @@ internal class LineLayoutCache {
         result: TextLayoutResult
     ) {
         cache[lineNumber] = LineLayout(lineNumber, lineFrom, topPx, leftPx, result)
+        sortedCache = null
     }
 
     /** Return the layout for a given 1-based line number, or null. */
@@ -68,11 +79,17 @@ internal class LineLayoutCache {
     /** Evict cached entries that are no longer in the visible set. */
     fun evict(visibleLineNumbers: Set<Int>) {
         val toRemove = cache.keys.filter { it !in visibleLineNumbers }
-        toRemove.forEach { cache.remove(it) }
+        if (toRemove.isNotEmpty()) {
+            toRemove.forEach { cache.remove(it) }
+            sortedCache = null
+        }
     }
 
     /** Clear all cached entries. */
-    fun clear() = cache.clear()
+    fun clear() {
+        cache.clear()
+        sortedCache = null
+    }
 
     /**
      * Return the document coordinates of the cursor at [pos].
@@ -99,7 +116,8 @@ internal class LineLayoutCache {
      */
     fun posAtCoords(x: Float, y: Float, state: EditorState): Int? {
         // Find the line whose vertical range contains y
-        for (layout in cache.values.sortedBy { it.topPx }) {
+        val sorted = sorted()
+        for (layout in sorted) {
             if (y >= layout.topPx && y <= layout.bottomPx) {
                 val localX = (x - layout.leftPx).coerceAtLeast(0f)
                 val offsetInLine = layout.result.getOffsetForPosition(
@@ -110,7 +128,6 @@ internal class LineLayoutCache {
             }
         }
         // y is outside any line's exact range — find the best matching line
-        val sorted = cache.values.sortedBy { it.topPx }
         if (sorted.isEmpty()) return null
 
         // When y falls in a gap between two lines, prefer the line below
