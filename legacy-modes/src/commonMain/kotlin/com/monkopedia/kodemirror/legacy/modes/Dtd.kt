@@ -184,9 +184,8 @@ val dtd: StreamParser<DtdState> = object : StreamParser<DtdState> {
         return style
     }
 
-    override fun indent(state: DtdState, textAfter: String, context: IndentContext): Int {
-        return dtdComputeIndent(state, textAfter, context)
-    }
+    override fun indent(state: DtdState, textAfter: String, context: IndentContext): Int =
+        dtdComputeIndent(state, textAfter, context)
 
     override val languageData: Map<String, Any>
         get() = mapOf(

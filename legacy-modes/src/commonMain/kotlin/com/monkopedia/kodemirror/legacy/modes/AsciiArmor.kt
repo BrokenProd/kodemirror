@@ -21,10 +21,7 @@ package com.monkopedia.kodemirror.legacy.modes
 import com.monkopedia.kodemirror.language.StreamParser
 import com.monkopedia.kodemirror.language.StringStream
 
-data class AsciiArmorState(
-    var state: String = "top",
-    var type: String? = null
-)
+data class AsciiArmorState(var state: String = "top", var type: String? = null)
 
 private fun errorIfNotEmpty(stream: StringStream): String? {
     val nonWS = stream.match(Regex("^\\s*\\S"))

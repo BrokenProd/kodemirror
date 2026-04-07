@@ -115,7 +115,8 @@ private fun getContext(node: SyntaxNode, doc: Text): List<Context> {
 private fun blankLine(cx: Context, state: EditorState): Boolean {
     val line = state.doc.lineAt(DocPos(cx.node.from))
     val content = state.doc.sliceString(line.from, line.to).trim()
-    return content.isEmpty() || content == ">" ||
+    return content.isEmpty() ||
+        content == ">" ||
         Regex("^\\d+[.)]\$").matches(content) ||
         Regex("^[-*+]\$").matches(content)
 }

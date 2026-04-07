@@ -65,10 +65,13 @@ private fun transitState(state: NtriplesState, c: Char) {
         loc == Location.WRITING_LIT_TYPE && c == '>' -> Location.POST_OBJ
         loc == Location.WRITING_OBJ_LITERAL && c == '@' -> Location.WRITING_LIT_LANG
         loc == Location.WRITING_OBJ_LITERAL && c == '^' -> Location.WRITING_LIT_TYPE
-        c == ' ' && loc in listOf(
-            Location.PRE_SUBJECT, Location.PRE_PRED,
-            Location.PRE_OBJ, Location.POST_OBJ
-        ) -> loc
+        c == ' ' &&
+            loc in listOf(
+                Location.PRE_SUBJECT,
+                Location.PRE_PRED,
+                Location.PRE_OBJ,
+                Location.POST_OBJ
+            ) -> loc
         loc == Location.POST_OBJ && c == '.' -> Location.PRE_SUBJECT
         else -> Location.ERROR
     }

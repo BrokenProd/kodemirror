@@ -57,10 +57,7 @@ private val haxeKeywords: Map<String, HaxeKw> = run {
 
 private val haxeIsOperatorChar = Regex("[+\\-*&%=<>!?|]")
 
-data class HxmlState(
-    var define: Boolean = false,
-    var inString: Boolean = false
-)
+data class HxmlState(var define: Boolean = false, var inString: Boolean = false)
 
 /** Stream parser for HXML (Haxe build). */
 val hxml: StreamParser<HxmlState> = object : StreamParser<HxmlState> {
@@ -142,11 +139,9 @@ data class HaxeState(
 val haxe: StreamParser<HaxeState> = object : StreamParser<HaxeState> {
     override val name: String get() = "haxe"
 
-    override fun startState(indentUnit: Int): HaxeState {
-        return HaxeState(
-            lexicalIndented = -indentUnit
-        )
-    }
+    override fun startState(indentUnit: Int): HaxeState = HaxeState(
+        lexicalIndented = -indentUnit
+    )
 
     override fun copyState(state: HaxeState) = state.copy()
 
@@ -291,7 +286,8 @@ val haxe: StreamParser<HaxeState> = object : StreamParser<HaxeState> {
 
         if (hxType == "comment") return style
 
-        state.reAllowed = hxType == "operator" || hxType == "keyword c" ||
+        state.reAllowed = hxType == "operator" ||
+            hxType == "keyword c" ||
             Regex("^[\\[{}(,;:]$").containsMatchIn(hxType)
         state.kwAllowed = hxType != "."
         state.lastType = hxType

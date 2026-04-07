@@ -124,8 +124,6 @@ val apl: StreamParser<AplState> = object : StreamParser<AplState> {
     }
 }
 
-private fun aplStringEater(type: String): (String) -> Boolean {
-    return { c ->
-        c != type
-    }
+private fun aplStringEater(type: String): (String) -> Boolean = { c ->
+    c != type
 }

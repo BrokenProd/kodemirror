@@ -40,13 +40,11 @@ private data class MscgenLangConfig(
     val operators: List<String>?
 )
 
-private fun mscgenWordRegexpBoundary(words: List<String>): Regex {
-    return Regex("^\\b(" + words.joinToString("|") + ")\\b", RegexOption.IGNORE_CASE)
-}
+private fun mscgenWordRegexpBoundary(words: List<String>): Regex =
+    Regex("^\\b(" + words.joinToString("|") + ")\\b", RegexOption.IGNORE_CASE)
 
-private fun mscgenWordRegexp(words: List<String>): Regex {
-    return Regex("^(?:" + words.joinToString("|") + ")", RegexOption.IGNORE_CASE)
-}
+private fun mscgenWordRegexp(words: List<String>): Regex =
+    Regex("^(?:" + words.joinToString("|") + ")", RegexOption.IGNORE_CASE)
 
 private fun mkMscgenParser(config: MscgenLangConfig): StreamParser<MscgenState> {
     val bracketsRE = mscgenWordRegexp(config.brackets)

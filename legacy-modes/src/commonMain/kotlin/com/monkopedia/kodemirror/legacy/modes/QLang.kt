@@ -242,7 +242,8 @@ val q: StreamParser<QLangState> = object : StreamParser<QLangState> {
             }
             cp == "." && ctx != null && ctx.type == "pattern" -> qPopContext(state)
             style != null &&
-                Regex("atom|string|variable").containsMatchIn(style) && ctx != null -> {
+                Regex("atom|string|variable").containsMatchIn(style) &&
+                ctx != null -> {
                 if (Regex("[}\\]]").containsMatchIn(ctx.type)) {
                     qPushContext(state, "pattern", stream.column())
                 } else if (ctx.type == "pattern" && ctx.align != true) {

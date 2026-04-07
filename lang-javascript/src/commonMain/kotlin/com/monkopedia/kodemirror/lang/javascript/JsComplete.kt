@@ -72,11 +72,7 @@ private val ScopeNodes = setOf(
  * @param name The identifier being completed (e.g. `"log"`).
  * @param from The document offset where the completed text starts.
  */
-data class CompletionPathResult(
-    val path: List<String>,
-    val name: String,
-    val from: DocPos
-)
+data class CompletionPathResult(val path: List<String>, val name: String, val from: DocPos)
 
 /**
  * Extract the completion path at the cursor. Reads backwards from the
@@ -89,7 +85,8 @@ fun completionPath(context: CompletionContext): CompletionPathResult? {
     val inner = syntaxTree(context.state).resolveInner(context.pos.value, -1)
     if (dontComplete.contains(inner.name)) return null
     val isWord = inner.name == "VariableName" ||
-        inner.name == "MemberExpression" && inner.to == context.pos.value
+        inner.name == "MemberExpression" &&
+        inner.to == context.pos.value
     if (!isWord && !context.explicit) return null
 
     val textBefore = context.state.doc.sliceString(
@@ -207,7 +204,8 @@ val localCompletionSource: CompletionSource = { context ->
         null
     } else {
         val isWord = inner.name == "VariableName" ||
-            inner.to == context.pos.value && (
+            inner.to == context.pos.value &&
+            (
                 inner.name == "MemberExpression" ||
                     inner.name == "PropertyName"
                 )

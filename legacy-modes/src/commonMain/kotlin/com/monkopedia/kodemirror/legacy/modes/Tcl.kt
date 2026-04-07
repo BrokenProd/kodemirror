@@ -71,7 +71,9 @@ private fun tclTokenBase(stream: StringStream, state: TclState): String? {
     } else if (Regex("[\\[\\]{}(),;.]").containsMatchIn(ch)) {
         if (ch == "(" && beforeParams) {
             state.inParams = true
-        } else if (ch == ")") state.inParams = false
+        } else if (ch == ")") {
+            state.inParams = false
+        }
         return null
     } else if (Regex("\\d").containsMatchIn(ch)) {
         stream.eatWhile(Regex("[\\w.]"))
@@ -149,7 +151,9 @@ private fun tclTokenUnparsed(stream: StringStream, state: TclState): String {
         }
         if (ch == "]") {
             maybeEnd++
-        } else if (ch != " ") maybeEnd = 0
+        } else if (ch != " ") {
+            maybeEnd = 0
+        }
     }
     return "meta"
 }

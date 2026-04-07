@@ -243,7 +243,8 @@ fun mkXML(parserConfig: XmlConfig): StreamParser<XmlState> {
                 if (stateType == "word") {
                     val tagName = stream.current()
                     val ctx = state.context
-                    if (ctx != null && ctx.tagName != tagName &&
+                    if (ctx != null &&
+                        ctx.tagName != tagName &&
                         lower(ctx.tagName) in config.implicitlyClosed
                     ) {
                         popContext(state)

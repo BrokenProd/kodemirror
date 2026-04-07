@@ -288,7 +288,5 @@ val idl: StreamParser<Unit> = object : StreamParser<Unit> {
     override fun startState(indentUnit: Int) = Unit
     override fun copyState(state: Unit) = Unit
 
-    override fun token(stream: StringStream, state: Unit): String? {
-        return idlTokenBase(stream)
-    }
+    override fun token(stream: StringStream, state: Unit): String? = idlTokenBase(stream)
 }

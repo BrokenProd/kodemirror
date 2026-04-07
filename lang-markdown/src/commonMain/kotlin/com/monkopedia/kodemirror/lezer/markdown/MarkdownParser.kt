@@ -203,10 +203,8 @@ class MarkdownParser(
         )
     }
 
-    internal fun getNodeType(name: String): Int {
-        return nodeTypes[name]
-            ?: throw IllegalArgumentException("Unknown node type '$name'")
-    }
+    internal fun getNodeType(name: String): Int = nodeTypes[name]
+        ?: throw IllegalArgumentException("Unknown node type '$name'")
 
     fun parseInline(text: String, offset: Int): List<Element> {
         val cx = InlineContext(this, text, offset)

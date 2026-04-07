@@ -127,17 +127,18 @@ private fun nginxTokenSGMLComment(stream: StringStream, state: NginxState): Ngin
     return NginxResult("comment", "comment")
 }
 
-private fun nginxTokenString(quote: String): (StringStream, NginxState) -> NginxResult {
-    return fn@{ stream, state ->
-        var escaped = false
-        while (true) {
-            val ch = stream.next() ?: break
-            if (ch == quote && !escaped) break
-            escaped = !escaped && ch == "\\"
-        }
-        if (!escaped) state.tokenize = ::nginxTokenBase
-        NginxResult("string", "string")
+private fun nginxTokenString(quote: String): (StringStream, NginxState) -> NginxResult = fn@{
+        stream,
+        state
+    ->
+    var escaped = false
+    while (true) {
+        val ch = stream.next() ?: break
+        if (ch == quote && !escaped) break
+        escaped = !escaped && ch == "\\"
     }
+    if (!escaped) state.tokenize = ::nginxTokenBase
+    NginxResult("string", "string")
 }
 
 /** Stream parser for Nginx configuration. */

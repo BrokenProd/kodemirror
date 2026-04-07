@@ -23,9 +23,7 @@ import com.monkopedia.kodemirror.language.StringStream
 
 private typealias HttpTokenFn = (StringStream, HttpState) -> String?
 
-data class HttpState(
-    var cur: HttpTokenFn = ::httpStart
-)
+data class HttpState(var cur: HttpTokenFn = ::httpStart)
 
 private fun httpFailFirstLine(stream: StringStream, state: HttpState): String {
     stream.skipToEnd()

@@ -68,7 +68,5 @@ val protobuf: StreamParser<Unit> = object : StreamParser<Unit> {
     override fun startState(indentUnit: Int) = Unit
     override fun copyState(state: Unit) = Unit
 
-    override fun token(stream: StringStream, state: Unit): String? {
-        return protobufTokenBase(stream)
-    }
+    override fun token(stream: StringStream, state: Unit): String? = protobufTokenBase(stream)
 }

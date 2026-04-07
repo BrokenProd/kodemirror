@@ -168,9 +168,7 @@ class StreamLanguage<State> private constructor(
                     input: Input,
                     fragments: List<TreeFragment>,
                     ranges: List<TextRange>
-                ): PartialParse {
-                    return StreamParse(lang, input, ranges)
-                }
+                ): PartialParse = StreamParse(lang, input, ranges)
             }
             lang = StreamLanguage(
                 parser = impl,
@@ -294,8 +292,10 @@ private class StreamParse<State>(
 
     private fun emitToken(id: Int, from: Int, to: Int) {
         val last = chunk.size - 4
-        if (lang.streamParser.mergeTokens && last >= 0 &&
-            chunk[last] == id && chunk[last + 2] == from
+        if (lang.streamParser.mergeTokens &&
+            last >= 0 &&
+            chunk[last] == id &&
+            chunk[last + 2] == from
         ) {
             chunk[last + 2] = to
         } else {
@@ -330,14 +330,12 @@ private class StreamParse<State>(
         chunkStart = parsedPos
     }
 
-    private fun finish(): Tree {
-        return Tree(
-            lang.topNode,
-            chunks.toList(),
-            chunkPos.toList(),
-            parsedPos - ranges.first().from
-        ).balance()
-    }
+    private fun finish(): Tree = Tree(
+        lang.topNode,
+        chunks.toList(),
+        chunkPos.toList(),
+        parsedPos - ranges.first().from
+    ).balance()
 }
 
 private fun <State> readToken(
@@ -382,9 +380,7 @@ private val defaultTable: Map<String, Int> = run {
     table
 }
 
-internal class TokenTable(
-    private val extra: Map<String, Any>
-) {
+internal class TokenTable(private val extra: Map<String, Any>) {
     private val table = defaultTable.toMutableMap()
 
     fun resolve(tag: String): Int {

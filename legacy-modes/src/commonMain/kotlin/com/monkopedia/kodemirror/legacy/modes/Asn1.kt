@@ -193,21 +193,18 @@ fun asn1(indentStatements: Boolean = true): StreamParser<Asn1State> =
                 "commentTokens" to mapOf("line" to "--")
             )
 
-        override fun startState(indentUnit: Int): Asn1State {
-            return Asn1State(
-                context = Asn1Context(
-                    indented = -2,
-                    column = 0,
-                    type = "top",
-                    align = false,
-                    prev = null
-                )
+        override fun startState(indentUnit: Int): Asn1State = Asn1State(
+            context = Asn1Context(
+                indented = -2,
+                column = 0,
+                type = "top",
+                align = false,
+                prev = null
             )
-        }
+        )
 
-        override fun copyState(state: Asn1State): Asn1State {
-            return state.copy(context = copyAsn1Context(state.context))
-        }
+        override fun copyState(state: Asn1State): Asn1State =
+            state.copy(context = copyAsn1Context(state.context))
 
         @Suppress("CyclomaticComplexMethod")
         override fun token(stream: StringStream, state: Asn1State): String? {

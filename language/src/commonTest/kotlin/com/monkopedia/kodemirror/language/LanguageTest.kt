@@ -49,9 +49,7 @@ class SimpleTestParser : Parser() {
     ): PartialParse {
         val length = input.length
         return object : PartialParse {
-            override fun advance(): Tree {
-                return Tree(topType, emptyList(), emptyList(), length)
-            }
+            override fun advance(): Tree = Tree(topType, emptyList(), emptyList(), length)
 
             override val parsedPos: Int get() = length
             override val stoppedAt: Int? get() = null

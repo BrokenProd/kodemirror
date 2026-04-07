@@ -56,12 +56,14 @@ private fun attrContent(quote: Int, token: Int, script: Boolean): ExternalTokeni
     ExternalTokenizer({ input, _ ->
         val start = input.pos
         while (
-            input.next != quote && input.next >= 0 &&
+            input.next != quote &&
+            input.next >= 0 &&
             (
-                script || (
-                    input.next != CH_AMPERSAND &&
-                        (input.next != CH_BRACE_L || input.peek(1) != CH_BRACE_L)
-                    )
+                script ||
+                    (
+                        input.next != CH_AMPERSAND &&
+                            (input.next != CH_BRACE_L || input.peek(1) != CH_BRACE_L)
+                        )
                 )
         ) {
             input.advance()

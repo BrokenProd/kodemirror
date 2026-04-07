@@ -51,9 +51,8 @@ data class MboxState(
     var inHeaders: Boolean = false
 )
 
-private fun mboxStyleForHeader(header: String?): String {
-    return if (header == "Subject") "header" else "string"
-}
+private fun mboxStyleForHeader(header: String?): String =
+    if (header == "Subject") "header" else "string"
 
 @Suppress("CyclomaticComplexMethod", "LongMethod", "ReturnCount")
 private fun mboxReadToken(stream: StringStream, state: MboxState): String? {
@@ -132,9 +131,8 @@ val mbox: StreamParser<MboxState> = object : StreamParser<MboxState> {
     override fun startState(indentUnit: Int) = MboxState()
     override fun copyState(state: MboxState) = state.copy()
 
-    override fun token(stream: StringStream, state: MboxState): String? {
-        return mboxReadToken(stream, state)
-    }
+    override fun token(stream: StringStream, state: MboxState): String? =
+        mboxReadToken(stream, state)
 
     override fun blankLine(state: MboxState, indentUnit: Int) {
         state.inHeaders = false

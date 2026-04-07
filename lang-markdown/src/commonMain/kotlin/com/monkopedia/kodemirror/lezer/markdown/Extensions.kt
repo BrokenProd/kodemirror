@@ -180,9 +180,8 @@ private class TableParserObj(cx: BlockContext, leaf: LeafBlock) : LeafBlockParse
         return true
     }
 
-    private fun isDelimiterLine(line: String): Boolean {
-        return Regex("^[|\\s:-]+$").matches(line) && line.contains('-')
-    }
+    private fun isDelimiterLine(line: String): Boolean =
+        Regex("^[|\\s:-]+$").matches(line) && line.contains('-')
 
     private fun finishTable(cx: BlockContext, leaf: LeafBlock) {
         val lines = leaf.content.split("\n")

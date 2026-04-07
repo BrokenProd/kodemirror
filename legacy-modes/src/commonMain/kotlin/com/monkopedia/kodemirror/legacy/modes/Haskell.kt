@@ -256,9 +256,7 @@ private val haskellWellKnownWords: Map<String, String> = buildMap {
     )
 }
 
-data class HaskellState(
-    var f: HaskellTokenFn = haskellNormal()
-)
+data class HaskellState(var f: HaskellTokenFn = haskellNormal())
 
 /** Stream parser for Haskell. */
 val haskell: StreamParser<HaskellState> = object : StreamParser<HaskellState> {

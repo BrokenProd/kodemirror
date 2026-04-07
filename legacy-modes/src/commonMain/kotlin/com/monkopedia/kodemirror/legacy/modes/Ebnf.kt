@@ -223,7 +223,6 @@ val ebnf: StreamParser<EbnfState> = object : StreamParser<EbnfState> {
         inDefinition = state.inDefinition
     )
 
-    override fun token(stream: StringStream, state: EbnfState): String? {
-        return ebnfTokenize(stream, state)
-    }
+    override fun token(stream: StringStream, state: EbnfState): String? =
+        ebnfTokenize(stream, state)
 }

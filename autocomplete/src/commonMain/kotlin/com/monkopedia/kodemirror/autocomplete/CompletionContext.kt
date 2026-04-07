@@ -24,11 +24,7 @@ import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 
 /** Result of [CompletionContext.matchBefore]. */
-data class MatchBeforeResult(
-    val from: DocPos,
-    val to: DocPos,
-    val text: String
-)
+data class MatchBeforeResult(val from: DocPos, val to: DocPos, val text: String)
 
 /**
  * Context passed to completion sources.
@@ -37,11 +33,7 @@ data class MatchBeforeResult(
  * @param pos The cursor position where completion was triggered.
  * @param explicit Whether completion was explicitly requested (e.g. Ctrl-Space).
  */
-class CompletionContext(
-    val state: EditorState,
-    val pos: DocPos,
-    val explicit: Boolean
-) {
+class CompletionContext(val state: EditorState, val pos: DocPos, val explicit: Boolean) {
     /**
      * Walk the syntax tree backward from [pos] looking for a node whose
      * name is in [types].

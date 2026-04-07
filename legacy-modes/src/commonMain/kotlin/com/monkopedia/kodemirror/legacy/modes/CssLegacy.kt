@@ -22,9 +22,7 @@ import com.monkopedia.kodemirror.language.IndentContext
 import com.monkopedia.kodemirror.language.StreamParser
 import com.monkopedia.kodemirror.language.StringStream
 
-private fun cssKeySet(array: List<String>): Set<String> {
-    return array.map { it.lowercase() }.toSet()
-}
+private fun cssKeySet(array: List<String>): Set<String> = array.map { it.lowercase() }.toSet()
 
 private val cssDocumentTypes = cssKeySet(listOf("domain", "regexp", "url", "url-prefix"))
 
@@ -374,11 +372,7 @@ object CssKeywords {
     val values: List<String> = cssValueKeywords_
 }
 
-data class CssContext(
-    val type: String,
-    val indent: Int,
-    val prev: CssContext?
-)
+data class CssContext(val type: String, val indent: Int, val prev: CssContext?)
 
 data class CssConfig(
     val name: String = "css",
@@ -531,9 +525,8 @@ fun mkCSS(config: CssConfig): StreamParser<CssState> {
     // circular forward-reference cycle: pass -> stateDispatch -> state fns -> pass.
     var stateDispatchFn: ((String, StringStream, CssState) -> String)? = null
 
-    fun pass(tp: String, stream: StringStream, state: CssState): String {
-        return stateDispatchFn!!(tp, stream, state)
-    }
+    fun pass(tp: String, stream: StringStream, state: CssState): String =
+        stateDispatchFn!!(tp, stream, state)
 
     fun popAndPass(tp: String, stream: StringStream, state: CssState, n: Int = 1): String {
         for (i in 0 until n) {
@@ -771,7 +764,9 @@ fun mkCSS(config: CssConfig): StreamParser<CssState> {
         if (tp == "{" || tp == "}") return popAndPass(tp, stream, state)
         if (tp == "word") {
             override = "tag"
-        } else if (tp == "hash") override = "builtin"
+        } else if (tp == "hash") {
+            override = "builtin"
+        }
         return "at"
     }
 
@@ -780,7 +775,9 @@ fun mkCSS(config: CssConfig): StreamParser<CssState> {
         if (tp == "{" || tp == ";") return popAndPass(tp, stream, state)
         if (tp == "word") {
             override = "variable"
-        } else if (tp != "variable" && tp != "(" && tp != ")") override = "error"
+        } else if (tp != "variable" && tp != "(" && tp != ")") {
+            override = "error"
+        }
         return "interpolation"
     }
 
@@ -818,16 +815,14 @@ fun mkCSS(config: CssConfig): StreamParser<CssState> {
             )
         }
 
-        override fun copyState(state: CssState): CssState {
-            return CssState(
-                tokenize = state.tokenize,
-                stringQuote = state.stringQuote,
-                state = state.state,
-                stateArg = state.stateArg,
-                // immutable data class - safe to share
-                context = state.context
-            )
-        }
+        override fun copyState(state: CssState): CssState = CssState(
+            tokenize = state.tokenize,
+            stringQuote = state.stringQuote,
+            state = state.state,
+            stateArg = state.stateArg,
+            // immutable data class - safe to share
+            context = state.context
+        )
 
         @Suppress("CyclomaticComplexMethod", "ReturnCount")
         override fun token(stream: StringStream, state: CssState): String? {
@@ -882,9 +877,12 @@ fun mkCSS(config: CssConfig): StreamParser<CssState> {
                 cx = cx.prev ?: cx
             }
             if (cx.prev != null) {
-                if (ch == "}" && (
-                        cx.type == "block" || cx.type == "top" ||
-                            cx.type == "interpolation" || cx.type == "restricted_atBlock"
+                if (ch == "}" &&
+                    (
+                        cx.type == "block" ||
+                            cx.type == "top" ||
+                            cx.type == "interpolation" ||
+                            cx.type == "restricted_atBlock"
                         )
                 ) {
                     cx = cx.prev!!

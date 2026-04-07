@@ -55,8 +55,9 @@ data class SqlCompletionConfig(
 private fun tokenBefore(tree: SyntaxNode): SyntaxNode {
     var cursor = tree.cursor()
     cursor.moveTo(tree.from, -1)
-    while (cursor.name.contains("Comment"))
+    while (cursor.name.contains("Comment")) {
         cursor.moveTo(cursor.from, -1)
+    }
     return cursor.node
 }
 
@@ -183,10 +184,7 @@ private fun sourceContext(state: EditorState, startPos: DocPos): SourceContextRe
 /**
  * A tree node used to build the schema-completion hierarchy.
  */
-class CompletionLevel(
-    private val idQuote: String,
-    private val idCaseInsensitive: Boolean
-) {
+class CompletionLevel(private val idQuote: String, private val idCaseInsensitive: Boolean) {
     val list: MutableList<Completion> = mutableListOf()
     var children: MutableMap<String, CompletionLevel>? = null
 
@@ -275,15 +273,13 @@ private fun maybeQuoteCompletions(
     openingQuote: String,
     closingQuote: String,
     completions: List<Completion>
-): List<Completion> {
-    return completions.map { c ->
-        val newLabel = if (c.label.startsWith(openingQuote)) {
-            c.label
-        } else {
-            openingQuote + c.label + closingQuote
-        }
-        c.copy(label = newLabel, apply = null)
+): List<Completion> = completions.map { c ->
+    val newLabel = if (c.label.startsWith(openingQuote)) {
+        c.label
+    } else {
+        openingQuote + c.label + closingQuote
     }
+    c.copy(label = newLabel, apply = null)
 }
 
 private val spanPattern = Regex("^\\w*$")

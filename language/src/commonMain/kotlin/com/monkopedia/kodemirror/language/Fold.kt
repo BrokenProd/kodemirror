@@ -183,16 +183,13 @@ val foldState: StateField<DecorationSet> = StateField.define(
 /**
  * Core code folding extension that wires the fold state.
  */
-fun codeFolding(): Extension {
-    return foldState
-}
+fun codeFolding(): Extension = foldState
 
 /**
  * Query the currently folded ranges in a state.
  */
-fun foldedRanges(state: EditorState): DecorationSet {
-    return state.field(foldState, require = false) ?: RangeSet.empty()
-}
+fun foldedRanges(state: EditorState): DecorationSet =
+    state.field(foldState, require = false) ?: RangeSet.empty()
 
 /**
  * Find a foldable range at the given line position, using registered
@@ -346,47 +343,45 @@ val foldKeymap: List<KeyBinding> = listOf(
  * Shows a clickable indicator (triangle) next to lines that can be
  * folded or unfolded.
  */
-fun foldGutter(): Extension {
-    return extensionListOf(
-        codeFolding(),
-        gutter(
-            GutterConfig(
-                type = GutterType.Custom("fold"),
-                lineMarker = { view, lineFrom ->
-                    val state = view.state
-                    val lineFromPos = DocPos(lineFrom)
-                    val line = state.doc.lineAt(lineFromPos)
-                    val folded = foldedRanges(state)
-                    var hasFold = false
-                    folded.between(lineFromPos, line.to) { from, _, _ ->
-                        if (from >= lineFrom && DocPos(from) <= line.to) {
-                            hasFold = true
-                            false
-                        } else {
-                            true
-                        }
-                    }
-                    if (hasFold) {
-                        FoldGutterMarker(folded = true)
+fun foldGutter(): Extension = extensionListOf(
+    codeFolding(),
+    gutter(
+        GutterConfig(
+            type = GutterType.Custom("fold"),
+            lineMarker = { view, lineFrom ->
+                val state = view.state
+                val lineFromPos = DocPos(lineFrom)
+                val line = state.doc.lineAt(lineFromPos)
+                val folded = foldedRanges(state)
+                var hasFold = false
+                folded.between(lineFromPos, line.to) { from, _, _ ->
+                    if (from >= lineFrom && DocPos(from) <= line.to) {
+                        hasFold = true
+                        false
                     } else {
-                        val canFold = foldable(state, lineFromPos) != null
-                        if (canFold) FoldGutterMarker(folded = false) else null
+                        true
                     }
-                },
-                lineMarkerChange = { update ->
-                    update.docChanged || update.transactions.any { tr ->
+                }
+                if (hasFold) {
+                    FoldGutterMarker(folded = true)
+                } else {
+                    val canFold = foldable(state, lineFromPos) != null
+                    if (canFold) FoldGutterMarker(folded = false) else null
+                }
+            },
+            lineMarkerChange = { update ->
+                update.docChanged ||
+                    update.transactions.any { tr ->
                         tr.effects.any {
                             it.asType(foldEffect) != null || it.asType(unfoldEffect) != null
                         }
                     }
-                }
-            )
+            }
         )
     )
-}
+)
 
-private class FoldGutterMarker(val folded: Boolean) :
-    GutterMarker() {
+private class FoldGutterMarker(val folded: Boolean) : GutterMarker() {
     @Composable
     override fun Content(theme: EditorTheme) {
         val contentStyle = LocalContentTextStyle.current

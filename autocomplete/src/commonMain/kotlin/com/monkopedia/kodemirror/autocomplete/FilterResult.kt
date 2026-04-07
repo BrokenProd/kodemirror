@@ -91,7 +91,8 @@ private fun scoreMatch(label: String, query: String): Pair<Int, List<IntRange>>?
     while (qi < lowerQuery.length && li < lowerLabel.length) {
         if (lowerLabel[li] == lowerQuery[qi]) {
             val start = li
-            while (qi < lowerQuery.length && li < lowerLabel.length &&
+            while (qi < lowerQuery.length &&
+                li < lowerLabel.length &&
                 lowerLabel[li] == lowerQuery[qi]
             ) {
                 qi++

@@ -83,58 +83,56 @@ private val textileReCache = mutableMapOf<String, Regex>()
 
 private fun textileRe(name: String): Regex = textileReCache.getOrPut(name) { textileCreateRe(name) }
 
-private fun textileCreateRe(name: String): Regex {
-    return when (name) {
-        "drawTable" -> textileMakeRe("^", textileSingles["drawTable"]!!, "$")
-        "html" -> textileMakeRe(
-            "^",
-            textileSingles["html"]!!,
-            "(?:",
-            textileSingles["html"]!!,
-            ")*",
-            "$"
-        )
-        "linkDefinition" -> textileMakeRe("^", textileSingles["linkDefinition"]!!, "$")
-        "listLayout" -> textileMakeRe(
-            "^",
-            textileSingles["list"]!!,
-            textileRe("allAttributes"),
-            "*\\s+"
-        )
-        "tableCellAttributes" -> textileMakeRe(
-            "^",
-            textileChoiceRe(textileSingles["tableCellAttributes"]!!, textileRe("allAttributes")),
-            "+\\."
-        )
-        "type" -> textileMakeRe("^", textileRe("allTypes"))
-        "typeLayout" -> textileMakeRe(
-            "^",
-            textileRe("allTypes"),
-            textileRe("allAttributes"),
-            "*\\.\\..?",
-            "(\\s+|$)"
-        )
-        "attributes" -> textileMakeRe("^", textileRe("allAttributes"), "+")
-        "allTypes" -> textileChoiceRe(
-            textileSingles["div"]!!,
-            textileSingles["foot"]!!,
-            textileSingles["header"]!!,
-            textileSingles["bc"]!!,
-            textileSingles["bq"]!!,
-            textileSingles["notextile"]!!,
-            textileSingles["pre"]!!,
-            textileSingles["table"]!!,
-            textileSingles["para"]!!
-        )
-        "allAttributes" -> textileChoiceRe(
-            textileAttr["selector"]!!,
-            textileAttr["css"]!!,
-            textileAttr["lang"]!!,
-            textileAttr["align"]!!,
-            textileAttr["pad"]!!
-        )
-        else -> textileMakeRe("^", textileSingles[name]!!)
-    }
+private fun textileCreateRe(name: String): Regex = when (name) {
+    "drawTable" -> textileMakeRe("^", textileSingles["drawTable"]!!, "$")
+    "html" -> textileMakeRe(
+        "^",
+        textileSingles["html"]!!,
+        "(?:",
+        textileSingles["html"]!!,
+        ")*",
+        "$"
+    )
+    "linkDefinition" -> textileMakeRe("^", textileSingles["linkDefinition"]!!, "$")
+    "listLayout" -> textileMakeRe(
+        "^",
+        textileSingles["list"]!!,
+        textileRe("allAttributes"),
+        "*\\s+"
+    )
+    "tableCellAttributes" -> textileMakeRe(
+        "^",
+        textileChoiceRe(textileSingles["tableCellAttributes"]!!, textileRe("allAttributes")),
+        "+\\."
+    )
+    "type" -> textileMakeRe("^", textileRe("allTypes"))
+    "typeLayout" -> textileMakeRe(
+        "^",
+        textileRe("allTypes"),
+        textileRe("allAttributes"),
+        "*\\.\\..?",
+        "(\\s+|$)"
+    )
+    "attributes" -> textileMakeRe("^", textileRe("allAttributes"), "+")
+    "allTypes" -> textileChoiceRe(
+        textileSingles["div"]!!,
+        textileSingles["foot"]!!,
+        textileSingles["header"]!!,
+        textileSingles["bc"]!!,
+        textileSingles["bq"]!!,
+        textileSingles["notextile"]!!,
+        textileSingles["pre"]!!,
+        textileSingles["table"]!!,
+        textileSingles["para"]!!
+    )
+    "allAttributes" -> textileChoiceRe(
+        textileAttr["selector"]!!,
+        textileAttr["css"]!!,
+        textileAttr["lang"]!!,
+        textileAttr["align"]!!,
+        textileAttr["pad"]!!
+    )
+    else -> textileMakeRe("^", textileSingles[name]!!)
 }
 
 private val textileSingles: Map<String, Any> = mapOf(
@@ -192,17 +190,15 @@ private fun textileChoiceRe(vararg parts: Any): Regex {
     return Regex("(?:${choiceParts.joinToString("|")})")
 }
 
-private fun textileDisabled(state: TextileState): String? {
-    return when (state.layoutType) {
-        "notextile" -> textileTokenStyles["notextile"]
-        "code" -> textileTokenStyles["code"]
-        "pre" -> textileTokenStyles["pre"]
-        else -> if (state.notextile) {
-            textileTokenStyles["notextile"] +
-                (state.layoutType?.let { " ${textileTokenStyles[it]}" } ?: "")
-        } else {
-            null
-        }
+private fun textileDisabled(state: TextileState): String? = when (state.layoutType) {
+    "notextile" -> textileTokenStyles["notextile"]
+    "code" -> textileTokenStyles["code"]
+    "pre" -> textileTokenStyles["pre"]
+    else -> if (state.notextile) {
+        textileTokenStyles["notextile"] +
+            (state.layoutType?.let { " ${textileTokenStyles[it]}" } ?: "")
+    } else {
+        null
     }
 }
 
@@ -287,14 +283,16 @@ private fun textileTogglePhraseModifier(
     val charAfter = stream.peek()
     if (getTextileFlag(state, phraseModifier)) {
         if ((charAfter == null || Regex("\\W").containsMatchIn(charAfter)) &&
-            charBefore != null && Regex("\\S").containsMatchIn(charBefore)
+            charBefore != null &&
+            Regex("\\S").containsMatchIn(charBefore)
         ) {
             val type = textileTokenStyles(state)
             setTextileFlag(state, phraseModifier, false)
             return type
         }
     } else if ((charBefore == null || Regex("\\W").containsMatchIn(charBefore)) &&
-        charAfter != null && Regex("\\S").containsMatchIn(charAfter) &&
+        charAfter != null &&
+        Regex("\\S").containsMatchIn(charAfter) &&
         stream.match(Regex("^.*\\S${closeRE.pattern}(?:\\W|$)"), consume = false) != null
     ) {
         setTextileFlag(state, phraseModifier, true)
@@ -545,7 +543,8 @@ private fun textileBlankLine(state: TextileState) {
 private fun textileStartNewLine(stream: StringStream, state: TextileState) {
     state.mode = ::textileModeNewLayout
     state.tableHeading = false
-    if (state.layoutType == "definitionList" && state.spanningLayout &&
+    if (state.layoutType == "definitionList" &&
+        state.spanningLayout &&
         stream.match(textileRe("definitionListEnd"), consume = false) != null
     ) {
         state.spanningLayout = false

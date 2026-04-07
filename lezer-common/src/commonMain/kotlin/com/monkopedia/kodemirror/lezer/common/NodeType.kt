@@ -40,9 +40,7 @@ class NodeType internal constructor(
 
     /** Look up a prop on this type. */
     @Suppress("UNCHECKED_CAST")
-    fun <T> prop(prop: NodeProp<T>): T? {
-        return props[prop.id] as T?
-    }
+    fun <T> prop(prop: NodeProp<T>): T? = props[prop.id] as T?
 
     override fun toString(): String = name.ifEmpty { "anonymous($id)" }
 

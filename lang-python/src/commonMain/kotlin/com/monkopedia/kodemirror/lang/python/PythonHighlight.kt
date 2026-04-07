@@ -26,7 +26,8 @@ import com.monkopedia.kodemirror.lezer.highlight.styleTags
 val pythonHighlighting = styleTags(
     mapOf(
         "async \"*\" \"**\" FormatConversion FormatSpec" to t.modifier,
-        "for while if elif else try except finally return raise break continue with pass assert await yield match case" to t.controlKeyword,
+        "for while if elif else try except finally return raise break continue with pass assert await yield match case" to
+            t.controlKeyword,
         "in not and or is del" to t.operatorKeyword,
         "from def class global nonlocal lambda" to t.definitionKeyword,
         "import" to t.moduleKeyword,

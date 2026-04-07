@@ -102,9 +102,7 @@ private val fortranIsOperatorChar = Regex("[+\\-*&=<>/:]")
 private val fortranLitOperator =
     Regex("^\\.(and|or|eq|lt|le|gt|ge|ne|not|eqv|neqv)\\.", RegexOption.IGNORE_CASE)
 
-data class FortranState(
-    var tokenize: ((StringStream, FortranState) -> String?)? = null
-)
+data class FortranState(var tokenize: ((StringStream, FortranState) -> String?)? = null)
 
 private fun fortranTokenBase(stream: StringStream, state: FortranState): String? {
     if (stream.match(fortranLitOperator) != null) {

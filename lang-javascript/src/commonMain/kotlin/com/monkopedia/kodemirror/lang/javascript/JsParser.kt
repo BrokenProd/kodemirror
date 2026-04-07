@@ -60,9 +60,11 @@ private val space = intArrayOf(
     8287, 12288
 )
 
-private fun identifierChar(ch: Int, start: Boolean): Boolean =
-    ch in 65..90 || ch in 97..122 || ch == 95 || ch >= 192 ||
-        (!start && ch in 48..57)
+private fun identifierChar(ch: Int, start: Boolean): Boolean = ch in 65..90 ||
+    ch in 97..122 ||
+    ch == 95 ||
+    ch >= 192 ||
+    (!start && ch in 48..57)
 
 @Suppress("UNCHECKED_CAST")
 private val trackNewline = ContextTracker(
@@ -94,7 +96,9 @@ private val noSemicolon = ExternalTokenizer(
         if (next !in space) {
             val after = input.peek(1)
             if (!(next == SLASH && (after == SLASH || after == STAR))) {
-                if (next != BRACE_R && next != SEMICOLON && next != -1 &&
+                if (next != BRACE_R &&
+                    next != SEMICOLON &&
+                    next != -1 &&
                     stack.context as? Boolean != true
                 ) {
                     input.acceptToken(NO_SEMI)
@@ -218,7 +222,8 @@ private val specLessThan = mapOf(
 internal val jsParser: LRParser = LRParser.deserialize(
     ParserSpec(
         version = 14,
-        states = "\$F|Q%TQlOOO%[QlOOO'_QpOOP(lO`OOO*zQ!0MxO'#CiO+RO#tO'#CjO+aO&jO'#CjO+oO#@ItO'#Da" +
+        states =
+        "\$F|Q%TQlOOO%[QlOOO'_QpOOP(lO`OOO*zQ!0MxO'#CiO+RO#tO'#CjO+aO&jO'#CjO+oO#@ItO'#Da" +
             "O.QQlO'#DgO.bQlO'#DrO%[QlO'#DzO0fQlO'#ESOOQ!0Lf'#E['#E[O1PQ`O'#EXOOQO'#Ep'#EpOOQ" +
             "O'#Il'#IlO1XQ`O'#GsO1dQ`O'#EoO1iQ`O'#EoO3hQ!0MxO'#JrO6[Q!0MxO'#JsO6uQ`O'#F]O6zQ," +
             "UO'#FtOOQ!0Lf'#Ff'#FfO7VO7dO'#FfO9XQMhO'#F|O9`Q`O'#F{OOQ!0Lf'#Js'#JsOOQ!0Lb'#Jr'" +
@@ -421,7 +426,8 @@ internal val jsParser: LRParser = LRParser.deserialize(
             "Q`O1G0uO((dQMjO<<K}O((kQMjO<<K}O((rQMhO'#F|O9`Q`O'#F{OAuQ`O'#EnO!)[QlO,5;tO!3oQ`" +
             "O'#GYO!3oQ`O'#GYO!3oQ`O'#G[O!3oQ`O'#G[O!,TQMhO7+(cO!,TQMhO7+(cO%.zQ!dO1G2wO%.zQ!" +
             "dO1G2wO!&zQMhO,5=]O!&zQMhO,5=]",
-        stateData = "()x~O'|OS'}OSTOS(ORQ~OPYOQYOSfOY!VOaqOdzOeyOl!POpkOrYOskOtkOzkO|YO!OYO!SWO!WkO!X" +
+        stateData =
+        "()x~O'|OS'}OSTOS(ORQ~OPYOQYOSfOY!VOaqOdzOeyOl!POpkOrYOskOtkOzkO|YO!OYO!SWO!WkO!X" +
             "kO!_XO!iuO!lZO!oYO!pYO!qYO!svO!uwO!xxO!|]O\$W|O\$niO%h}O%j!QO%l!OO%m!OO%n!OO%q!R" +
             "O%s!SO%v!TO%w!TO%y!UO&W!WO&^!XO&`!YO&b!ZO&d![O&g!]O&m!^O&s!_O&u!`O&w!aO&y!bO&{!c" +
             "O(TSO(VTO(YUO(aVO(o[O~OWtO~P`OPYOQYOSfOd!jOe!iOpkOrYOskOtkOzkO|YO!OYO!SWO!WkO!Xk" +
@@ -929,7 +935,8 @@ internal val jsParser: LRParser = LRParser.deserialize(
         propSources = listOf(javascriptHighlighting),
         skippedNodes = listOf(0, 5, 6, 278),
         repeatNodeCount = 37,
-        tokenData = "\$Fq07[R!bOX%ZXY+gYZ-yZ[+g[]%Z]^.c^p%Zpq+gqr/mrs3cst:_tuEruvJSvwLkwx! Yxy!'iyz!(" +
+        tokenData =
+        "\$Fq07[R!bOX%ZXY+gYZ-yZ[+g[]%Z]^.c^p%Zpq+gqr/mrs3cst:_tuEruvJSvwLkwx! Yxy!'iyz!(" +
             "sz{!)}{|!,q|}!.O}!O!,q!O!P!/Y!P!Q!9j!Q!R#:O!R![#<_![!]#I_!]!^#Jk!^!_#Ku!_!`\$![!" +
             "`!a\$\$v!a!b\$*T!b!c\$,r!c!}Er!}#O\$-|#O#P\$/W#P#Q\$4o#Q#R\$5y#R#SEr#S#T\$7W#T#o" +
             "\$8b#o#p\$<r#p#q\$=h#q#r\$>x#r#s\$@U#s\$f%Z\$f\$g+g\$g#BYEr#BY#BZ\$A`#BZ\$ISEr\$" +

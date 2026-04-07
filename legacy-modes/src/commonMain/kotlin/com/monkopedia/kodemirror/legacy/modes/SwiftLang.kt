@@ -60,11 +60,7 @@ private val swiftProperty = Regex("^\\.(?:\\$\\d+|(`?)[_A-Za-z][_A-Za-z\$0-9]*\\
 private val swiftInstruction = Regex("^#[A-Za-z]+")
 private val swiftAttribute = Regex("^@(?:\\$\\d+|(`?)[_A-Za-z][_A-Za-z\$0-9]*\\1)")
 
-data class SwiftContext(
-    val prev: SwiftContext?,
-    val align: Int?,
-    val indented: Int
-)
+data class SwiftContext(val prev: SwiftContext?, val align: Int?, val indented: Int)
 
 data class SwiftState(
     var prev: String? = null,
@@ -107,9 +103,7 @@ val swiftLang: StreamParser<SwiftState> = object : StreamParser<SwiftState> {
         stream: StringStream,
         state: SwiftState,
         prev: String?
-    ): String {
-        return tokenComment(stream, state)
-    }
+    ): String = tokenComment(stream, state)
 
     private fun tokenString(openQuote: String, stream: StringStream, state: SwiftState): String {
         val singleLine = openQuote.length == 1
@@ -205,9 +199,7 @@ val swiftLang: StreamParser<SwiftState> = object : StreamParser<SwiftState> {
                     s: StringStream,
                     st: SwiftState,
                     @Suppress("UNUSED_PARAMETER") _p: String?
-                ): String {
-                    return tokenString(quote, s, st)
-                }
+                ): String = tokenString(quote, s, st)
             state.tokenize.add(tokenize)
             return tokenize(stream, state, prev)
         }
@@ -266,7 +258,9 @@ val swiftLang: StreamParser<SwiftState> = object : StreamParser<SwiftState> {
         }
         if (style == null || style == "comment") {
             state.prev = prev
-        } else if (state.prev == null) state.prev = style
+        } else if (state.prev == null) {
+            state.prev = style
+        }
 
         if (style == "punctuation") {
             val bracket = Regex("[\\(\\[{]|([)\\]}])").find(stream.current())

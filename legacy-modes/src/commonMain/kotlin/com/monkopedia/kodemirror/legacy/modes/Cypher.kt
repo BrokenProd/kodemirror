@@ -79,11 +79,7 @@ data class CypherContext(
     var align: Boolean? = null
 )
 
-data class CypherState(
-    var context: CypherContext? = null,
-    var indent: Int = 0,
-    var col: Int = 0
-)
+data class CypherState(var context: CypherContext? = null, var indent: Int = 0, var col: Int = 0)
 
 private var cypherCurPunc: String? = null
 
@@ -156,7 +152,8 @@ val cypher: StreamParser<CypherState> = object : StreamParser<CypherState> {
         if (stream.eatSpace()) return null
 
         val style = cypherTokenBase(stream, state)
-        if (style != "comment" && state.context?.align == null &&
+        if (style != "comment" &&
+            state.context?.align == null &&
             state.context?.type != "pattern"
         ) {
             state.context?.align = true
@@ -178,7 +175,8 @@ val cypher: StreamParser<CypherState> = object : StreamParser<CypherState> {
             }
         } else if (punc == "." && state.context?.type == "pattern") {
             cypherPopContext(state)
-        } else if (style != null && Regex("atom|string|variable").containsMatchIn(style) &&
+        } else if (style != null &&
+            Regex("atom|string|variable").containsMatchIn(style) &&
             state.context != null
         ) {
             val ctxType = state.context?.type ?: ""

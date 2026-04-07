@@ -48,8 +48,10 @@ private val commonmark: MarkdownParser = baseParser.configure(
         com.monkopedia.kodemirror.lezer.markdown.MarkdownConfig(
             props = listOf(
                 foldNodeProp.add { type ->
-                    if (!type.`is`("Block") || type.`is`("Document") ||
-                        isHeading(type) != null || isList(type)
+                    if (!type.`is`("Block") ||
+                        type.`is`("Document") ||
+                        isHeading(type) != null ||
+                        isList(type)
                     ) {
                         null
                     } else {

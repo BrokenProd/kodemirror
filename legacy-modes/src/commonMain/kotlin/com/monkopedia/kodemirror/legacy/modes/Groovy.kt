@@ -54,12 +54,14 @@ data class GroovyState(
     var curPunc: String? = null
 )
 
-private fun groovyExpectExpression(last: String?, newline: Boolean): Boolean {
-    return last == null || last == "operator" || last == "->" ||
-        (last.length == 1 && Regex("[.\\[{(,;:]").containsMatchIn(last)) ||
-        last == "newstatement" || last == "keyword" || last == "proplabel" ||
-        (last == "standalone" && !newline)
-}
+private fun groovyExpectExpression(last: String?, newline: Boolean): Boolean = last == null ||
+    last == "operator" ||
+    last == "->" ||
+    (last.length == 1 && Regex("[.\\[{(,;:]").containsMatchIn(last)) ||
+    last == "newstatement" ||
+    last == "keyword" ||
+    last == "proplabel" ||
+    (last == "standalone" && !newline)
 
 private fun groovyTokenBase(stream: StringStream, state: GroovyState): String? {
     val ch = stream.next() ?: return null
@@ -114,7 +116,9 @@ private fun groovyTokenBase(stream: StringStream, state: GroovyState): String? {
     if (cur in groovyKeywords) {
         if (cur in groovyBlockKeywords) {
             state.curPunc = "newstatement"
-        } else if (cur in groovyStandaloneKeywords) state.curPunc = "standalone"
+        } else if (cur in groovyStandaloneKeywords) {
+            state.curPunc = "standalone"
+        }
         return "keyword"
     }
     return "variable"
@@ -191,7 +195,8 @@ private fun groovyTokenBaseUntilBrace(): (StringStream, GroovyState) -> String? 
 private fun groovyVariableDerefTokenizer(): (StringStream, GroovyState) -> String? {
     val fn: (StringStream, GroovyState) -> String? = fn@{ stream, state ->
         val next = stream.match(Regex("^(\\.|[\\w\$_]+)"))
-        if (next == null || (
+        if (next == null ||
+            (
                 if (next.value[0] == '.') {
                     stream.match(Regex("^[\\w\$_]"), consume = false)
                 } else {
@@ -283,7 +288,8 @@ val groovy: StreamParser<GroovyState> = object : StreamParser<GroovyState> {
         if ((curPunc == ";" || curPunc == ":") && ctx.type == "statement") {
             groovyPopContext(state)
         } else if (
-            curPunc == "->" && ctx.type == "statement" &&
+            curPunc == "->" &&
+            ctx.type == "statement" &&
             ctx.prev?.type == "}"
         ) {
             groovyPopContext(state)
@@ -301,7 +307,8 @@ val groovy: StreamParser<GroovyState> = object : StreamParser<GroovyState> {
         } else if (curPunc == state.context.type) {
             groovyPopContext(state)
         } else if (
-            state.context.type == "}" || state.context.type == "top" ||
+            state.context.type == "}" ||
+            state.context.type == "top" ||
             (state.context.type == "statement" && curPunc == "newstatement")
         ) {
             groovyPushContext(state, stream.column(), "statement")

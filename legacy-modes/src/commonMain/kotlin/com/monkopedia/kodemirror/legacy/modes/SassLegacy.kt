@@ -121,9 +121,8 @@ data class SassState(
     var lastToken: Pair<String?, String>? = null
 )
 
-private fun sassIsEndLine(stream: StringStream): Boolean {
-    return stream.peek() == null || stream.match(Regex("\\s+$"), consume = false) != null
-}
+private fun sassIsEndLine(stream: StringStream): Boolean =
+    stream.peek() == null || stream.match(Regex("\\s+$"), consume = false) != null
 
 private fun sassUrlTokens(stream: StringStream, state: SassState): String? {
     val ch = stream.peek()
@@ -430,9 +429,8 @@ val sassLegacy: StreamParser<SassState> = object : StreamParser<SassState> {
         return style
     }
 
-    override fun indent(state: SassState, textAfter: String, context: IndentContext): Int {
-        return state.scopes[0].offset
-    }
+    override fun indent(state: SassState, textAfter: String, context: IndentContext): Int =
+        state.scopes[0].offset
 
     override val languageData: Map<String, Any>
         get() = mapOf(

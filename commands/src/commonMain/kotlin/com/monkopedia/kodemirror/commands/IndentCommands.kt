@@ -92,7 +92,8 @@ private fun changeIndent(view: EditorSession, add: Boolean): Boolean {
             // Find common prefix length
             var keep = 0
             while (
-                keep < space.length && keep < newIndent.length &&
+                keep < space.length &&
+                keep < newIndent.length &&
                 space[keep] == newIndent[keep]
             ) {
                 keep++

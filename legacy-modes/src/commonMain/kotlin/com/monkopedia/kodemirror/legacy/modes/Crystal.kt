@@ -459,15 +459,13 @@ val crystal: StreamParser<CrystalState> = object : StreamParser<CrystalState> {
 
     override fun startState(indentUnit: Int) = CrystalState()
 
-    override fun copyState(state: CrystalState): CrystalState {
-        return CrystalState(
-            tokenize = state.tokenize.toMutableList(),
-            currentIndent = state.currentIndent,
-            lastToken = state.lastToken,
-            lastStyle = state.lastStyle,
-            blocks = state.blocks.toMutableList()
-        )
-    }
+    override fun copyState(state: CrystalState): CrystalState = CrystalState(
+        tokenize = state.tokenize.toMutableList(),
+        currentIndent = state.currentIndent,
+        lastToken = state.lastToken,
+        lastStyle = state.lastStyle,
+        blocks = state.blocks.toMutableList()
+    )
 
     override fun token(stream: StringStream, state: CrystalState): String? {
         val style = state.tokenize.last()(stream, state)

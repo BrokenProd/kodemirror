@@ -39,10 +39,7 @@ import com.monkopedia.kodemirror.view.keymap
  * @param brackets The bracket/quote pairs to auto-close.
  * @param before Characters before which a closing bracket may be inserted.
  */
-data class CloseBracketsConfig(
-    val brackets: String = "()[]{}''\"\"",
-    val before: String = ")]}:;>"
-)
+data class CloseBracketsConfig(val brackets: String = "()[]{}''\"\"", val before: String = ")]}:;>")
 
 private val defaultPairs = mapOf(
     '(' to ')',
@@ -152,7 +149,8 @@ val deleteBracketPair: (EditorSession) -> Boolean = { view ->
     val result = if (pos > DocPos.ZERO && pos < state.doc.endPos) {
         val before = state.doc.sliceString(pos - 1, pos)
         val after = state.doc.sliceString(pos, pos + 1)
-        val isPair = before.length == 1 && after.length == 1 &&
+        val isPair = before.length == 1 &&
+            after.length == 1 &&
             defaultPairs[before[0]] == after[0]
         if (isPair) {
             view.dispatch(

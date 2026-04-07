@@ -155,14 +155,12 @@ internal object Side {
     const val DONT_CARE = 4
 }
 
-internal fun checkSide(side: Int, pos: Int, from: Int, to: Int): Boolean {
-    return when (side) {
-        Side.BEFORE -> from < pos
-        Side.AT_OR_BEFORE -> to >= pos && from < pos
-        Side.AROUND -> from < pos && to > pos
-        Side.AT_OR_AFTER -> from <= pos && to > pos
-        Side.AFTER -> to > pos
-        Side.DONT_CARE -> true
-        else -> false
-    }
+internal fun checkSide(side: Int, pos: Int, from: Int, to: Int): Boolean = when (side) {
+    Side.BEFORE -> from < pos
+    Side.AT_OR_BEFORE -> to >= pos && from < pos
+    Side.AROUND -> from < pos && to > pos
+    Side.AT_OR_AFTER -> from <= pos && to > pos
+    Side.AFTER -> to > pos
+    Side.DONT_CARE -> true
+    else -> false
 }

@@ -65,10 +65,7 @@ data class Completion(
 )
 
 /** A named section for grouping completions. */
-data class CompletionSection(
-    val name: String,
-    val rank: Int = 0
-)
+data class CompletionSection(val name: String, val rank: Int = 0)
 
 /**
  * The result of a completion source query.

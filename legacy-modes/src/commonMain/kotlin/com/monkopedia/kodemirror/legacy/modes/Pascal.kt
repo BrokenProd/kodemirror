@@ -46,9 +46,7 @@ private val pascalAtoms = setOf("null")
 
 private val pascalIsOperatorChar = Regex("[+\\-*&%=<>!?|/]")
 
-data class PascalState(
-    var tokenize: ((StringStream, PascalState) -> String?)? = null
-)
+data class PascalState(var tokenize: ((StringStream, PascalState) -> String?)? = null)
 
 private fun pascalTokenBase(stream: StringStream, state: PascalState): String? {
     val ch = stream.next() ?: return null

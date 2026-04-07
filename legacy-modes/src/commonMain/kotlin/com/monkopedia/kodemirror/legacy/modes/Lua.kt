@@ -180,12 +180,16 @@ val lua: StreamParser<LuaState> = object : StreamParser<LuaState> {
         if (style == "variable") {
             if (word in luaKeywords) {
                 style = "keyword"
-            } else if (word in luaBuiltins) style = "builtin"
+            } else if (word in luaBuiltins) {
+                style = "builtin"
+            }
         }
         if (style != "comment" && style != "string") {
             if (indentTokens.matches(word)) {
                 ++state.indentDepth
-            } else if (dedentTokens.matches(word)) --state.indentDepth
+            } else if (dedentTokens.matches(word)) {
+                --state.indentDepth
+            }
         }
         return style
     }

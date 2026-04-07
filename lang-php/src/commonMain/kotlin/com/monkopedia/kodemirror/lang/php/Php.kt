@@ -54,10 +54,19 @@ val phpLanguage: LRLanguage = LRLanguage.define(
                             val isCase =
                                 Regex("""^\s*(case|default)\b""").containsMatchIn(after)
                             val unit = getIndentUnit(cx.state)
-                            cx.baseIndent + (if (closed) 0 else if (isCase) 1 else 2) * unit
+                            cx.baseIndent + (
+                                if (closed) {
+                                    0
+                                } else if (isCase) {
+                                    1
+                                } else {
+                                    2
+                                }
+                                ) * unit
                         }
                         type.name == "ColonBlock" -> { cx -> cx.baseIndent + cx.unit }
-                        type.name == "Block" || type.name == "EnumBody" ||
+                        type.name == "Block" ||
+                            type.name == "EnumBody" ||
                             type.name == "DeclarationList" ->
                             delimitedIndent(closing = "}")
                         type.name == "ArrowFunction" -> { cx -> cx.baseIndent + cx.unit }

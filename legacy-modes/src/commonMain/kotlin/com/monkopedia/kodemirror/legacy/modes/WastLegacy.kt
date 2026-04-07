@@ -127,9 +127,7 @@ private val wastStringRegex = Regex(
     """^"(?:[^"\\\x00-\x1f\x7f]|\\[nt\\'"]|\\[0-9a-fA-F][0-9a-fA-F])*""""
 )
 
-data class WastLegacyState(
-    var inComment: Boolean = false
-)
+data class WastLegacyState(var inComment: Boolean = false)
 
 /** Stream parser for WebAssembly Text (WAT). */
 val wastLegacy: StreamParser<WastLegacyState> = object : StreamParser<WastLegacyState> {

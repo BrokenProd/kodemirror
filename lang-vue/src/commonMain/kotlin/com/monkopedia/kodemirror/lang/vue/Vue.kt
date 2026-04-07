@@ -63,28 +63,24 @@ private val attrMixed = NestedParse(parser = attrParser)
 
 private val atOrColonOrVDash = Regex("^(@|:|v-)")
 
-private fun mixVue(node: SyntaxNodeRef, input: Input): NestedParse? {
-    return when (node.name) {
-        "Attribute" -> {
-            val prefix = input.read(node.from, minOf(node.from + 3, node.to))
-            if (atOrColonOrVDash.containsMatchIn(prefix)) attrMixed else null
-        }
-        "Text" -> textMixed
-        else -> null
+private fun mixVue(node: SyntaxNodeRef, input: Input): NestedParse? = when (node.name) {
+    "Attribute" -> {
+        val prefix = input.read(node.from, minOf(node.from + 3, node.to))
+        if (atOrColonOrVDash.containsMatchIn(prefix)) attrMixed else null
     }
+    "Text" -> textMixed
+    else -> null
 }
 
-private fun makeVue(base: LRLanguage): LRLanguage {
-    return LRLanguage.define(
-        parser = (base.parser as LRParser).configure(
-            ParserConfig(
-                dialect = "selfClosing",
-                wrap = parseMixed(::mixVue)
-            )
-        ),
-        name = "vue"
-    )
-}
+private fun makeVue(base: LRLanguage): LRLanguage = LRLanguage.define(
+    parser = (base.parser as LRParser).configure(
+        ParserConfig(
+            dialect = "selfClosing",
+            wrap = parseMixed(::mixVue)
+        )
+    ),
+    name = "vue"
+)
 
 /**
  * A language provider for Vue templates.

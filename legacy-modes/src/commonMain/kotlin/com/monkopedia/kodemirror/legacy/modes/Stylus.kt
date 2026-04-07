@@ -297,10 +297,7 @@ data class StylusContext(
     val line: StylusLine = StylusLine()
 )
 
-data class StylusLine(
-    var firstWord: String = "",
-    var indent: Int = 0
-)
+data class StylusLine(var firstWord: String = "", var indent: Int = 0)
 
 class StylusState(
     // 0=null(base), 1=cComment, 2=string, 3=parenthesized
@@ -310,14 +307,11 @@ class StylusState(
     var context: StylusContext = StylusContext("block", 0, null)
 )
 
-private fun stylusEndOfLine(stream: StringStream): Boolean {
-    return stream.eol() || stream.match(Regex("^\\s*\$"), false) != null
-}
+private fun stylusEndOfLine(stream: StringStream): Boolean =
+    stream.eol() || stream.match(Regex("^\\s*\$"), false) != null
 
-private fun stylusStartOfLine(stream: StringStream): Boolean {
-    return stream.sol() ||
-        stream.string.matches(Regex("^\\s*" + Regex.escape(stream.current())))
-}
+private fun stylusStartOfLine(stream: StringStream): Boolean = stream.sol() ||
+    stream.string.matches(Regex("^\\s*" + Regex.escape(stream.current())))
 
 private fun stylusFirstWordOfLine(input: String): String {
     val re = Regex("^\\s*[-_]*[a-z0-9]+[\\w-]*", RegexOption.IGNORE_CASE)
@@ -325,18 +319,14 @@ private fun stylusFirstWordOfLine(input: String): String {
     return result?.value?.trimStart() ?: ""
 }
 
-private fun stylusWordIsTag(word: String): Boolean {
-    return word.lowercase() in stylusTagKeywords
-}
+private fun stylusWordIsTag(word: String): Boolean = word.lowercase() in stylusTagKeywords
 
 private fun stylusWordIsProperty(word: String): Boolean {
     val lc = word.lowercase()
     return lc in stylusPropertyKeywords || lc in stylusFontProperties
 }
 
-private fun stylusWordIsBlock(word: String): Boolean {
-    return word.lowercase() in stylusBlockKeywords
-}
+private fun stylusWordIsBlock(word: String): Boolean = word.lowercase() in stylusBlockKeywords
 
 @Suppress("CyclomaticComplexMethod", "LongMethod", "ReturnCount", "NestedBlockDepth")
 private fun stylusWordAsValue(word: String): String {
@@ -604,7 +594,9 @@ private fun stylusStateDispatch(
             }
         }
         "variableName" -> {
-            if (type == "string" || type == "[" || type == "]" ||
+            if (type == "string" ||
+                type == "[" ||
+                type == "]" ||
                 stream.current().matches(Regex("^[.\$].*"))
             ) {
                 if (stream.current().matches(Regex("^\\.[\\w-]+", RegexOption.IGNORE_CASE))) {
@@ -979,18 +971,14 @@ private fun stylusKeyframesState(
 val stylus: StreamParser<StylusState> = object : StreamParser<StylusState> {
     override val name: String get() = "stylus"
 
-    override fun startState(indentUnit: Int): StylusState {
-        return StylusState()
-    }
+    override fun startState(indentUnit: Int): StylusState = StylusState()
 
-    override fun copyState(state: StylusState): StylusState {
-        return StylusState(
-            tokenize = state.tokenize,
-            stringQuote = state.stringQuote,
-            state = state.state,
-            context = state.context
-        )
-    }
+    override fun copyState(state: StylusState): StylusState = StylusState(
+        tokenize = state.tokenize,
+        stringQuote = state.stringQuote,
+        state = state.state,
+        context = state.context
+    )
 
     @Suppress("CyclomaticComplexMethod", "ReturnCount")
     override fun token(stream: StringStream, state: StylusState): String? {
@@ -1034,10 +1022,12 @@ val stylus: StreamParser<StylusState> = object : StreamParser<StylusState> {
         if (cx.prev != null &&
             (
                 (
-                    ch == "}" && (
-                        cx.type == "block" || cx.type == "atBlock" ||
-                            cx.type == "keyframes"
-                        )
+                    ch == "}" &&
+                        (
+                            cx.type == "block" ||
+                                cx.type == "atBlock" ||
+                                cx.type == "keyframes"
+                            )
                     ) ||
                     (ch == ")" && (cx.type == "parens" || cx.type == "atBlock_parens")) ||
                     (ch == "{" && cx.type == "at")

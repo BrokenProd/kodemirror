@@ -59,11 +59,7 @@ data class BracketMatchingConfig(
 )
 
 /** Result of a bracket-matching query. */
-data class MatchResult(
-    val start: SelectionRange,
-    val end: SelectionRange?,
-    val matched: Boolean
-)
+data class MatchResult(val start: SelectionRange, val end: SelectionRange?, val matched: Boolean)
 
 private val defaultBracketPairs = mapOf(
     '(' to ')',
@@ -220,8 +216,8 @@ private fun tryScanMatch(
  * cursor. If either is a bracket, highlights both it and its match
  * (or just the unmatched bracket if no match is found).
  */
-fun bracketMatching(config: BracketMatchingConfig = BracketMatchingConfig()): Extension {
-    return ViewPlugin.define(
+fun bracketMatching(config: BracketMatchingConfig = BracketMatchingConfig()): Extension =
+    ViewPlugin.define(
         create = { view ->
             BracketMatchingPlugin(view.state, config)
         },
@@ -233,12 +229,9 @@ fun bracketMatching(config: BracketMatchingConfig = BracketMatchingConfig()): Ex
             )
         }
     ).asExtension()
-}
 
-private class BracketMatchingPlugin(
-    state: EditorState,
-    private val config: BracketMatchingConfig
-) : PluginValue {
+private class BracketMatchingPlugin(state: EditorState, private val config: BracketMatchingConfig) :
+    PluginValue {
     var decos: DecorationSet = buildDecos(state)
 
     override fun update(update: ViewUpdate) {

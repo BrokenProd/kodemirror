@@ -71,10 +71,7 @@ val language: Facet<Language, Language?> = Facet.define(
  * A language object manages parsing and per-language metadata.
  * Parse data is managed as a Lezer tree.
  */
-open class Language(
-    val parser: Parser,
-    val name: String = ""
-) {
+open class Language(val parser: Parser, val name: String = "") {
     /** The extension value to install this as the document language. */
     val extension: Extension = language.of(this)
 
@@ -92,10 +89,7 @@ open class Language(
 /**
  * Bundles a [Language] with optional supporting extensions.
  */
-class LanguageSupport(
-    val language: Language,
-    val support: Extension? = null
-) {
+class LanguageSupport(val language: Language, val support: Extension? = null) {
     val extension: Extension = if (support != null) {
         extensionListOf(language.extension, support)
     } else {
@@ -148,17 +142,12 @@ fun <T> languageDataAt(state: EditorState, facet: Facet<T, *>, pos: Int): T? {
  * Provides additional functionality for reconfiguring the parser
  * and integrating with [languageDataProp].
  */
-class LRLanguage(
-    parser: Parser,
-    name: String = ""
-) : Language(parser, name) {
+class LRLanguage(parser: Parser, name: String = "") : Language(parser, name) {
     companion object {
         /**
          * Define a new LR-parser-based language.
          */
-        fun define(parser: Parser, name: String = ""): LRLanguage {
-            return LRLanguage(parser, name)
-        }
+        fun define(parser: Parser, name: String = ""): LRLanguage = LRLanguage(parser, name)
     }
 }
 
@@ -176,16 +165,12 @@ internal class DocInput(private val doc: Text) : Input {
         return doc.sliceString(DocPos(pos), DocPos(pos + chunkSize))
     }
 
-    override fun read(from: Int, to: Int): String {
-        return doc.sliceString(DocPos(from), DocPos(to))
-    }
+    override fun read(from: Int, to: Int): String = doc.sliceString(DocPos(from), DocPos(to))
 
     override val lineChunks: Boolean get() = false
 }
 
-private class LanguageState(
-    val tree: Tree
-) {
+private class LanguageState(val tree: Tree) {
     fun apply(tr: Transaction): LanguageState {
         if (!tr.docChanged) return this
         val lang = tr.state.facet(language) ?: return LanguageState(Tree.empty)
@@ -206,9 +191,8 @@ private class LanguageState(
  * Get the syntax tree for a state, which is the current parse tree
  * of the active language, or [Tree.empty] if no language is configured.
  */
-fun syntaxTree(state: EditorState): Tree {
-    return state.field(languageStateField, require = false)?.tree ?: Tree.empty
-}
+fun syntaxTree(state: EditorState): Tree =
+    state.field(languageStateField, require = false)?.tree ?: Tree.empty
 
 /**
  * Get the syntax tree for the state if it covers at least up to
@@ -242,9 +226,7 @@ fun ensureSyntaxTree(
 fun syntaxTreeAvailable(
     state: EditorState,
     @Suppress("UNUSED_PARAMETER") upto: Int = state.doc.length
-): Boolean {
-    return state.facet(language) != null
-}
+): Boolean = state.facet(language) != null
 
 /**
  * Check whether the syntax parser is currently running in the
@@ -253,9 +235,7 @@ fun syntaxTreeAvailable(
  * returns `false`.
  */
 @Suppress("UNUSED_PARAMETER")
-fun syntaxParserRunning(state: EditorState): Boolean {
-    return false
-}
+fun syntaxParserRunning(state: EditorState): Boolean = false
 
 /**
  * Force a complete re-parse of the document. In Kodemirror's
@@ -266,9 +246,7 @@ fun syntaxParserRunning(state: EditorState): Boolean {
  * CodeMirror, where it forces async parsing to complete
  * synchronously.
  */
-fun forceParsing(state: EditorState): Tree {
-    return syntaxTree(state)
-}
+fun forceParsing(state: EditorState): Tree = syntaxTree(state)
 
 /**
  * Metadata descriptor for a language. Used for language detection
@@ -316,9 +294,7 @@ data class LanguageDescription(
         fun matchFilename(
             descriptions: List<LanguageDescription>,
             filename: String
-        ): LanguageDescription? {
-            return descriptions.firstOrNull { it.matchFilename(filename) }
-        }
+        ): LanguageDescription? = descriptions.firstOrNull { it.matchFilename(filename) }
 
         /**
          * Find a language description matching a language name from
@@ -327,19 +303,14 @@ data class LanguageDescription(
         fun matchLanguageName(
             descriptions: List<LanguageDescription>,
             name: String
-        ): LanguageDescription? {
-            return descriptions.firstOrNull { it.matchLanguageName(name) }
-        }
+        ): LanguageDescription? = descriptions.firstOrNull { it.matchLanguageName(name) }
     }
 }
 
 /**
  * Comment tokens for a language, used by comment toggle commands.
  */
-data class CommentTokens(
-    val line: String? = null,
-    val block: BlockComment? = null
-) {
+data class CommentTokens(val line: String? = null, val block: BlockComment? = null) {
     data class BlockComment(val open: String, val close: String)
 }
 

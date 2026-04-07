@@ -203,7 +203,8 @@ private fun juliaTokenBase(stream: StringStream, state: JuliaState): String? {
         if (!numberLiteral && stream.match(Regex("^0o[0-7_]+", RegexOption.IGNORE_CASE)) != null) {
             numberLiteral = true
         }
-        if (!numberLiteral && stream.match(
+        if (!numberLiteral &&
+            stream.match(
                 Regex(
                     "^(?:(?:\\d[_\\d]*)?\\." +
                         "(?!\\.)" +
@@ -215,7 +216,8 @@ private fun juliaTokenBase(stream: StringStream, state: JuliaState): String? {
         ) {
             numberLiteral = true
         }
-        if (!numberLiteral && stream.match(
+        if (!numberLiteral &&
+            stream.match(
                 Regex("^\\d[_\\d]*(e[+-]?\\d+)?", RegexOption.IGNORE_CASE)
             ) != null
         ) {
@@ -247,9 +249,12 @@ private fun juliaTokenBase(stream: StringStream, state: JuliaState): String? {
     if (stream.match(juliaKeywords) != null) return "keyword"
     if (stream.match(juliaBuiltins) != null) return "builtin"
 
-    val isDefinition = state.isDefinition || state.lastToken == "function" ||
-        state.lastToken == "macro" || state.lastToken == "type" ||
-        state.lastToken == "struct" || state.lastToken == "immutable"
+    val isDefinition = state.isDefinition ||
+        state.lastToken == "function" ||
+        state.lastToken == "macro" ||
+        state.lastToken == "type" ||
+        state.lastToken == "struct" ||
+        state.lastToken == "immutable"
 
     if (stream.match(juliaIdentifiers) != null) {
         if (isDefinition) {
@@ -372,7 +377,8 @@ val julia: StreamParser<JuliaState> = object : StreamParser<JuliaState> {
 
     override fun indent(state: JuliaState, textAfter: String, context: IndentContext): Int {
         var delta = 0
-        if (textAfter == "]" || textAfter == ")" ||
+        if (textAfter == "]" ||
+            textAfter == ")" ||
             Regex("^end\\b").containsMatchIn(textAfter) ||
             Regex("^else").containsMatchIn(textAfter) ||
             Regex("^catch\\b").containsMatchIn(textAfter) ||

@@ -32,20 +32,18 @@ class IndentTest {
     private fun createState(
         doc: String,
         vararg extensions: com.monkopedia.kodemirror.state.Extension
-    ): EditorState {
-        return EditorState.create(
-            EditorStateConfig(
-                doc = doc.asDoc(),
-                extensions = if (extensions.isEmpty()) {
-                    null
-                } else if (extensions.size == 1) {
-                    extensions[0]
-                } else {
-                    ExtensionList(extensions.toList())
-                }
-            )
+    ): EditorState = EditorState.create(
+        EditorStateConfig(
+            doc = doc.asDoc(),
+            extensions = if (extensions.isEmpty()) {
+                null
+            } else if (extensions.size == 1) {
+                extensions[0]
+            } else {
+                ExtensionList(extensions.toList())
+            }
         )
-    }
+    )
 
     @Test
     fun getIndentUnitDefaultsTo2() {

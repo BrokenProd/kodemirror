@@ -72,25 +72,21 @@ private val attrMixed = NestedParse(parser = attrParser)
 
 private val angularAttrPrefix = Regex("""^[*#(\[]|\{\{""")
 
-private fun mixAngular(node: SyntaxNodeRef, input: Input): NestedParse? {
-    return when (node.name) {
-        "Attribute" -> {
-            val text = input.read(node.from, node.to)
-            if (angularAttrPrefix.containsMatchIn(text)) attrMixed else null
-        }
-        "Text" -> textMixed
-        else -> null
+private fun mixAngular(node: SyntaxNodeRef, input: Input): NestedParse? = when (node.name) {
+    "Attribute" -> {
+        val text = input.read(node.from, node.to)
+        if (angularAttrPrefix.containsMatchIn(text)) attrMixed else null
     }
+    "Text" -> textMixed
+    else -> null
 }
 
-private fun mkAngular(base: LRLanguage): LRLanguage {
-    return LRLanguage.define(
-        parser = (base.parser as LRParser).configure(
-            ParserConfig(wrap = parseMixed(::mixAngular))
-        ),
-        name = "angular"
-    )
-}
+private fun mkAngular(base: LRLanguage): LRLanguage = LRLanguage.define(
+    parser = (base.parser as LRParser).configure(
+        ParserConfig(wrap = parseMixed(::mixAngular))
+    ),
+    name = "angular"
+)
 
 /**
  * A language provider for Angular Templates.

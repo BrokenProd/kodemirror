@@ -130,19 +130,20 @@ private fun sieveTokenCComment(stream: StringStream, state: SieveState): String 
     return "comment"
 }
 
-private fun sieveTokenString(quote: String): (StringStream, SieveState) -> String {
-    return { stream, state ->
-        var escaped = false
-        var ch: String?
-        while (true) {
-            ch = stream.next()
-            if (ch == null) break
-            if (ch == quote && !escaped) break
-            escaped = !escaped && ch == "\\"
-        }
-        if (!escaped) state.tokenize = ::sieveTokenBase
-        "string"
+private fun sieveTokenString(quote: String): (StringStream, SieveState) -> String = {
+        stream,
+        state
+    ->
+    var escaped = false
+    var ch: String?
+    while (true) {
+        ch = stream.next()
+        if (ch == null) break
+        if (ch == quote && !escaped) break
+        escaped = !escaped && ch == "\\"
     }
+    if (!escaped) state.tokenize = ::sieveTokenBase
+    "string"
 }
 
 data class SieveState(

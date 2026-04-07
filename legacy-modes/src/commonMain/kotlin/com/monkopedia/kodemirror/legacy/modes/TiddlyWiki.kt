@@ -237,7 +237,8 @@ val tiddlyWiki: StreamParser<TiddlyWikiState> = object : StreamParser<TiddlyWiki
             return chain(stream, state, ::twTokenCode)
         }
 
-        if (ch != null && Regex("[hf]", RegexOption.IGNORE_CASE).containsMatchIn(ch) &&
+        if (ch != null &&
+            Regex("[hf]", RegexOption.IGNORE_CASE).containsMatchIn(ch) &&
             stream.peek() != null &&
             Regex("[ti]", RegexOption.IGNORE_CASE).containsMatchIn(stream.peek()!!) &&
             stream.match(

@@ -180,7 +180,8 @@ val gherkin: StreamParser<GherkinState> = object : StreamParser<GherkinState> {
         } else if (!state.inKeywordLine && stream.match(Regex("^@\\S+")) != null) {
             return "tag"
         } else if (
-            !state.inKeywordLine && state.allowFeature &&
+            !state.inKeywordLine &&
+            state.allowFeature &&
             stream.match(gherkinFeatureRE) != null
         ) {
             state.allowScenario = true
@@ -191,7 +192,8 @@ val gherkin: StreamParser<GherkinState> = object : StreamParser<GherkinState> {
             state.inKeywordLine = true
             return "keyword"
         } else if (
-            !state.inKeywordLine && state.allowBackground &&
+            !state.inKeywordLine &&
+            state.allowBackground &&
             stream.match(gherkinBackgroundRE) != null
         ) {
             state.allowPlaceholders = false
@@ -201,7 +203,8 @@ val gherkin: StreamParser<GherkinState> = object : StreamParser<GherkinState> {
             state.inKeywordLine = true
             return "keyword"
         } else if (
-            !state.inKeywordLine && state.allowScenario &&
+            !state.inKeywordLine &&
+            state.allowScenario &&
             stream.match(gherkinScenarioOutlineRE) != null
         ) {
             state.allowPlaceholders = true
@@ -219,7 +222,8 @@ val gherkin: StreamParser<GherkinState> = object : StreamParser<GherkinState> {
             state.allowMultilineArgument = true
             return "keyword"
         } else if (
-            !state.inKeywordLine && state.allowScenario &&
+            !state.inKeywordLine &&
+            state.allowScenario &&
             stream.match(gherkinScenarioRE) != null
         ) {
             state.allowPlaceholders = false
@@ -229,7 +233,8 @@ val gherkin: StreamParser<GherkinState> = object : StreamParser<GherkinState> {
             state.inKeywordLine = true
             return "keyword"
         } else if (
-            !state.inKeywordLine && state.allowSteps &&
+            !state.inKeywordLine &&
+            state.allowSteps &&
             stream.match(gherkinStepsRE) != null
         ) {
             state.inStep = true

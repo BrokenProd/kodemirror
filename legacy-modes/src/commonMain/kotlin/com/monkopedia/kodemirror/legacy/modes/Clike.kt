@@ -387,7 +387,8 @@ fun mkClike(config: ClikeConfig): StreamParser<ClikeState> {
             val dontIndent = config.dontIndentStatements
             if (dontIndent != null) {
                 while (ctx.type == "statement" &&
-                    ctx.info != null && dontIndent.containsMatchIn(ctx.info)
+                    ctx.info != null &&
+                    dontIndent.containsMatchIn(ctx.info)
                 ) {
                     ctx = ctx.prev ?: break
                 }
@@ -417,7 +418,8 @@ fun mkClike(config: ClikeConfig): StreamParser<ClikeState> {
                 }
                 else -> {
                     ctx.indented + (if (closing) 0 else context.unit) +
-                        if (!closing && switchBlock &&
+                        if (!closing &&
+                            switchBlock &&
                             !Regex("^(?:case|default)\\b").containsMatchIn(textAfter)
                         ) {
                             context.unit
@@ -549,13 +551,11 @@ private val basicCTypes = words(
 
 private val basicObjCTypes = words("SEL instancetype id Class Protocol BOOL")
 
-private fun cTypes(identifier: String): Boolean {
-    return identifier in basicCTypes || Regex(".+_t$").containsMatchIn(identifier)
-}
+private fun cTypes(identifier: String): Boolean =
+    identifier in basicCTypes || Regex(".+_t$").containsMatchIn(identifier)
 
-private fun objCTypes(identifier: String): Boolean {
-    return cTypes(identifier) || identifier in basicObjCTypes
-}
+private fun objCTypes(identifier: String): Boolean =
+    cTypes(identifier) || identifier in basicObjCTypes
 
 private val cBlockKeywordsStr = "case do else for if switch while struct enum union"
 private val cDefKeywordsStr = "struct enum union"
@@ -577,18 +577,15 @@ private fun cppHook(stream: StringStream, state: ClikeState): Any {
     return "meta"
 }
 
-private fun cppHookTokenizer(stream: StringStream, state: ClikeState): String? {
-    return cppHook(stream, state) as? String
-}
+private fun cppHookTokenizer(stream: StringStream, state: ClikeState): String? =
+    cppHook(stream, state) as? String
 
 private fun pointerHook(
     @Suppress(
         "UNUSED_PARAMETER"
     ) stream: StringStream,
     state: ClikeState
-): Any {
-    return if (state.prevToken == "type") "type" else false
-}
+): Any = if (state.prevToken == "type") "type" else false
 
 private fun cIsReservedIdentifier(token: String): Boolean {
     if (token.length < 2) return false
@@ -649,28 +646,29 @@ private fun cppLooksLikeConstructor(word: String): Boolean {
 // Kotlin-specific helpers
 // ---------------------------------------------------------------------------
 
-private fun tokenKotlinString(tripleString: Boolean): (StringStream, ClikeState) -> String? {
-    return fn@{ stream, state ->
-        var escaped = false
-        var end = false
-        while (!stream.eol()) {
-            if (!tripleString && !escaped && stream.match("\"")) {
-                end = true
-                break
-            }
-            if (tripleString && stream.match("\"\"\"")) {
-                end = true
-                break
-            }
-            val next = stream.next()
-            if (!escaped && next == "$" && stream.match("{")) {
-                stream.skipTo("}")
-            }
-            escaped = !escaped && next == "\\" && !tripleString
+private fun tokenKotlinString(tripleString: Boolean): (StringStream, ClikeState) -> String? = fn@{
+        stream,
+        state
+    ->
+    var escaped = false
+    var end = false
+    while (!stream.eol()) {
+        if (!tripleString && !escaped && stream.match("\"")) {
+            end = true
+            break
         }
-        if (end || !tripleString) state.tokenize = null
-        "string"
+        if (tripleString && stream.match("\"\"\"")) {
+            end = true
+            break
+        }
+        val next = stream.next()
+        if (!escaped && next == "$" && stream.match("{")) {
+            stream.skipTo("}")
+        }
+        escaped = !escaped && next == "\\" && !tripleString
     }
+    if (end || !tripleString) state.tokenize = null
+    "string"
 }
 
 // ---------------------------------------------------------------------------
@@ -694,13 +692,12 @@ private fun pushInterpolationStack(state: ClikeState) {
     state.interpolationStack.add(state.tokenize)
 }
 
-private fun popInterpolationStack(state: ClikeState): ((StringStream, ClikeState) -> String?)? {
-    return if (state.interpolationStack.isNotEmpty()) {
+private fun popInterpolationStack(state: ClikeState): ((StringStream, ClikeState) -> String?)? =
+    if (state.interpolationStack.isNotEmpty()) {
         state.interpolationStack.removeAt(state.interpolationStack.size - 1)
     } else {
         null
     }
-}
 
 private fun sizeInterpolationStack(state: ClikeState): Int = state.interpolationStack.size
 
@@ -728,7 +725,8 @@ private fun tokenDartString(
                 return "string"
             }
             val next = stream.next()
-            if (next == quote && !escaped &&
+            if (next == quote &&
+                !escaped &&
                 (!tripleQuoted || stream.match(quote + quote))
             ) {
                 state.tokenize = null
@@ -766,28 +764,30 @@ private fun tokenInterpolationIdentifier(stream: StringStream, state: ClikeState
 
 private var ceylonStringTokenizer: ((StringStream, ClikeState) -> String?)? = null
 
-private fun tokenCeylonString(type: String): (StringStream, ClikeState) -> String? {
-    return fn@{ stream, state ->
-        var escaped = false
-        var end = false
-        while (!stream.eol()) {
-            if (!escaped && stream.match("\"") &&
-                (type == "single" || stream.match("\"\""))
-            ) {
-                end = true
-                break
-            }
-            if (!escaped && stream.match("``")) {
-                ceylonStringTokenizer = tokenCeylonString(type)
-                end = true
-                break
-            }
-            val next = stream.next()
-            escaped = type == "single" && !escaped && next == "\\"
+private fun tokenCeylonString(type: String): (StringStream, ClikeState) -> String? = fn@{
+        stream,
+        state
+    ->
+    var escaped = false
+    var end = false
+    while (!stream.eol()) {
+        if (!escaped &&
+            stream.match("\"") &&
+            (type == "single" || stream.match("\"\""))
+        ) {
+            end = true
+            break
         }
-        if (end) state.tokenize = null
-        "string"
+        if (!escaped && stream.match("``")) {
+            ceylonStringTokenizer = tokenCeylonString(type)
+            end = true
+            break
+        }
+        val next = stream.next()
+        escaped = type == "single" && !escaped && next == "\\"
     }
+    if (end) state.tokenize = null
+    "string"
 }
 
 // ---------------------------------------------------------------------------
@@ -839,9 +839,11 @@ private val cppConfig = ClikeConfig(
         "9" to { stream, state -> cpp14Literal(stream, state) }
     ),
     tokenHook = { stream, state, style ->
-        if (style == "variable" && stream.peek() == "(" &&
+        if (style == "variable" &&
+            stream.peek() == "(" &&
             (
-                state.prevToken == ";" || state.prevToken == null ||
+                state.prevToken == ";" ||
+                    state.prevToken == null ||
                     state.prevToken == "}"
                 ) &&
             cppLooksLikeConstructor(stream.current())
@@ -1242,9 +1244,11 @@ private val objectiveCppConfig = ClikeConfig(
         "9" to { stream, state -> cpp14Literal(stream, state) }
     ),
     tokenHook = { stream, state, style ->
-        if (style == "variable" && stream.peek() == "(" &&
+        if (style == "variable" &&
+            stream.peek() == "(" &&
             (
-                state.prevToken == ";" || state.prevToken == null ||
+                state.prevToken == ";" ||
+                    state.prevToken == null ||
                     state.prevToken == "}"
                 ) &&
             cppLooksLikeConstructor(stream.current())

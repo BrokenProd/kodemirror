@@ -28,10 +28,7 @@ import com.monkopedia.kodemirror.lezer.highlight.tagHighlighter
 /**
  * Specification for a tag-to-style mapping in [HighlightStyle.define].
  */
-data class TagStyleSpec(
-    val tags: List<Tag>,
-    val style: SpanStyle
-)
+data class TagStyleSpec(val tags: List<Tag>, val style: SpanStyle)
 
 fun TagStyleSpec(tag: Tag, style: SpanStyle): TagStyleSpec = TagStyleSpec(listOf(tag), style)
 

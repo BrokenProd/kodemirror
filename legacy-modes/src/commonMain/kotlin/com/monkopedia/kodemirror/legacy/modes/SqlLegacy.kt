@@ -97,10 +97,7 @@ data class SqlContext(
     var align: Boolean? = null
 )
 
-data class SqlLegacyState(
-    var tokenizeTag: String = "base",
-    var context: SqlContext? = null
-)
+data class SqlLegacyState(var tokenizeTag: String = "base", var context: SqlContext? = null)
 
 internal class SqlParserConfig(
     val client: Set<String> = emptySet(),
@@ -161,10 +158,16 @@ private fun makeSqlParser(config: SqlParserConfig): StreamParser<SqlLegacyState>
             val tok = stream.current()
             when (tok) {
                 "(" -> state.context = SqlContext(
-                    state.context, stream.indentation(), stream.column(), ")"
+                    state.context,
+                    stream.indentation(),
+                    stream.column(),
+                    ")"
                 )
                 "[" -> state.context = SqlContext(
-                    state.context, stream.indentation(), stream.column(), "]"
+                    state.context,
+                    stream.indentation(),
+                    stream.column(),
+                    "]"
                 )
                 else -> if (state.context != null && state.context!!.type == tok) {
                     state.context = state.context!!.prev
@@ -234,18 +237,21 @@ private fun sqlTokenBase(
     } else if (ch == "'" || (ch == "\"" && config.support.contains("doubleQuote"))) {
         state.tokenizeTag = "string:$ch:${if (config.backslashStringEscapes) 1 else 0}"
         return sqlTokenLiteral(stream, state, config, ch, config.backslashStringEscapes)
-    } else if (config.support.contains("nCharCast") && (ch == "n" || ch == "N") &&
+    } else if (config.support.contains("nCharCast") &&
+        (ch == "n" || ch == "N") &&
         (stream.peek() == "'" || stream.peek() == "\"")
     ) {
         return "keyword"
     } else if (config.support.contains("commentSlashSlash") &&
-        ch == "/" && stream.eat("/") != null
+        ch == "/" &&
+        stream.eat("/") != null
     ) {
         stream.skipToEnd()
         return "comment"
     } else if ((config.support.contains("commentHash") && ch == "#") ||
         (
-            ch == "-" && stream.eat("-") != null &&
+            ch == "-" &&
+                stream.eat("-") != null &&
                 (!config.support.contains("commentSpaceRequired") || stream.eat(" ") != null)
             )
     ) {

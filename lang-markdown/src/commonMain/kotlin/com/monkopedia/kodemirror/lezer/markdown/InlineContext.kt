@@ -26,18 +26,9 @@ internal object Mark {
     const val CLOSE = 2
 }
 
-class InlineDelimiter(
-    val type: DelimiterType,
-    val from: Int,
-    val to: Int,
-    var side: Int
-)
+class InlineDelimiter(val type: DelimiterType, val from: Int, val to: Int, var side: Int)
 
-class InlineContext(
-    val parser: MarkdownParser,
-    val text: String,
-    val offset: Int
-) {
+class InlineContext(val parser: MarkdownParser, val text: String, val offset: Int) {
     internal val parts: MutableList<Any?> = mutableListOf() // Element | InlineDelimiter | null
 
     fun char(pos: Int): Int = if (pos >= end) -1 else text[pos - offset].code
@@ -56,8 +47,8 @@ class InlineContext(
         return delim.to
     }
 
-    fun addDelimiter(type: DelimiterType, from: Int, to: Int, open: Boolean, close: Boolean): Int {
-        return append(
+    fun addDelimiter(type: DelimiterType, from: Int, to: Int, open: Boolean, close: Boolean): Int =
+        append(
             InlineDelimiter(
                 type,
                 from,
@@ -66,7 +57,6 @@ class InlineContext(
                     (if (close) Mark.CLOSE else Mark.NONE)
             )
         )
-    }
 
     val hasOpenLink: Boolean
         get() {
@@ -86,7 +76,8 @@ class InlineContext(
     internal fun resolveMarkers(from: Int): List<Element> {
         for (i in from until parts.size) {
             val close = parts[i]
-            if (close !is InlineDelimiter || close.type.resolve == null ||
+            if (close !is InlineDelimiter ||
+                close.type.resolve == null ||
                 (close.side and Mark.CLOSE) == 0
             ) {
                 continue
@@ -98,7 +89,8 @@ class InlineContext(
             var j = i - 1
             while (j >= from) {
                 val part = parts[j]
-                if (part is InlineDelimiter && (part.side and Mark.OPEN) != 0 &&
+                if (part is InlineDelimiter &&
+                    (part.side and Mark.OPEN) != 0 &&
                     part.type == close.type &&
                     !(
                         emp &&
@@ -165,7 +157,8 @@ class InlineContext(
     fun findOpeningDelimiter(type: DelimiterType): Int? {
         for (i in parts.indices.reversed()) {
             val part = parts[i]
-            if (part is InlineDelimiter && part.type == type &&
+            if (part is InlineDelimiter &&
+                part.type == type &&
                 (part.side and Mark.OPEN) != 0
             ) {
                 return i

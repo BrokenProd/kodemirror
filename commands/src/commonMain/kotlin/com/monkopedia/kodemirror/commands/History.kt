@@ -131,7 +131,8 @@ private fun addMappingToBranch(
     var selections: List<EditorSelection> = emptyList()
     while (length > 0) {
         val event = mapEvent(branch[length - 1], currentMapping, selections)
-        if (event.changes != null && !event.changes.empty ||
+        if (event.changes != null &&
+            !event.changes.empty ||
             event.effects.isNotEmpty()
         ) {
             val result = branch.subList(0, length).toMutableList()
@@ -216,8 +217,13 @@ private fun popSelection(branch: List<HistoryEvent>): List<HistoryEvent> {
     return newBranch
 }
 
-private fun <T> conc(a: List<T>, b: List<T>): List<T> =
-    if (a.isEmpty()) b else if (b.isEmpty()) a else a + b
+private fun <T> conc(a: List<T>, b: List<T>): List<T> = if (a.isEmpty()) {
+    b
+} else if (b.isEmpty()) {
+    a
+} else {
+    a + b
+}
 
 private fun eqSelectionShape(a: EditorSelection, b: EditorSelection): Boolean {
     if (a.ranges.size != b.ranges.size) return false
@@ -227,10 +233,7 @@ private fun eqSelectionShape(a: EditorSelection, b: EditorSelection): Boolean {
     return true
 }
 
-data class HistoryConfig(
-    val groupDelay: Long = DEFAULT_GROUP_DELAY,
-    val minDepth: Int = 100
-)
+data class HistoryConfig(val groupDelay: Long = DEFAULT_GROUP_DELAY, val minDepth: Int = 100)
 
 internal val historyConfig: Facet<HistoryConfig, HistoryConfig> = Facet.define(
     combine = { configs -> configs.firstOrNull() ?: HistoryConfig() }
@@ -254,7 +257,8 @@ internal class HistoryState(
         val lastEvent = done.lastOrNull()
         val newDone: List<HistoryEvent>
         if (lastEvent != null &&
-            lastEvent.changes != null && !lastEvent.changes.empty &&
+            lastEvent.changes != null &&
+            !lastEvent.changes.empty &&
             event.changes != null &&
             (
                 userEvent == null ||
@@ -265,7 +269,9 @@ internal class HistoryState(
             isAdjacent(lastEvent.changes, event.changes)
         ) {
             newDone = updateBranch(
-                done, done.size - 1, minDepth,
+                done,
+                done.size - 1,
+                minDepth,
                 HistoryEvent(
                     event.changes.compose(lastEvent.changes),
                     conc(
@@ -433,8 +439,11 @@ private val _historyField: StateField<HistoryState> = StateField.define(
                 val userEvent = tr.annotation(Transaction.userEvent)
                 if (event != null) {
                     state = state.addChanges(
-                        event, time, userEvent,
-                        config.groupDelay, config.minDepth
+                        event,
+                        time,
+                        userEvent,
+                        config.groupDelay,
+                        config.minDepth
                     )
                 } else if (tr.selection != null) {
                     state = state.addSelection(
@@ -509,27 +518,25 @@ fun redoDepth(state: EditorState): Int {
     return hist.undone.count { it.changes != null }
 }
 
-fun history(config: HistoryConfig = HistoryConfig()): Extension {
-    return ExtensionList(
-        listOf(
-            historyConfig.of(config),
-            _historyField,
-            keymapOf(
-                KeyBinding(
-                    key = "Ctrl-z",
-                    mac = "Meta-z",
-                    run = undo
-                ),
-                KeyBinding(
-                    key = "Ctrl-y",
-                    mac = "Meta-Shift-z",
-                    run = redo
-                ),
-                KeyBinding(
-                    key = "Ctrl-Shift-z",
-                    run = redo
-                )
+fun history(config: HistoryConfig = HistoryConfig()): Extension = ExtensionList(
+    listOf(
+        historyConfig.of(config),
+        _historyField,
+        keymapOf(
+            KeyBinding(
+                key = "Ctrl-z",
+                mac = "Meta-z",
+                run = undo
+            ),
+            KeyBinding(
+                key = "Ctrl-y",
+                mac = "Meta-Shift-z",
+                run = redo
+            ),
+            KeyBinding(
+                key = "Ctrl-Shift-z",
+                run = redo
             )
         )
     )
-}
+)

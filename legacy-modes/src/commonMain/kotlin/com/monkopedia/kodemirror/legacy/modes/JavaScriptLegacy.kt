@@ -110,14 +110,16 @@ private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState
                 if (next == "/" && !inSet) return
                 if (next == "[") {
                     inSet = true
-                } else if (inSet && next == "]") inSet = false
+                } else if (inSet && next == "]") {
+                    inSet = false
+                }
             }
             escaped = !escaped && next == "\\"
         }
     }
 
-    fun expressionAllowed(stream: StringStream, state: JavaScriptState, backUp: Int): Boolean {
-        return state.tokenize == 0 &&
+    fun expressionAllowed(stream: StringStream, state: JavaScriptState, backUp: Int): Boolean =
+        state.tokenize == 0 &&
             Regex(
                 "^(?:operator|sof|keyword [bcd]|case|new|export|default|spread|[\\[{}(,;:]|=>)\$"
             ).containsMatchIn(state.lastType) ||
@@ -127,7 +129,6 @@ private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState
                         stream.string.substring(0, stream.pos - backUp)
                     )
                 )
-    }
 
     fun tokenBase(stream: StringStream, state: JavaScriptState): String? {
         val ch = stream.next() ?: return null
@@ -207,9 +208,11 @@ private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState
             return ret("meta", "meta")
         } else if (ch == "#" && stream.eatWhile(wordRE)) {
             return ret("variable", "property")
-        } else if (ch == "<" && stream.match("!--") ||
+        } else if (ch == "<" &&
+            stream.match("!--") ||
             (
-                ch == "-" && stream.match("->") &&
+                ch == "-" &&
+                    stream.match("->") &&
                     !Regex("\\S").containsMatchIn(
                         stream.string.substring(0, stream.start)
                     )
@@ -252,32 +255,28 @@ private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState
         return null
     }
 
-    fun isContinuedStatement(state: JavaScriptState, textAfter: String): Boolean {
-        return state.lastType == "operator" || state.lastType == "," ||
+    fun isContinuedStatement(state: JavaScriptState, textAfter: String): Boolean =
+        state.lastType == "operator" ||
+            state.lastType == "," ||
             jsIsOperatorChar.containsMatchIn(textAfter[0].toString()) ||
             Regex("[,.]").containsMatchIn(textAfter[0].toString())
-    }
 
     return object : StreamParser<JavaScriptState> {
         override val name: String get() = config.name
 
-        override fun startState(indentUnit: Int): JavaScriptState {
-            return JavaScriptState(
-                lexical = JSLexical(-indentUnit, 0, "block", false)
-            )
-        }
+        override fun startState(indentUnit: Int): JavaScriptState = JavaScriptState(
+            lexical = JSLexical(-indentUnit, 0, "block", false)
+        )
 
-        override fun copyState(state: JavaScriptState): JavaScriptState {
-            return JavaScriptState(
-                tokenize = state.tokenize,
-                stringQuote = state.stringQuote,
-                lastType = state.lastType,
-                indented = state.indented,
-                // JSLexical is immutable data class - safe to share
-                lexical = state.lexical,
-                fatArrowAt = state.fatArrowAt
-            )
-        }
+        override fun copyState(state: JavaScriptState): JavaScriptState = JavaScriptState(
+            tokenize = state.tokenize,
+            stringQuote = state.stringQuote,
+            lastType = state.lastType,
+            indented = state.indented,
+            // JSLexical is immutable data class - safe to share
+            lexical = state.lexical,
+            fatArrowAt = state.fatArrowAt
+        )
 
         @Suppress("CyclomaticComplexMethod", "LongMethod", "ReturnCount", "NestedBlockDepth")
         override fun token(stream: StringStream, state: JavaScriptState): String? {
@@ -293,7 +292,8 @@ private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState
             when (state.tokenize) {
                 1 -> {
                     // string
-                    if (jsonldMode && stream.peek() == "@" &&
+                    if (jsonldMode &&
+                        stream.peek() == "@" &&
                         stream.match(jsIsJsonldKeyword) != null
                     ) {
                         state.tokenize = 0
@@ -375,7 +375,8 @@ private fun mkJavaScript(config: JavaScriptConfig): StreamParser<JavaScriptState
                 lexical = lexical.prev ?: break
             }
 
-            if (statementIndent != null && lexical.type == ")" &&
+            if (statementIndent != null &&
+                lexical.type == ")" &&
                 lexical.prev?.type == "stat"
             ) {
                 lexical = lexical.prev!!

@@ -55,9 +55,8 @@ val yacas: StreamParser<YacasState> = object : StreamParser<YacasState> {
             )
         )
 
-    private fun currentScope(state: YacasState): String? {
-        return if (state.scopes.isNotEmpty()) state.scopes.last() else null
-    }
+    private fun currentScope(state: YacasState): String? =
+        if (state.scopes.isNotEmpty()) state.scopes.last() else null
 
     private fun tokenString(stream: StringStream, state: YacasState): String? {
         var next: String?
@@ -203,8 +202,10 @@ val yacas: StreamParser<YacasState> = object : StreamParser<YacasState> {
         if (state.tokenize != ::tokenBase) return null
 
         var delta = 0
-        if (textAfter == "]" || textAfter == "];" ||
-            textAfter == "}" || textAfter == "};" ||
+        if (textAfter == "]" ||
+            textAfter == "];" ||
+            textAfter == "}" ||
+            textAfter == "};" ||
             textAfter == ");"
         ) {
             delta = -1

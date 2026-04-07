@@ -83,9 +83,7 @@ open class IndentContext(
     val simulateDoubleBreak: Boolean = false
 ) {
     /** Get the text of a document line by position. */
-    fun lineAt(pos: DocPos, bias: Int = 1): Line {
-        return state.doc.lineAt(pos)
-    }
+    fun lineAt(pos: DocPos, bias: Int = 1): Line = state.doc.lineAt(pos)
 
     /** Get the indentation column at the start of a line. */
     fun lineIndent(pos: DocPos, bias: Int = 1): Int {
@@ -181,9 +179,7 @@ fun getIndentation(
     return null
 }
 
-private fun getTreeIndent(cx: TreeIndentContext): Int? {
-    return indentFrom(cx.node, cx.pos, cx)
-}
+private fun getTreeIndent(cx: TreeIndentContext): Int? = indentFrom(cx.node, cx.pos, cx)
 
 internal fun indentFrom(start: SyntaxNode?, pos: DocPos, cx: TreeIndentContext): Int? {
     var node = start
@@ -219,9 +215,8 @@ private fun indentStrategy(node: SyntaxNode): ((TreeIndentContext) -> Int?)? {
     return if (node.parent == null) { _ -> 0 } else null
 }
 
-private fun ignoreClosed(cx: TreeIndentContext): Boolean {
-    return cx.pos == cx.simulateBreak && cx.simulateDoubleBreak
-}
+private fun ignoreClosed(cx: TreeIndentContext): Boolean =
+    cx.pos == cx.simulateBreak && cx.simulateDoubleBreak
 
 private fun bracketedAligned(context: TreeIndentContext): Pair<Int, Int>? {
     val tree = context.node
@@ -314,10 +309,8 @@ fun delimitedIndent(
     closing: String? = null,
     align: Boolean = true,
     units: Int = 1
-): (TreeIndentContext) -> Int? {
-    return { cx ->
-        delimitedStrategy(cx, align, units, closing)
-    }
+): (TreeIndentContext) -> Int? = { cx ->
+    delimitedStrategy(cx, align, units, closing)
 }
 
 /**
@@ -328,14 +321,12 @@ fun delimitedIndent(
  * @param except When the text after the cursor matches this regex, return
  *   [baseIndent] without extra indentation.
  */
-fun continuedIndent(units: Int = 1, except: Regex? = null): (TreeIndentContext) -> Int? {
-    return { cx ->
-        val unit = getIndentUnit(cx.state)
-        if (except != null && except.containsMatchIn(cx.textAfter)) {
-            cx.baseIndent
-        } else {
-            cx.baseIndent + unit * units
-        }
+fun continuedIndent(units: Int = 1, except: Regex? = null): (TreeIndentContext) -> Int? = { cx ->
+    val unit = getIndentUnit(cx.state)
+    if (except != null && except.containsMatchIn(cx.textAfter)) {
+        cx.baseIndent
+    } else {
+        cx.baseIndent + unit * units
     }
 }
 

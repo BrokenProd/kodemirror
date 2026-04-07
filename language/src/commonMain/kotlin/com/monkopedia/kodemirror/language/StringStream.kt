@@ -191,7 +191,11 @@ class StringStream(
     fun column(): Int {
         if (lastColumnPos < start) {
             lastColumnValue = countCol(
-                string, start, tabSize, lastColumnPos, lastColumnValue
+                string,
+                start,
+                tabSize,
+                lastColumnPos,
+                lastColumnValue
             )
             lastColumnPos = start
         }
@@ -199,9 +203,7 @@ class StringStream(
     }
 
     /** Get the indentation column of the current line. */
-    fun indentation(): Int {
-        return overrideIndent ?: countCol(string, null, tabSize)
-    }
+    fun indentation(): Int = overrideIndent ?: countCol(string, null, tabSize)
 
     /**
      * Match the input against the given string.

@@ -79,14 +79,12 @@ fun simpleMode(config: SimpleModeConfig): StreamParser<SimpleModeState> {
             indent = if (hasIndentation) mutableListOf() else null
         )
 
-        override fun copyState(state: SimpleModeState): SimpleModeState {
-            return SimpleModeState(
-                state = state.state,
-                pending = state.pending?.toMutableList(),
-                indent = state.indent?.toMutableList(),
-                stack = state.stack?.toMutableList()
-            )
-        }
+        override fun copyState(state: SimpleModeState): SimpleModeState = SimpleModeState(
+            state = state.state,
+            pending = state.pending?.toMutableList(),
+            indent = state.indent?.toMutableList(),
+            stack = state.stack?.toMutableList()
+        )
 
         override fun token(stream: StringStream, state: SimpleModeState): String? {
             val pend = state.pending

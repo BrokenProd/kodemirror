@@ -100,19 +100,17 @@ private fun goTokenBase(stream: StringStream, state: GoState): String? {
     return "variable"
 }
 
-private fun goTokenString(quote: String): (StringStream, GoState) -> String {
-    return fn@{ stream, state ->
-        var escaped = false
-        while (true) {
-            val next = stream.next() ?: break
-            if (next == quote && !escaped) {
-                state.tokenize = null
-                break
-            }
-            escaped = !escaped && quote != "`" && next == "\\"
+private fun goTokenString(quote: String): (StringStream, GoState) -> String = fn@{ stream, state ->
+    var escaped = false
+    while (true) {
+        val next = stream.next() ?: break
+        if (next == quote && !escaped) {
+            state.tokenize = null
+            break
         }
-        "string"
+        escaped = !escaped && quote != "`" && next == "\\"
     }
+    "string"
 }
 
 private fun goTokenComment(stream: StringStream, state: GoState): String {
@@ -191,7 +189,9 @@ val goLang: StreamParser<GoState> = object : StreamParser<GoState> {
             ctx.type = "case"
         } else if (curPunc == "}" && ctx.type == "}") {
             goPopContext(state)
-        } else if (curPunc == ctx.type) goPopContext(state)
+        } else if (curPunc == ctx.type) {
+            goPopContext(state)
+        }
         state.startOfLine = false
         return style
     }

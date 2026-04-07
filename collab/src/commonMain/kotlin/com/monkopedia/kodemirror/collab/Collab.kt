@@ -74,10 +74,7 @@ internal class LocalUpdate(
     val clientID: String
 )
 
-internal class CollabState(
-    val version: Int,
-    val unconfirmed: List<LocalUpdate>
-)
+internal class CollabState(val version: Int, val unconfirmed: List<LocalUpdate>)
 
 private val collabConfig =
     Facet.define<ResolvedCollabConfig, ResolvedCollabConfig>(
@@ -210,8 +207,8 @@ fun receiveUpdates(state: EditorState, updates: List<Update>): TransactionSpec {
  * Returns the set of locally made updates that still have to be sent
  * to the authority.
  */
-fun sendableUpdates(state: EditorState): List<SendableUpdate> {
-    return state.field(collabField).unconfirmed.map {
+fun sendableUpdates(state: EditorState): List<SendableUpdate> =
+    state.field(collabField).unconfirmed.map {
         SendableUpdate(
             changes = it.changes,
             clientID = it.clientID,
@@ -219,22 +216,17 @@ fun sendableUpdates(state: EditorState): List<SendableUpdate> {
             origin = it.origin
         )
     }
-}
 
 /**
  * Get the version up to which the collab plugin has synced with the
  * central authority.
  */
-fun getSyncedVersion(state: EditorState): Int {
-    return state.field(collabField).version
-}
+fun getSyncedVersion(state: EditorState): Int = state.field(collabField).version
 
 /**
  * Get this editor's collaborative editing client ID.
  */
-fun getClientID(state: EditorState): String {
-    return state.facet(collabConfig).clientID
-}
+fun getClientID(state: EditorState): String = state.facet(collabConfig).clientID
 
 /**
  * Rebase and deduplicate an array of client-submitted updates that

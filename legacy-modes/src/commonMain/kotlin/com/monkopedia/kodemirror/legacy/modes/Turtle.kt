@@ -146,8 +146,10 @@ val turtle: StreamParser<TurtleState> = object : StreamParser<TurtleState> {
         if (stream.eatSpace()) return null
         val style = state.tokenize(stream, state)
 
-        if (style != "comment" && state.context != null &&
-            state.context!!.align == null && state.context!!.type != "pattern"
+        if (style != "comment" &&
+            state.context != null &&
+            state.context!!.align == null &&
+            state.context!!.type != "pattern"
         ) {
             state.context!!.align = true
         }
@@ -161,11 +163,13 @@ val turtle: StreamParser<TurtleState> = object : StreamParser<TurtleState> {
         } else if (curPunc != null && Regex("[\\]})]]").containsMatchIn(curPunc!!)) {
             while (state.context != null && state.context!!.type == "pattern") popContext(state)
             if (state.context != null && curPunc == state.context!!.type) popContext(state)
-        } else if (curPunc == "." && state.context != null &&
+        } else if (curPunc == "." &&
+            state.context != null &&
             state.context!!.type == "pattern"
         ) {
             popContext(state)
-        } else if (style != null && Regex("atom|string|variable").containsMatchIn(style) &&
+        } else if (style != null &&
+            Regex("atom|string|variable").containsMatchIn(style) &&
             state.context != null
         ) {
             if (Regex("[}\\]]").containsMatchIn(state.context!!.type)) {

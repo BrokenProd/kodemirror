@@ -31,9 +31,8 @@ data class VbScriptState(
     var ignoreKeyword: Boolean = false
 )
 
-private fun vbsWordRegexp(words: List<String>): Regex {
-    return Regex("^((" + words.joinToString(")|(") + "))\\b", RegexOption.IGNORE_CASE)
-}
+private fun vbsWordRegexp(words: List<String>): Regex =
+    Regex("^((" + words.joinToString(")|(") + "))\\b", RegexOption.IGNORE_CASE)
 
 @Suppress("LongMethod")
 private fun mkVbScript(isASP: Boolean): StreamParser<VbScriptState> {
@@ -168,10 +167,12 @@ private fun mkVbScript(isASP: Boolean): StreamParser<VbScriptState> {
         }
 
         val isNumStart = stream.match(
-            Regex("^((&H)|(&O))?[0-9.]", RegexOption.IGNORE_CASE), false
+            Regex("^((&H)|(&O))?[0-9.]", RegexOption.IGNORE_CASE),
+            false
         ) != null
         val isNumIdent = stream.match(
-            Regex("^((&H)|(&O))?[0-9.]+[a-z_]", RegexOption.IGNORE_CASE), false
+            Regex("^((&H)|(&O))?[0-9.]+[a-z_]", RegexOption.IGNORE_CASE),
+            false
         ) != null
         if (isNumStart && !isNumIdent) {
             var floatLiteral = false

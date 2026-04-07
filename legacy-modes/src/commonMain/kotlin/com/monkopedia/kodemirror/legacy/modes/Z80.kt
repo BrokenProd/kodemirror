@@ -21,9 +21,7 @@ package com.monkopedia.kodemirror.legacy.modes
 import com.monkopedia.kodemirror.language.StreamParser
 import com.monkopedia.kodemirror.language.StringStream
 
-data class Z80State(
-    var context: Int = 0
-)
+data class Z80State(var context: Int = 0)
 
 private fun mkZ80(ez80: Boolean): StreamParser<Z80State> {
     val keywords1: Regex

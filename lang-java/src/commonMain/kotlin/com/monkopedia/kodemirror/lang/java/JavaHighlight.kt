@@ -31,8 +31,10 @@ val javaHighlighting = styleTags(
         "new super assert open to with void" to t.keyword,
         "class interface extends implements enum var" to t.definitionKeyword,
         "module package import" to t.moduleKeyword,
-        "switch while for if else case default do break continue return try catch finally throw" to t.controlKeyword,
-        "requires exports opens uses provides public private protected static transitive abstract final strictfp synchronized native transient volatile throws" to t.modifier,
+        "switch while for if else case default do break continue return try catch finally throw" to
+            t.controlKeyword,
+        "requires exports opens uses provides public private protected static transitive abstract final strictfp synchronized native transient volatile throws" to
+            t.modifier,
         "IntegerLiteral" to t.integer,
         "FloatingPointLiteral" to t.float,
         "StringLiteral TextBlock" to t.string,

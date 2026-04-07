@@ -39,15 +39,11 @@ open class Element(
         buf.content.add(endSize)
     }
 
-    open fun toTree(nodeSet: NodeSet): Tree {
-        return Buffer(nodeSet).writeElements(children, -from).finish(type, to - from)
-    }
+    open fun toTree(nodeSet: NodeSet): Tree =
+        Buffer(nodeSet).writeElements(children, -from).finish(type, to - from)
 }
 
-class TreeElement(
-    val tree: Tree,
-    from: Int
-) : Element(tree.type.id, from, from + tree.length) {
+class TreeElement(val tree: Tree, from: Int) : Element(tree.type.id, from, from + tree.length) {
     override var to: Int
         get() = from + tree.length
         set(_) {}
@@ -77,7 +73,9 @@ internal fun injectMarks(elements: List<Element>, marks: List<Element>): List<El
             val e = elts[eI]
             if (e !is TreeElement) {
                 elts[eI] = Element(
-                    e.type, e.from, e.to,
+                    e.type,
+                    e.from,
+                    e.to,
                     injectMarks(e.children, listOf(mark))
                 )
             }

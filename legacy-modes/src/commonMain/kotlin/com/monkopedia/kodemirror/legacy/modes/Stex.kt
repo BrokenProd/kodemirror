@@ -21,17 +21,11 @@ package com.monkopedia.kodemirror.legacy.modes
 import com.monkopedia.kodemirror.language.StreamParser
 import com.monkopedia.kodemirror.language.StringStream
 
-class StexPlugin(
-    val name: String,
-    val style: String,
-    val styles: List<String?> = emptyList()
-) {
+class StexPlugin(val name: String, val style: String, val styles: List<String?> = emptyList()) {
     var bracketNo: Int = 0
     var argument: String? = null
 
-    fun styleIdentifier(): String? {
-        return styles.getOrNull(bracketNo - 1)
-    }
+    fun styleIdentifier(): String? = styles.getOrNull(bracketNo - 1)
 
     fun openBracket(): String {
         bracketNo++
@@ -77,9 +71,8 @@ private fun mkStex(mathMode: Boolean): StreamParser<StexState> {
         state.cmdState.add(command)
     }
 
-    fun peekCommand(state: StexState): StexPlugin? {
-        return if (state.cmdState.isNotEmpty()) state.cmdState.last() else null
-    }
+    fun peekCommand(state: StexState): StexPlugin? =
+        if (state.cmdState.isNotEmpty()) state.cmdState.last() else null
 
     fun popCommand(state: StexState) {
         val plug = state.cmdState.removeLastOrNull()
@@ -226,9 +219,7 @@ private fun mkStex(mathMode: Boolean): StreamParser<StexState> {
             f = state.f
         )
 
-        override fun token(stream: StringStream, state: StexState): String? {
-            return state.f(stream, state)
-        }
+        override fun token(stream: StringStream, state: StexState): String? = state.f(stream, state)
 
         override fun blankLine(state: StexState, indentUnit: Int) {
             state.f = ::normal

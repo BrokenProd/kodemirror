@@ -22,12 +22,7 @@ import com.monkopedia.kodemirror.language.IndentContext
 import com.monkopedia.kodemirror.language.StreamParser
 import com.monkopedia.kodemirror.language.StringStream
 
-data class ErlangToken(
-    val token: String,
-    val column: Int,
-    val indent: Int,
-    val type: String?
-)
+data class ErlangToken(val token: String, val column: Int, val indent: Int, val type: String?)
 
 class ErlangState(
     var tokenStack: MutableList<ErlangToken> = mutableListOf(),
@@ -97,7 +92,9 @@ private fun erlQuote(stream: StringStream, quoteChar: String, escapeChar: String
         val ch = stream.next()
         if (ch == quoteChar) {
             return true
-        } else if (ch == escapeChar) stream.next()
+        } else if (ch == escapeChar) {
+            stream.next()
+        }
     }
     return false
 }
@@ -543,21 +540,17 @@ val erlang: StreamParser<ErlangState> = object : StreamParser<ErlangState> {
 
     override fun startState(indentUnit: Int) = ErlangState()
 
-    override fun copyState(state: ErlangState): ErlangState {
-        return ErlangState(
-            tokenStack = state.tokenStack.toMutableList(),
-            in_string = state.in_string,
-            in_atom = state.in_atom
-        )
-    }
+    override fun copyState(state: ErlangState): ErlangState = ErlangState(
+        tokenStack = state.tokenStack.toMutableList(),
+        in_string = state.in_string,
+        in_atom = state.in_atom
+    )
 
-    override fun token(stream: StringStream, state: ErlangState): String? {
-        return erlTokenizer(stream, state)
-    }
+    override fun token(stream: StringStream, state: ErlangState): String? =
+        erlTokenizer(stream, state)
 
-    override fun indent(state: ErlangState, textAfter: String, context: IndentContext): Int? {
-        return erlIndenter(state, textAfter, context)
-    }
+    override fun indent(state: ErlangState, textAfter: String, context: IndentContext): Int? =
+        erlIndenter(state, textAfter, context)
 
     override val languageData: Map<String, Any>
         get() = mapOf("commentTokens" to mapOf("line" to "%"))

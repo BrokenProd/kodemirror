@@ -35,19 +35,15 @@ class NodeProp<T>(
      * Create a [NodePropSource] that assigns a value for this prop to
      * [NodeType]s by name or by a predicate function.
      */
-    fun add(map: Map<String, T>): NodePropSource<T> {
-        return NodePropSource(this) { type ->
-            map[type.name]
-        }
+    fun add(map: Map<String, T>): NodePropSource<T> = NodePropSource(this) { type ->
+        map[type.name]
     }
 
     /**
      * Create a [NodePropSource] using a function that returns a value
      * for each [NodeType].
      */
-    fun add(f: (NodeType) -> T?): NodePropSource<T> {
-        return NodePropSource(this, f)
-    }
+    fun add(f: (NodeType) -> T?): NodePropSource<T> = NodePropSource(this, f)
 
     companion object {
         /** The group prop: a list of group names this type belongs to. */
@@ -96,11 +92,7 @@ class NodeProp<T>(
 /**
  * Info about a mounted tree inside another tree.
  */
-data class MountedTree(
-    val tree: Tree,
-    val overlay: List<TextRange>?,
-    val parser: Parser
-) {
+data class MountedTree(val tree: Tree, val overlay: List<TextRange>?, val parser: Parser) {
     companion object {
         /** Retrieve the [MountedTree] from a [Tree], if any. */
         fun get(tree: Tree): MountedTree? = tree.prop(NodeProp.mounted)
@@ -110,7 +102,4 @@ data class MountedTree(
 /**
  * A source that can provide values for a [NodeProp] on [NodeType]s.
  */
-class NodePropSource<T>(
-    val prop: NodeProp<T>,
-    val f: (NodeType) -> T?
-)
+class NodePropSource<T>(val prop: NodeProp<T>, val f: (NodeType) -> T?)

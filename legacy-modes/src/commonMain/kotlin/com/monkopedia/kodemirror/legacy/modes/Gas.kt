@@ -21,9 +21,7 @@ package com.monkopedia.kodemirror.legacy.modes
 import com.monkopedia.kodemirror.language.StreamParser
 import com.monkopedia.kodemirror.language.StringStream
 
-data class GasState(
-    var tokenize: ((StringStream, GasState) -> String?)? = null
-)
+data class GasState(var tokenize: ((StringStream, GasState) -> String?)? = null)
 
 private fun mkGas(arch: String): StreamParser<GasState> {
     val custom = mutableListOf<(String, StringStream) -> String?>()

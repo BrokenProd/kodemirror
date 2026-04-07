@@ -18,10 +18,7 @@
  */
 package com.monkopedia.kodemirror.lezer.markdown
 
-class LeafBlock(
-    val start: Int,
-    content: String
-) {
+class LeafBlock(val start: Int, content: String) {
     var content: String = content
         internal set
     internal val marks: MutableList<Element> = mutableListOf()

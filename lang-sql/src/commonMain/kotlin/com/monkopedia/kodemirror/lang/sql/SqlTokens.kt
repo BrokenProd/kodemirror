@@ -175,8 +175,10 @@ private fun readWordOrQuoted(input: InputStream) {
 }
 
 private fun readBits(input: InputStream, endQuote: Int = -1) {
-    while (input.next == 48 || input.next == 49) // '0' or '1'
+    while (input.next == 48 || input.next == 49) {
+        // '0' or '1'
         input.advance()
+    }
     if (endQuote >= 0 && input.next == endQuote) input.advance()
 }
 
@@ -199,8 +201,10 @@ private fun readNumber(input: InputStream, sawDot: Boolean) {
 }
 
 private fun eol(input: InputStream) {
-    while (!(input.next < 0 || input.next == 10)) // Newline
+    while (!(input.next < 0 || input.next == 10)) {
+        // Newline
         input.advance()
+    }
 }
 
 private fun inString(ch: Int, str: String): Boolean {
@@ -292,7 +296,8 @@ fun tokensFor(d: DialectSpec): ExternalTokenizer = ExternalTokenizer({ input, _ 
             eol(input)
             input.acceptToken(LINE_COMMENT)
         }
-        next == 45 && input.next == 45 &&
+        next == 45 &&
+            input.next == 45 &&
             (!d.spaceAfterDashes || input.peek(1) == 32) -> {
             // Dash-dash comment
             eol(input)
@@ -345,8 +350,10 @@ fun tokensFor(d: DialectSpec): ExternalTokenizer = ExternalTokenizer({ input, _ 
             }
         }
         d.plsqlQuotingMechanism &&
-            (next == 113 || next == 81) && input.next == 39 &&
-            input.peek(1) > 0 && !inString(input.peek(1), space) -> {
+            (next == 113 || next == 81) &&
+            input.next == 39 &&
+            input.peek(1) > 0 &&
+            !inString(input.peek(1), space) -> {
             // q' or Q' PL/SQL quoting mechanism
             val openDelim = input.peek(1)
             input.advance(2)

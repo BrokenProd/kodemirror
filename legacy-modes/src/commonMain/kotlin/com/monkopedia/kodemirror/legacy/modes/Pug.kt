@@ -181,7 +181,9 @@ private fun pugNextToken(stream: StringStream, state: PugState): String? {
         } else {
             if (stream.peek() == "(") {
                 state.javaScriptArgumentsDepth++
-            } else if (stream.peek() == ")") state.javaScriptArgumentsDepth--
+            } else if (stream.peek() == ")") {
+                state.javaScriptArgumentsDepth--
+            }
             if (state.javaScriptArgumentsDepth == 0) {
                 state.javaScriptArguments = false
             } else {
@@ -410,7 +412,5 @@ val pug: StreamParser<PugState> = object : StreamParser<PugState> {
         )
     }
 
-    override fun token(stream: StringStream, state: PugState): String? {
-        return pugNextToken(stream, state)
-    }
+    override fun token(stream: StringStream, state: PugState): String? = pugNextToken(stream, state)
 }

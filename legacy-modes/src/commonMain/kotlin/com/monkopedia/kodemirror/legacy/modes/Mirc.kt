@@ -112,7 +112,9 @@ private fun mircTokenBase(stream: StringStream, state: MircState): String? {
     if (Regex("[\\[\\]{}(),.]").containsMatchIn(ch)) {
         if (ch == "(" && beforeParams) {
             state.inParams = true
-        } else if (ch == ")") state.inParams = false
+        } else if (ch == ")") {
+            state.inParams = false
+        }
         return null
     }
     if (Regex("\\d").containsMatchIn(ch)) {
@@ -191,7 +193,9 @@ private fun mircTokenUnparsed(stream: StringStream, state: MircState): String {
         }
         if (ch == ")") {
             maybeEnd++
-        } else if (ch != " ") maybeEnd = 0
+        } else if (ch != " ") {
+            maybeEnd = 0
+        }
     }
     return "meta"
 }

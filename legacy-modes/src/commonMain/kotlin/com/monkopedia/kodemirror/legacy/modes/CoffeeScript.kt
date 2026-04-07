@@ -42,9 +42,8 @@ private val csCommonKeywords = listOf(
     "this", "@", "throw", "when", "until", "extends"
 )
 
-private fun wordRegexp(words: List<String>): Regex {
-    return Regex("^((" + words.joinToString(")|(") + "))\\b")
-}
+private fun wordRegexp(words: List<String>): Regex =
+    Regex("^((" + words.joinToString(")|(") + "))\\b")
 
 private val csKeywords = wordRegexp(csIndentKeywordsRaw + csCommonKeywords)
 private val csIndentKeywords = wordRegexp(csIndentKeywordsRaw)

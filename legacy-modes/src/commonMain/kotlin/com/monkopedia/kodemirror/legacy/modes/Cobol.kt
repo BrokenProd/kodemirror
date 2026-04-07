@@ -188,10 +188,7 @@ data class CobolState(
     var mode: String? = null
 )
 
-data class CobolIndent(
-    val prev: CobolIndent?,
-    val indent: Int
-)
+data class CobolIndent(val prev: CobolIndent?, val indent: Int)
 
 /** Stream parser for COBOL. */
 val cobol: StreamParser<CobolState> = object : StreamParser<CobolState> {
@@ -265,7 +262,5 @@ val cobol: StreamParser<CobolState> = object : StreamParser<CobolState> {
         state: CobolState,
         textAfter: String,
         context: com.monkopedia.kodemirror.language.IndentContext
-    ): Int {
-        return state.indentStack?.indent ?: state.indentation
-    }
+    ): Int = state.indentStack?.indent ?: state.indentation
 }

@@ -209,7 +209,8 @@ val vhdl: StreamParser<VhdlState> = object : StreamParser<VhdlState> {
             while (ctx.type == "statement") ctx = popContext(state)
         } else if (curPunc == ctx.type) {
             popContext(state)
-        } else if (ctx.type == "}" || ctx.type == "top" ||
+        } else if (ctx.type == "}" ||
+            ctx.type == "top" ||
             (ctx.type == "statement" && curPunc == "newstatement")
         ) {
             pushContext(state, stream.column(), "statement")

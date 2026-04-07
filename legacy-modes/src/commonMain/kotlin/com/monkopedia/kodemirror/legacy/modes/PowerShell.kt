@@ -234,9 +234,8 @@ private fun psTokenDoubleQuoteString(stream: StringStream, state: PowerShellStat
     return "error"
 }
 
-private fun psTokenStringInterpolation(stream: StringStream, state: PowerShellState): String? {
-    return psTokenInterpolation(stream, state, ::psTokenDoubleQuoteString)
-}
+private fun psTokenStringInterpolation(stream: StringStream, state: PowerShellState): String? =
+    psTokenInterpolation(stream, state, ::psTokenDoubleQuoteString)
 
 private fun psTokenMultiStringReturn(stream: StringStream, state: PowerShellState): String? {
     state.tokenize = ::psTokenMultiString
@@ -244,9 +243,8 @@ private fun psTokenMultiStringReturn(stream: StringStream, state: PowerShellStat
     return psTokenMultiString(stream, state)
 }
 
-private fun psTokenHereStringInterpolation(stream: StringStream, state: PowerShellState): String? {
-    return psTokenInterpolation(stream, state, ::psTokenMultiStringReturn)
-}
+private fun psTokenHereStringInterpolation(stream: StringStream, state: PowerShellState): String? =
+    psTokenInterpolation(stream, state, ::psTokenMultiStringReturn)
 
 private fun psTokenInterpolation(
     stream: StringStream,
@@ -351,9 +349,8 @@ val powerShell: StreamParser<PowerShellState> = object : StreamParser<PowerShell
         startQuote = state.startQuote
     )
 
-    override fun token(stream: StringStream, state: PowerShellState): String? {
-        return state.tokenize(stream, state)
-    }
+    override fun token(stream: StringStream, state: PowerShellState): String? =
+        state.tokenize(stream, state)
 
     override val languageData: Map<String, Any>
         get() = mapOf(

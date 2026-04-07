@@ -25,22 +25,15 @@ package com.monkopedia.kodemirror.lezer.common
  * aren't available cross-platform.
  */
 class NodeWeakMap<T> {
-    private data class NodeKey(
-        val tree: Any?,
-        val from: Int,
-        val to: Int,
-        val typeId: Int
-    )
+    private data class NodeKey(val tree: Any?, val from: Int, val to: Int, val typeId: Int)
 
     private val map = HashMap<NodeKey, T>()
 
-    private fun keyFor(node: SyntaxNode): NodeKey {
-        return NodeKey(node.tree, node.from, node.to, node.type.id)
-    }
+    private fun keyFor(node: SyntaxNode): NodeKey =
+        NodeKey(node.tree, node.from, node.to, node.type.id)
 
-    private fun keyFor(cursor: TreeCursor): NodeKey {
-        return NodeKey(cursor.tree, cursor.from, cursor.to, cursor.type.id)
-    }
+    private fun keyFor(cursor: TreeCursor): NodeKey =
+        NodeKey(cursor.tree, cursor.from, cursor.to, cursor.type.id)
 
     fun get(node: SyntaxNode): T? = map[keyFor(node)]
 

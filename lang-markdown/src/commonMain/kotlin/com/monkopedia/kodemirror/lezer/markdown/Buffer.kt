@@ -40,15 +40,13 @@ class Buffer(val nodeSet: NodeSet) {
         return this
     }
 
-    fun finish(type: Int, length: Int): Tree {
-        return Tree.build(
-            TreeBuildSpec(
-                buffer = TreeBuildBuffer.ListBuffer(content.toList()),
-                nodeSet = nodeSet,
-                reused = nodes,
-                topID = type,
-                length = length
-            )
+    fun finish(type: Int, length: Int): Tree = Tree.build(
+        TreeBuildSpec(
+            buffer = TreeBuildBuffer.ListBuffer(content.toList()),
+            nodeSet = nodeSet,
+            reused = nodes,
+            topID = type,
+            length = length
         )
-    }
+    )
 }

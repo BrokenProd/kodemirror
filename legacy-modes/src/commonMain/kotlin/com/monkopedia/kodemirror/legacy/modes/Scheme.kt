@@ -104,11 +104,7 @@ private val schemeDecimalMatcher = Regex(
     RegexOption.IGNORE_CASE
 )
 
-data class SchemeIndentStack(
-    val indent: Int,
-    val type: String,
-    val prev: SchemeIndentStack?
-)
+data class SchemeIndentStack(val indent: Int, val type: String, val prev: SchemeIndentStack?)
 
 data class SchemeState(
     var indentStack: SchemeIndentStack? = null,
@@ -347,9 +343,8 @@ val scheme: StreamParser<SchemeState> = object : StreamParser<SchemeState> {
         }
     }
 
-    override fun indent(state: SchemeState, textAfter: String, context: IndentContext): Int {
-        return state.indentStack?.indent ?: state.indentation
-    }
+    override fun indent(state: SchemeState, textAfter: String, context: IndentContext): Int =
+        state.indentStack?.indent ?: state.indentation
 
     override val languageData: Map<String, Any>
         get() = mapOf(

@@ -62,11 +62,7 @@ private const val TYPE_MAP = 2 // Block mapping
 private const val TYPE_FLOW = 3 // Inside flow content
 private const val TYPE_LIT = 4 // Block literal with explicit indentation
 
-private class Context(
-    val parent: Context?,
-    val depth: Int,
-    val type: Int
-) {
+private class Context(val parent: Context?, val depth: Int, val type: Int) {
     val hash: Int = (
         (if (parent != null) (parent.hash + parent.hash) shl 8 else 0) +
             depth + (depth shl 4) + type
@@ -133,10 +129,10 @@ private val indentation = ContextTracker(
     strict = false
 ) as ContextTracker<Any?>
 
-private fun three(input: InputStream, ch: Int, off: Int = 0): Boolean {
-    return input.peek(off) == ch && input.peek(off + 1) == ch &&
-        input.peek(off + 2) == ch && isSep(input.peek(off + 3))
-}
+private fun three(input: InputStream, ch: Int, off: Int = 0): Boolean = input.peek(off) == ch &&
+    input.peek(off + 1) == ch &&
+    input.peek(off + 2) == ch &&
+    isSep(input.peek(off + 3))
 
 private val newlines = ExternalTokenizer(
     { input, stack ->
@@ -173,12 +169,15 @@ private val newlines = ExternalTokenizer(
             if ((
                     depth < context.depth ||
                         (
-                            depth == context.depth && context.type == TYPE_SEQ &&
+                            depth == context.depth &&
+                                context.type == TYPE_SEQ &&
                                 (input.next != 45 /* '-' */ || !isSep(input.peek(1)))
                             )
                     ) &&
                 // Not blank
-                input.next != -1 && !isBreakSpace(input.next) && input.next != 35 /* '#' */
+                input.next != -1 &&
+                !isBreakSpace(input.next) &&
+                input.next != 35 /* '#' */
             ) {
                 input.acceptToken(BLOCK_END, -depth)
             }
@@ -201,14 +200,21 @@ private fun isSafe(ch: Int, inFlow: Boolean): Boolean {
     return tag != 'u' && !(inFlow && tag == 'f')
 }
 
-private fun uriChar(ch: Int): Boolean {
-    return ch > 32 && ch < 127 && ch != 34 && ch != 37 && ch != 44 && ch != 60 &&
-        ch != 62 && ch != 92 && ch != 94 && ch != 96 && ch != 123 && ch != 124 && ch != 125
-}
+private fun uriChar(ch: Int): Boolean = ch > 32 &&
+    ch < 127 &&
+    ch != 34 &&
+    ch != 37 &&
+    ch != 44 &&
+    ch != 60 &&
+    ch != 62 &&
+    ch != 92 &&
+    ch != 94 &&
+    ch != 96 &&
+    ch != 123 &&
+    ch != 124 &&
+    ch != 125
 
-private fun hexChar(ch: Int): Boolean {
-    return (ch in 48..57) || (ch in 97..102) || (ch in 65..70)
-}
+private fun hexChar(ch: Int): Boolean = (ch in 48..57) || (ch in 97..102) || (ch in 65..70)
 
 private fun readUriChar(input: InputStream, quoted: Boolean): Boolean {
     if (input.next == 37 /* '%' */) {
@@ -331,7 +337,8 @@ private fun readPlain(input: InputStream, scan: Boolean, inFlow: Boolean, indent
                     isSafe(next, inFlow)
                 }
                 )
-        if (!safe || (!inFlow && lineIndent <= indent) ||
+        if (!safe ||
+            (!inFlow && lineIndent <= indent) ||
             (lineIndent == 0 && !inFlow && (three(input, 45, off) || three(input, 46, off)))
         ) {
             break

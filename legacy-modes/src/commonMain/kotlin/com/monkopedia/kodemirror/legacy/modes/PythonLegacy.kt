@@ -30,11 +30,7 @@ data class PythonConfig(
     val extra_builtins: List<String> = emptyList()
 )
 
-data class PythonScope(
-    val offset: Int,
-    val type: String,
-    val align: Int?
-)
+data class PythonScope(val offset: Int, val type: String, val align: Int?)
 
 class PythonState(
     // 0=tokenBase, 1+=string tokenizers
@@ -56,9 +52,8 @@ class PythonState(
     var outerTokenize: Int = 0
 )
 
-private fun wordRegexp(words: List<String>): Regex {
-    return Regex("^((" + words.joinToString(")|(") + "))\\b")
-}
+private fun wordRegexp(words: List<String>): Regex =
+    Regex("^((" + words.joinToString(")|(") + "))\\b")
 
 private val wordOperators = wordRegexp(listOf("and", "or", "not", "is"))
 
@@ -352,7 +347,8 @@ fun mkPython(parserConf: PythonConfig = PythonConfig()): StreamParser<PythonStat
                 if (lineOffset > scopeOffset) {
                     pushPyScope(stream, state)
                 } else if (lineOffset < scopeOffset &&
-                    dedent(stream, state) && stream.peek() != "#"
+                    dedent(stream, state) &&
+                    stream.peek() != "#"
                 ) {
                     state.errorToken = true
                 }
@@ -401,7 +397,9 @@ fun mkPython(parserConf: PythonConfig = PythonConfig()): StreamParser<PythonStat
         if (current == "pass" || current == "return") state.dedent = true
         if (current == "lambda") state.lambda = true
 
-        if (current == ":" && !state.lambda && top(state).type == "py" &&
+        if (current == ":" &&
+            !state.lambda &&
+            top(state).type == "py" &&
             stream.match(Regex("^\\s*(?:#|$)"), false) != null
         ) {
             pushPyScope(stream, state)
@@ -429,7 +427,9 @@ fun mkPython(parserConf: PythonConfig = PythonConfig()): StreamParser<PythonStat
                 }
             }
         }
-        if (state.dedent && stream.eol() && top(state).type == "py" &&
+        if (state.dedent &&
+            stream.eol() &&
+            top(state).type == "py" &&
             state.scopes.size > 1
         ) {
             state.scopes.removeAt(state.scopes.lastIndex)
@@ -443,23 +443,21 @@ fun mkPython(parserConf: PythonConfig = PythonConfig()): StreamParser<PythonStat
 
         override fun startState(indentUnit: Int) = PythonState()
 
-        override fun copyState(state: PythonState): PythonState {
-            return PythonState(
-                tokenize = state.tokenize,
-                scopes = state.scopes.toMutableList(),
-                indent = state.indent,
-                lastToken = state.lastToken,
-                lambda = state.lambda,
-                dedent = state.dedent,
-                errorToken = state.errorToken,
-                beginningOfLine = state.beginningOfLine,
-                stringDelimiter = state.stringDelimiter,
-                stringIsSingle = state.stringIsSingle,
-                stringIsFmt = state.stringIsFmt,
-                stringNestDepth = state.stringNestDepth,
-                outerTokenize = state.outerTokenize
-            )
-        }
+        override fun copyState(state: PythonState): PythonState = PythonState(
+            tokenize = state.tokenize,
+            scopes = state.scopes.toMutableList(),
+            indent = state.indent,
+            lastToken = state.lastToken,
+            lambda = state.lambda,
+            dedent = state.dedent,
+            errorToken = state.errorToken,
+            beginningOfLine = state.beginningOfLine,
+            stringDelimiter = state.stringDelimiter,
+            stringIsSingle = state.stringIsSingle,
+            stringIsFmt = state.stringIsFmt,
+            stringNestDepth = state.stringNestDepth,
+            outerTokenize = state.outerTokenize
+        )
 
         override fun token(stream: StringStream, state: PythonState): String? {
             val addErr = state.errorToken
@@ -486,7 +484,8 @@ fun mkPython(parserConf: PythonConfig = PythonConfig()): StreamParser<PythonStat
             val scope = top(state)
             val closing = (scope.type == textAfter.firstOrNull()?.toString()) ||
                 (
-                    scope.type == "py" && !state.dedent &&
+                    scope.type == "py" &&
+                        !state.dedent &&
                         Regex("^(else:|elif |except |finally:)").containsMatchIn(textAfter)
                     )
             return if (scope.align != null) {

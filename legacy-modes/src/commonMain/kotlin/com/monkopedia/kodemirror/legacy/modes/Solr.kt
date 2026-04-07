@@ -25,9 +25,7 @@ private val solrIsStringChar = Regex("[^\\s|!+\\-*?~^&:()\\[\\]{}\"\\\\]")
 private val solrIsOperatorChar = Regex("[|!+\\-*?~^&]")
 private val solrIsOperatorString = Regex("^(OR|AND|NOT|TO)$")
 
-private fun solrIsNumber(word: String): Boolean {
-    return word.toDoubleOrNull()?.toString() == word
-}
+private fun solrIsNumber(word: String): Boolean = word.toDoubleOrNull()?.toString() == word
 
 private fun solrTokenString(quote: String): (StringStream, SolrState) -> String? =
     { stream, state ->
@@ -83,9 +81,7 @@ private fun solrTokenBase(stream: StringStream, state: SolrState): String? {
     return if (state.tokenize != ::solrTokenBase) state.tokenize(stream, state) else null
 }
 
-data class SolrState(
-    var tokenize: (StringStream, SolrState) -> String? = ::solrTokenBase
-)
+data class SolrState(var tokenize: (StringStream, SolrState) -> String? = ::solrTokenBase)
 
 /** Stream parser for Solr. */
 val solr: StreamParser<SolrState> = object : StreamParser<SolrState> {

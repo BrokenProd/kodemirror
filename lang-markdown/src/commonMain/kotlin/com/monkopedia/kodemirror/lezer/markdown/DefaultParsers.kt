@@ -45,9 +45,13 @@ private fun isHorizontalRule(line: Line, cx: BlockContext, breaking: Boolean): I
         val ch = line.text[pos].code
         if (ch == line.next) {
             count++
-        } else if (!space(ch)) return -1
+        } else if (!space(ch)) {
+            return -1
+        }
     }
-    if (breaking && line.next == 45 && isSetextUnderline(line) > -1 &&
+    if (breaking &&
+        line.next == 45 &&
+        isSetextUnderline(line) > -1 &&
         line.depth == cx.stack.size &&
         cx.parser.leafBlockParsers.indexOf(DefaultLeafBlocks["SetextHeading"]) > -1
     ) {
@@ -63,11 +67,12 @@ private fun inList(cx: BlockContext, type: Int): Boolean {
     return false
 }
 
-private fun isBulletList(line: Line, cx: BlockContext, breaking: Boolean): Int {
-    return if ((line.next == 45 || line.next == 43 || line.next == 42) &&
+private fun isBulletList(line: Line, cx: BlockContext, breaking: Boolean): Int =
+    if ((line.next == 45 || line.next == 43 || line.next == 42) &&
         (line.pos == line.text.length - 1 || space(line.text[line.pos + 1].code)) &&
         (
-            !breaking || inList(cx, Type.BulletList) ||
+            !breaking ||
+                inList(cx, Type.BulletList) ||
                 line.skipSpace(line.pos + 2) < line.text.length
             )
     ) {
@@ -75,7 +80,6 @@ private fun isBulletList(line: Line, cx: BlockContext, breaking: Boolean): Int {
     } else {
         -1
     }
-}
 
 private fun isOrderedList(line: Line, cx: BlockContext, breaking: Boolean): Int {
     var pos = line.pos
@@ -89,14 +93,18 @@ private fun isOrderedList(line: Line, cx: BlockContext, breaking: Boolean): Int 
         if (pos == line.text.length) return -1
         next = line.text[pos].code
     }
-    if (pos == line.pos || pos > line.pos + 9 ||
-        (next != 46 && next != 41) || // '.' or ')'
+    if (pos == line.pos ||
+        pos > line.pos + 9 ||
+        (next != 46 && next != 41) ||
+        // '.' or ')'
         (pos < line.text.length - 1 && !space(line.text[pos + 1].code)) ||
         (
-            breaking && !inList(cx, Type.OrderedList) &&
+            breaking &&
+                !inList(cx, Type.OrderedList) &&
                 (
                     line.skipSpace(pos + 1) == line.text.length ||
-                        pos > line.pos + 1 || line.next != 49
+                        pos > line.pos + 1 ||
+                        line.next != 49
                     )
             ) // '1'
     ) {
@@ -667,7 +675,9 @@ internal val DefaultInline: Map<String, (InlineContext, Int, Int) -> Int> = link
                     if (curSize == size && cx.char(pos + 1) != 96) {
                         result = cx.append(
                             elt(
-                                Type.InlineCode, start, pos + 1,
+                                Type.InlineCode,
+                                start,
+                                pos + 1,
                                 listOf(
                                     elt(Type.CodeMark, start, start + size),
                                     elt(Type.CodeMark, pos + 1 - size, pos + 1)
@@ -698,7 +708,9 @@ internal val DefaultInline: Map<String, (InlineContext, Int, Int) -> Int> = link
             if (url != null) {
                 cx.append(
                     elt(
-                        Type.Autolink, start, start + 1 + url.value.length,
+                        Type.Autolink,
+                        start,
+                        start + 1 + url.value.length,
                         listOf(
                             elt(Type.LinkMark, start, start + 1),
                             elt(Type.URL, start + 1, start + url.value.length),
@@ -763,7 +775,8 @@ internal val DefaultInline: Map<String, (InlineContext, Int, Int) -> Int> = link
             cx.append(
                 InlineDelimiter(
                     if (next == 95) EmphasisUnderscore else EmphasisAsterisk,
-                    start, pos,
+                    start,
+                    pos,
                     (if (canOpen) Mark.OPEN else Mark.NONE) or
                         (if (canClose) Mark.CLOSE else Mark.NONE)
                 )
@@ -826,9 +839,11 @@ internal val DefaultInline: Map<String, (InlineContext, Int, Int) -> Int> = link
                     } else {
                         val content = cx.takeContent(i)
                         val link = finishLink(
-                            cx, content,
+                            cx,
+                            content,
                             if (part.type == LinkStart) Type.Link else Type.Image,
-                            part.from, start + 1
+                            part.from,
+                            start + 1
                         )
                         cx.parts.add(link)
                         if (part.type == LinkStart) {
@@ -970,7 +985,9 @@ internal fun parseLinkLabel(
             if (nonWS && !space(ch)) nonWS = false
             if (ch == 91) {
                 return null // '['
-            } else if (ch == 92) escaped = true // '\\'
+            } else if (ch == 92) {
+                escaped = true // '\\'
+            }
         }
     }
     return null

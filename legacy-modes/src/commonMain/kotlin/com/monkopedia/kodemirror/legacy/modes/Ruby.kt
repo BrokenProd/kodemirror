@@ -38,11 +38,7 @@ private val rubyDedentWords = setOf("end", "until")
 private val rubyOpening = mapOf("[" to "]", "{" to "}", "(" to ")")
 private val rubyClosing = mapOf("]" to "[", "}" to "{", ")" to "(")
 
-data class RubyContext(
-    val type: String,
-    val indented: Int,
-    val prev: RubyContext?
-)
+data class RubyContext(val type: String, val indented: Int, val prev: RubyContext?)
 
 data class RubyState(
     var tokenize: MutableList<(StringStream, RubyState) -> String?> = mutableListOf(),
@@ -130,29 +126,27 @@ private fun rubyReadQuoted(
     style: String,
     embed: Boolean,
     unescaped: Boolean = false
-): (StringStream, RubyState) -> String? {
-    return fn@{ stream, state ->
-        var escaped = false
-        var ch: String?
-        while (true) {
-            ch = stream.next() ?: break
-            if (ch == quote && (unescaped || !escaped)) {
-                state.tokenize.removeLastOrNull()
+): (StringStream, RubyState) -> String? = fn@{ stream, state ->
+    var escaped = false
+    var ch: String?
+    while (true) {
+        ch = stream.next() ?: break
+        if (ch == quote && (unescaped || !escaped)) {
+            state.tokenize.removeLastOrNull()
+            break
+        }
+        if (embed && ch == "#" && !escaped) {
+            if (stream.eat("{") != null) {
+                state.tokenize.add(rubyTokenBaseUntilBrace())
+                break
+            } else if (stream.peek()?.let { Regex("[@\$]").containsMatchIn(it) } == true) {
+                state.tokenize.add(rubyTokenBaseOnce())
                 break
             }
-            if (embed && ch == "#" && !escaped) {
-                if (stream.eat("{") != null) {
-                    state.tokenize.add(rubyTokenBaseUntilBrace())
-                    break
-                } else if (stream.peek()?.let { Regex("[@\$]").containsMatchIn(it) } == true) {
-                    state.tokenize.add(rubyTokenBaseOnce())
-                    break
-                }
-            }
-            escaped = !escaped && ch == "\\"
         }
-        style
+        escaped = !escaped && ch == "\\"
     }
+    style
 }
 
 private fun rubyReadHereDoc(

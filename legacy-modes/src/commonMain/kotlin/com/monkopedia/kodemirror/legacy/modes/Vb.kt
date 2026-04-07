@@ -22,9 +22,8 @@ import com.monkopedia.kodemirror.language.IndentContext
 import com.monkopedia.kodemirror.language.StreamParser
 import com.monkopedia.kodemirror.language.StringStream
 
-private fun vbWordRegexp(words: List<String>): Regex {
-    return Regex("^((" + words.joinToString(")|(") + "))\\b", RegexOption.IGNORE_CASE)
-}
+private fun vbWordRegexp(words: List<String>): Regex =
+    Regex("^((" + words.joinToString(")|(") + "))\\b", RegexOption.IGNORE_CASE)
 
 private val vbSingleOperators = Regex("^[+\\-*/%&\\\\|^~<>!]")
 private val vbSingleDelimiters = Regex("^[()\\[\\]{}@,:`=;.]")

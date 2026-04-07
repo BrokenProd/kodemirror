@@ -40,12 +40,16 @@ private val PERL: Map<String, Any?> = buildMap {
         "le", "ge", "==", "!=", "<=>", "eq", "ne", "cmp", "~~",
         "&", "|", "^", "&&", "||", "//", "..", "...", "?", ":", "=",
         "+=", "-=", "*=", ",", "=>", "::", "not", "and", "or", "xor"
-    )) put(op, 4)
+    )) {
+        put(op, 4)
+    }
     // predefined variables with [5,1]
     for (v in listOf(
         "BEGIN", "END", "PRINT", "PRINTF", "GETC", "READ", "READLINE",
         "DESTROY", "TIE", "TIEHANDLE", "UNTIE"
-    )) put(v, listOf(5, 1))
+    )) {
+        put(v, listOf(5, 1))
+    }
     // predefined variables = 5
     for (v in listOf(
         "STDIN", "STDIN_TOP", "STDOUT", "STDOUT_TOP", "STDERR", "STDERR_TOP",
@@ -82,7 +86,9 @@ private val PERL: Map<String, Any?> = buildMap {
         "\$OS_ERROR", "\$ERRNO", "\$!", "%OS_ERROR", "%ERRNO", "%!",
         "\$CHILD_ERROR", "\$?", "\$EVAL_ERROR", "\$@", "\$OFMT",
         "\$#", "\$*", "\$ARRAY_BASE", "\$[", "\$OLD_PERL_VERSION", "\$]"
-    )) put(v, 5)
+    )) {
+        put(v, 5)
+    }
     // blocks with [1,1]
     for (v in listOf("if", "elsif", "else", "while", "unless", "for", "foreach")) {
         put(v, listOf(1, 1))
@@ -125,7 +131,9 @@ private val PERL: Map<String, Any?> = buildMap {
         "umask", "undef", "unlink", "unpack", "unshift", "untie", "use",
         "utime", "values", "vec", "wait", "waitpid", "wantarray", "warn",
         "when", "write"
-    )) put(v, 1)
+    )) {
+        put(v, 1)
+    }
     // def = 2
     for (v in listOf("local", "my", "our")) put(v, 2)
     // null (magic touch)
@@ -146,13 +154,11 @@ private fun perlLook(stream: StringStream, c: Int): String {
     }
 }
 
-private fun perlPrefix(stream: StringStream, c: Int = 0): String {
-    return if (c > 0) {
-        val x = stream.pos - c
-        stream.string.substring(if (x >= 0) x else 0, stream.pos)
-    } else {
-        stream.string.substring(0, stream.pos - 1)
-    }
+private fun perlPrefix(stream: StringStream, c: Int = 0): String = if (c > 0) {
+    val x = stream.pos - c
+    stream.string.substring(if (x >= 0) x else 0, stream.pos)
+} else {
+    stream.string.substring(0, stream.pos - 1)
 }
 
 private fun perlSuffix(stream: StringStream, c: Int = 0): String {
@@ -552,18 +558,15 @@ val perl: StreamParser<PerlState> = object : StreamParser<PerlState> {
     override val name: String get() = "perl"
     override fun startState(indentUnit: Int) = PerlState()
 
-    override fun copyState(state: PerlState): PerlState {
-        return PerlState(
-            tokenize = state.tokenize,
-            chain = state.chain,
-            style = state.style,
-            tail = state.tail
-        )
-    }
+    override fun copyState(state: PerlState): PerlState = PerlState(
+        tokenize = state.tokenize,
+        chain = state.chain,
+        style = state.style,
+        tail = state.tail
+    )
 
-    override fun token(stream: StringStream, state: PerlState): String? {
-        return state.tokenize(stream, state)
-    }
+    override fun token(stream: StringStream, state: PerlState): String? =
+        state.tokenize(stream, state)
 
     override val languageData: Map<String, Any>
         get() = mapOf(

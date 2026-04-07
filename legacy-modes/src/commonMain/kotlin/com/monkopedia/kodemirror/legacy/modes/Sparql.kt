@@ -77,19 +77,20 @@ private fun sparqlEatPnLocal(stream: StringStream) {
     )
 }
 
-private fun sparqlTokenLiteral(quote: String): (StringStream, SparqlState) -> String? {
-    return fn@{ stream, state ->
-        var escaped = false
-        var ch: String?
-        while (stream.next().also { ch = it } != null) {
-            if (ch == quote && !escaped) {
-                state.tokenize = ::sparqlTokenBase
-                break
-            }
-            escaped = !escaped && ch == "\\"
+private fun sparqlTokenLiteral(quote: String): (StringStream, SparqlState) -> String? = fn@{
+        stream,
+        state
+    ->
+    var escaped = false
+    var ch: String?
+    while (stream.next().also { ch = it } != null) {
+        if (ch == quote && !escaped) {
+            state.tokenize = ::sparqlTokenBase
+            break
         }
-        "string"
+        escaped = !escaped && ch == "\\"
     }
+    "string"
 }
 
 private fun sparqlTokenBase(stream: StringStream, state: SparqlState): String? {
@@ -199,8 +200,10 @@ val sparql: StreamParser<SparqlState> = object : StreamParser<SparqlState> {
         state.curPunc = null
         val style = state.tokenize(stream, state)
 
-        if (style != "comment" && state.context != null &&
-            state.context!!.align == null && state.context!!.type != "pattern"
+        if (style != "comment" &&
+            state.context != null &&
+            state.context!!.align == null &&
+            state.context!!.type != "pattern"
         ) {
             state.context!!.align = true
         }
@@ -222,7 +225,8 @@ val sparql: StreamParser<SparqlState> = object : StreamParser<SparqlState> {
             }
             curPunc == "." && state.context?.type == "pattern" ->
                 sparqlPopContext(state)
-            style != null && Regex("atom|string|variable").containsMatchIn(style) &&
+            style != null &&
+                Regex("atom|string|variable").containsMatchIn(style) &&
                 state.context != null -> {
                 val ctxType = state.context!!.type
                 if (ctxType == "}" || ctxType == "]") {

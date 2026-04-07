@@ -56,10 +56,8 @@ fun syntaxHighlighting(highlighter: Highlighter, fallback: Boolean = false): Ext
     return if (fallback) Prec.lowest(ext) else Prec.high(ext)
 }
 
-private class TreeHighlighter(
-    view: EditorSession,
-    private val highlighter: Highlighter
-) : PluginValue {
+private class TreeHighlighter(view: EditorSession, private val highlighter: Highlighter) :
+    PluginValue {
     private val markCache = mutableMapOf<String, MarkDecoration>()
 
     var decorations: DecorationSet = buildDeco(view)

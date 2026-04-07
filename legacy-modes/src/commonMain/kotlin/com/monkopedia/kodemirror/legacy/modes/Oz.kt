@@ -22,9 +22,8 @@ import com.monkopedia.kodemirror.language.IndentContext
 import com.monkopedia.kodemirror.language.StreamParser
 import com.monkopedia.kodemirror.language.StringStream
 
-private fun ozWordRegexp(words: List<String>): Regex {
-    return Regex("^(?:(?:${words.joinToString(")|(?:")}))\b")
-}
+private fun ozWordRegexp(words: List<String>): Regex =
+    Regex("^(?:(?:${words.joinToString(")|(?:")}))\b")
 
 private val ozSingleOperators = Regex("[^@!|<>#~.*\\-+\\\\/,=]")
 private val ozDoubleOperators =

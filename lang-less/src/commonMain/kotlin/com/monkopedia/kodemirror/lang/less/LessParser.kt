@@ -52,8 +52,13 @@ private val argList = ExternalTokenizer({ input, _ ->
 private val descendant = ExternalTokenizer({ input, _ ->
     if (space.contains(input.peek(-1))) {
         val next = input.next
-        if (isAlpha(next) || next == 95 || next == 35 || next == 46 ||
-            next == 91 || next == 58 || next == 45
+        if (isAlpha(next) ||
+            next == 95 ||
+            next == 35 ||
+            next == 46 ||
+            next == 91 ||
+            next == 58 ||
+            next == 45
         ) {
             input.acceptToken(DESCENDANT_OP)
         }

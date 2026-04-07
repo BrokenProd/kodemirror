@@ -58,10 +58,7 @@ private val mumpsSingleDelimiters = Regex("^[.,:]")
 private val mumpsBrackets = Regex("[()]")
 private val mumpsIdentifiers = Regex("^[%A-Za-z][A-Za-z0-9]*")
 
-data class MumpsState(
-    var label: Boolean = false,
-    var commandMode: Int = 0
-)
+data class MumpsState(var label: Boolean = false, var commandMode: Int = 0)
 
 @Suppress("CyclomaticComplexMethod", "LongMethod", "ReturnCount")
 private fun mumpsTokenBase(stream: StringStream, state: MumpsState): String? {

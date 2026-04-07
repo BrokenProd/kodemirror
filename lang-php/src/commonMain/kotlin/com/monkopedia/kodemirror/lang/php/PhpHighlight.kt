@@ -27,10 +27,13 @@ import com.monkopedia.kodemirror.lezer.highlight.styleTags
 val phpHighlighting = styleTags(
     mapOf(
         "Visibility abstract final static" to Tags.modifier,
-        "for foreach while do if else elseif switch try catch finally return throw break continue default case" to Tags.controlKeyword,
-        "endif endfor endforeach endswitch endwhile declare enddeclare goto match" to Tags.controlKeyword,
+        "for foreach while do if else elseif switch try catch finally return throw break continue default case" to
+            Tags.controlKeyword,
+        "endif endfor endforeach endswitch endwhile declare enddeclare goto match" to
+            Tags.controlKeyword,
         "and or xor yield unset clone instanceof insteadof" to Tags.operatorKeyword,
-        "function fn class trait implements extends const enum global interface use var" to Tags.definitionKeyword,
+        "function fn class trait implements extends const enum global interface use var" to
+            Tags.definitionKeyword,
         "include include_once require require_once namespace" to Tags.moduleKeyword,
         "new from echo print array list as" to Tags.keyword,
         "null" to Tags.`null`,

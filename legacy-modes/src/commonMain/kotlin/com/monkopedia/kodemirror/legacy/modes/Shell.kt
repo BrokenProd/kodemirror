@@ -108,7 +108,8 @@ private fun shellTokenBase(stream: StringStream, state: ShellState): String? {
     }
     if (Regex("\\d").containsMatchIn(ch)) {
         stream.eatWhile(Regex("\\d"))
-        if (stream.eol() || stream.peek()?.let {
+        if (stream.eol() ||
+            stream.peek()?.let {
                 !Regex("\\w").containsMatchIn(it)
             } == true
         ) {
@@ -134,7 +135,9 @@ private fun shellTokenString(quote: String, style: String): (StringStream, Shell
             if (next == close && !escaped) {
                 state.tokens.removeFirst()
                 break
-            } else if (next == "$" && !escaped && quote != "'" &&
+            } else if (next == "$" &&
+                !escaped &&
+                quote != "'" &&
                 stream.peek() != close
             ) {
                 stream.backUp(1)
@@ -146,7 +149,8 @@ private fun shellTokenString(quote: String, style: String): (StringStream, Shell
                     shellTokenString(quote, style)
                 )
                 return@fn shellTokenize(stream, state)
-            } else if (!escaped && Regex("['\"]").containsMatchIn(next) &&
+            } else if (!escaped &&
+                Regex("['\"]").containsMatchIn(next) &&
                 !Regex("['\"]").containsMatchIn(quote)
             ) {
                 state.tokens.add(
@@ -214,7 +218,6 @@ val shell: StreamParser<ShellState> = object : StreamParser<ShellState> {
     override fun startState(indentUnit: Int) = ShellState()
     override fun copyState(state: ShellState) = ShellState(tokens = state.tokens.toMutableList())
 
-    override fun token(stream: StringStream, state: ShellState): String? {
-        return shellTokenize(stream, state)
-    }
+    override fun token(stream: StringStream, state: ShellState): String? =
+        shellTokenize(stream, state)
 }

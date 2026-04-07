@@ -205,9 +205,7 @@ private val elmChompGlsl: ElmTokenFn = ElmTokenFn { source, setState ->
     "string"
 }
 
-data class ElmState(
-    var f: ElmTokenFn = elmNormal()
-)
+data class ElmState(var f: ElmTokenFn = elmNormal())
 
 /** Stream parser for Elm. */
 val elm: StreamParser<ElmState> = object : StreamParser<ElmState> {

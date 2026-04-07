@@ -54,7 +54,15 @@ val javaLanguage: LRLanguage = LRLanguage.define(
                             val isCase =
                                 Regex("""^\s*(case|default)\b""").containsMatchIn(after)
                             val unit = getIndentUnit(cx.state)
-                            cx.baseIndent + (if (closed) 0 else if (isCase) 1 else 2) * unit
+                            cx.baseIndent + (
+                                if (closed) {
+                                    0
+                                } else if (isCase) {
+                                    1
+                                } else {
+                                    2
+                                }
+                                ) * unit
                         }
                         type.name == "Block" -> delimitedIndent(closing = "}")
                         type.name == "BlockComment" -> { _ -> null }

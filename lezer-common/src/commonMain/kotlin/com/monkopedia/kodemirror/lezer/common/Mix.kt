@@ -57,11 +57,10 @@ class NestedParse(
  * function, runs the resulting inner parses, and then mounts
  * their results onto the tree.
  */
-fun parseMixed(nest: (node: SyntaxNodeRef, input: Input) -> NestedParse?): ParseWrapper {
-    return { parse, input, fragments, ranges ->
+fun parseMixed(nest: (node: SyntaxNodeRef, input: Input) -> NestedParse?): ParseWrapper =
+    { parse, input, fragments, ranges ->
         MixedParse(parse, nest, input, fragments, ranges)
     }
-}
 
 private val stoppedInner = NodeProp<Int>(perNode = true)
 
@@ -88,17 +87,9 @@ private class ActiveOverlay(
     val ranges = mutableListOf<TextRange>()
 }
 
-private data class ReusableMount(
-    val frag: TreeFragment,
-    val mount: MountedTree,
-    val pos: Int
-)
+private data class ReusableMount(val frag: TreeFragment, val mount: MountedTree, val pos: Int)
 
-private data class CoverInfo(
-    val ranges: List<TextRange>,
-    var depth: Int,
-    val prev: CoverInfo?
-)
+private data class CoverInfo(val ranges: List<TextRange>, var depth: Int, val prev: CoverInfo?)
 
 private enum class Cover { None, Partial, Full }
 
@@ -193,7 +184,8 @@ private class MixedParse(
                         for (r in match.mount.overlay!!) {
                             val from = r.from + match.pos
                             val to = r.to + match.pos
-                            if (from >= cursor.from && to <= cursor.to &&
+                            if (from >= cursor.from &&
+                                to <= cursor.to &&
                                 !ov.ranges.any { it.from < to && it.to > from }
                             ) {
                                 ov.ranges.add(TextRange(from, to))
@@ -299,7 +291,8 @@ private class MixedParse(
                                 val last = ov.ranges.size - 1
                                 if (last >= 0 && ov.ranges[last].to == r.from) {
                                     ov.ranges[last] = TextRange(
-                                        ov.ranges[last].from, r.to
+                                        ov.ranges[last].from,
+                                        r.to
                                     )
                                 } else {
                                     ov.ranges.add(r)
@@ -397,7 +390,8 @@ private class StructureCursor(root: Tree, private val offset: Int) {
 
     fun hasNode(cursor: TreeCursor): Boolean {
         moveTo(cursor.from)
-        if (!done && this.cursor.from + offset == cursor.from &&
+        if (!done &&
+            this.cursor.from + offset == cursor.from &&
             this.cursor.tree != null
         ) {
             var tree = this.cursor.tree!!
@@ -435,7 +429,8 @@ private class FragmentCursor(val fragments: List<TreeFragment>) {
     fun hasNode(node: TreeCursor): Boolean {
         while (curFrag != null && node.from >= curTo) nextFrag()
         val cf = curFrag ?: return false
-        return cf.from <= node.from && curTo >= node.to &&
+        return cf.from <= node.from &&
+            curTo >= node.to &&
             inner!!.hasNode(node)
     }
 
@@ -689,7 +684,12 @@ private fun materialize(cursor: TreeCursor) {
     }
 
     base.children[bufIdx] = split(
-        0, b.size, NodeType.none, 0, buf.length, indexStack.size - 1
+        0,
+        b.size,
+        NodeType.none,
+        0,
+        buf.length,
+        indexStack.size - 1
     )
     // Re-navigate the cursor down to the materialized tree node
     for (idx in newStack) {

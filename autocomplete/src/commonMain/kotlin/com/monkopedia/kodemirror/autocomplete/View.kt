@@ -206,9 +206,7 @@ fun insertCompletionText(
 
 // ── ViewPlugin ──
 
-private class CompletionPlugin(
-    private val view: EditorSession
-) : PluginValue {
+private class CompletionPlugin(private val view: EditorSession) : PluginValue {
     override fun update(update: ViewUpdate) {
         val config = update.state.facet(completionConfig)
         if (!config.activateOnTyping) return

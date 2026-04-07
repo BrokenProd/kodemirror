@@ -120,7 +120,8 @@ private fun jinja2TokenBase(stream: StringStream, state: Jinja2State): String? {
             } else if (stream.match(jinja2Sign) != null) {
                 state.sign = true
             } else {
-                if (stream.column() == 1 && state.lineTag &&
+                if (stream.column() == 1 &&
+                    state.lineTag &&
                     stream.match(jinja2Keywords) != null
                 ) {
                     return "keyword"
@@ -142,7 +143,8 @@ private fun jinja2TokenBase(stream: StringStream, state: Jinja2State): String? {
             } else if (stream.match(jinja2Sign) != null) {
                 state.sign = true
             } else {
-                if (stream.column() == 1 && state.lineTag &&
+                if (stream.column() == 1 &&
+                    state.lineTag &&
                     stream.match(jinja2Keywords) != null
                 ) {
                     return "keyword"
@@ -203,9 +205,11 @@ val jinja2Legacy: StreamParser<Jinja2State> = object : StreamParser<Jinja2State>
 
     override fun token(stream: StringStream, state: Jinja2State): String? {
         val style = state.tokenize(stream, state)
-        if (stream.eol() && state.lineTag &&
+        if (stream.eol() &&
+            state.lineTag &&
             state.instring == false &&
-            state.inbraces == 0 && state.inbrackets == 0
+            state.inbraces == 0 &&
+            state.inbrackets == 0
         ) {
             state.intag = false
             state.lineTag = false

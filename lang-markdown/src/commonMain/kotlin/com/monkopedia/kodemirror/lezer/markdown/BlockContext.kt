@@ -152,8 +152,10 @@ class BlockContext(
 
     internal fun startContext(type: Int, start: Int, value: Int = 0) {
         block = CompositeBlock.create(
-            type, value,
-            lineStart + start, block.hash,
+            type,
+            value,
+            lineStart + start,
+            block.hash,
             lineStart + line.text.length
         )
         stack.add(block)

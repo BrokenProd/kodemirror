@@ -32,11 +32,7 @@ private val lsIndenter = Regex(
 
 private val lsKeywordend = "(?![\$\\w]|-[A-Za-z]|\\s*:(?![:=]))"
 
-private data class LsRule(
-    val token: String,
-    val regex: Regex,
-    val next: String? = null
-)
+private data class LsRule(val token: String, val regex: Regex, val next: String? = null)
 
 private val lsStringfill = LsRule(token = "string", regex = Regex("^.+"))
 
@@ -189,16 +185,9 @@ private fun buildLsRules(): Map<String, List<LsRule>> {
 
 private val lsRules = buildLsRules()
 
-data class LsLastToken(
-    var style: String? = null,
-    var indent: Int = 0,
-    var content: String = ""
-)
+data class LsLastToken(var style: String? = null, var indent: Int = 0, var content: String = "")
 
-data class LiveScriptState(
-    var next: String = "start",
-    var lastToken: LsLastToken = LsLastToken()
-)
+data class LiveScriptState(var next: String = "start", var lastToken: LsLastToken = LsLastToken())
 
 private fun lsTokenBase(stream: StringStream, state: LiveScriptState): String {
     val nextRule = state.next

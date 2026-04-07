@@ -31,9 +31,8 @@ import kotlin.test.assertTrue
 
 class MatchBracketsTest {
 
-    private fun createState(doc: String): EditorState {
-        return EditorState.create(EditorStateConfig(doc = doc.asDoc()))
-    }
+    private fun createState(doc: String): EditorState =
+        EditorState.create(EditorStateConfig(doc = doc.asDoc()))
 
     @Test
     fun matchParenthesesForward() {

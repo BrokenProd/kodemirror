@@ -21,9 +21,8 @@ package com.monkopedia.kodemirror.legacy.modes
 import com.monkopedia.kodemirror.language.StreamParser
 import com.monkopedia.kodemirror.language.StringStream
 
-private fun wordRegexpWebIdl(words: List<String>): Regex {
-    return Regex("^((" + words.joinToString(")|(") + "))\\b")
-}
+private fun wordRegexpWebIdl(words: List<String>): Regex =
+    Regex("^((" + words.joinToString(")|(") + "))\\b")
 
 private val webIdlBuiltinArray = listOf(
     "Clamp", "Constructor", "EnforceRange", "Exposed", "ImplicitThis",
@@ -130,8 +129,10 @@ val webIDL: StreamParser<WebIdlState> = object : StreamParser<WebIdlState> {
             val nextToken = stream.match(Regex("^\\s*(.+?)\\b"), false)
                 ?.groupValues?.getOrNull(1)
 
-            if (lastToken == ":" || lastToken == "implements" ||
-                nextToken == "implements" || nextToken == "="
+            if (lastToken == ":" ||
+                lastToken == "implements" ||
+                nextToken == "implements" ||
+                nextToken == "="
             ) {
                 return "builtin"
             } else {

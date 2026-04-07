@@ -248,7 +248,8 @@ val ecl: StreamParser<EclState> = object : StreamParser<EclState> {
             }
         } else if (punc == ctx.type) {
             eclPopContext(state)
-        } else if (ctx.type == "}" || ctx.type == "top" ||
+        } else if (ctx.type == "}" ||
+            ctx.type == "top" ||
             (ctx.type == "statement" && punc == "newstatement")
         ) {
             eclPushContext(state, stream.column(), "statement")

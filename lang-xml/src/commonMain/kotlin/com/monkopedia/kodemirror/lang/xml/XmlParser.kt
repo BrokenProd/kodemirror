@@ -44,8 +44,13 @@ private const val SLASH = 47
 private const val BANG = 33
 private const val QUESTION = 63
 
-private fun nameChar(ch: Int): Boolean = ch == 45 || ch == 46 || ch == 58 ||
-    ch in 65..90 || ch == 95 || ch in 97..122 || ch >= 161
+private fun nameChar(ch: Int): Boolean = ch == 45 ||
+    ch == 46 ||
+    ch == 58 ||
+    ch in 65..90 ||
+    ch == 95 ||
+    ch in 97..122 ||
+    ch >= 161
 
 private fun isSpace(ch: Int): Boolean = ch == 9 || ch == 10 || ch == 13 || ch == 32
 

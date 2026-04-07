@@ -93,7 +93,9 @@ val PostgreSQL: SQLDialect = SQLDialect.define(
         doubleDollarQuotedStrings = true,
         operatorChars = "+-*/<>=~!@#%^&|`?",
         specialVar = "",
-        keywords = SQL_KEYWORDS + "abort abs absent access according ada admin aggregate alias also always " +
+        keywords =
+        SQL_KEYWORDS +
+            "abort abs absent access according ada admin aggregate alias also always " +
             "analyse analyze array_agg array_max_cardinality asensitive assert assignment asymmetric " +
             "atomic attach attribute attributes avg backward base64 begin_frame begin_partition bernoulli " +
             "bit_length blocked bom cache called cardinality catalog_name ceil ceiling chain char_length " +
@@ -149,7 +151,8 @@ val PostgreSQL: SQLDialect = SQLDialect.define(
             "width_bucket window within wrapper xmlagg xmlattributes xmlbinary xmlcast xmlcomment " +
             "xmlconcat xmldeclaration xmldocument xmlelement xmlexists xmlforest xmliterate xmlnamespaces " +
             "xmlparse xmlpi xmlquery xmlroot xmlschema xmlserialize xmltable xmltext xmlvalidate yes",
-        types = SQL_TYPES + "bigint int8 bigserial serial8 varbit bool box bytea cidr circle precision " +
+        types =
+        SQL_TYPES + "bigint int8 bigserial serial8 varbit bool box bytea cidr circle precision " +
             "float8 inet int4 json jsonb line lseg macaddr macaddr8 money numeric pg_lsn point polygon " +
             "float4 int2 smallserial serial2 serial serial4 text timetz timestamptz tsquery tsvector " +
             "txid_snapshot uuid xml"
@@ -220,7 +223,9 @@ val MariaSQL: SQLDialect = SQLDialect.define(
         spaceAfterDashes = true,
         specialVar = "@?",
         identifierQuotes = "`",
-        keywords = SQL_KEYWORDS + "always generated groupby_concat hard persistent shutdown soft virtual " + mySQL_KEYWORDS,
+        keywords =
+        SQL_KEYWORDS + "always generated groupby_concat hard persistent shutdown soft virtual " +
+            mySQL_KEYWORDS,
         types = mySQL_TYPES,
         builtin = mySQLBuiltin
     )
@@ -313,7 +318,9 @@ val MSSQL: SQLDialect = SQLDialect.define(
             "readcommittedlock readpast readuncommitted repeatableread rowlock serializable snapshot " +
             "spatial_window_max_cells tablock tablockx updlock xlock keepidentity keepdefaults " +
             "ignore_constraints ignore_triggers",
-        types = SQL_TYPES + "smalldatetime datetimeoffset datetime2 datetime bigint smallint smallmoney " +
+        types =
+        SQL_TYPES +
+            "smalldatetime datetimeoffset datetime2 datetime bigint smallint smallmoney " +
             "tinyint money real text nvarchar ntext varbinary image hierarchyid uniqueidentifier " +
             "sql_variant xml",
         builtin = mssqlBuiltin,
@@ -328,12 +335,15 @@ val MSSQL: SQLDialect = SQLDialect.define(
  */
 val SQLite: SQLDialect = SQLDialect.define(
     SqlDialectDef(
-        keywords = SQL_KEYWORDS + "abort analyze attach autoincrement conflict database detach exclusive " +
+        keywords =
+        SQL_KEYWORDS + "abort analyze attach autoincrement conflict database detach exclusive " +
             "fail glob ignore index indexed instead isnull notnull offset plan pragma query raise regexp " +
             "reindex rename replace temp vacuum virtual",
-        types = SQL_TYPES + "bool blob long longblob longtext medium mediumblob mediumint mediumtext " +
+        types =
+        SQL_TYPES + "bool blob long longblob longtext medium mediumblob mediumint mediumtext " +
             "tinyblob tinyint tinytext text bigint int2 int8 unsigned signed real",
-        builtin = "auth backup bail changes clone databases dbinfo dump echo eqp explain fullschema " +
+        builtin =
+        "auth backup bail changes clone databases dbinfo dump echo eqp explain fullschema " +
             "headers help import imposter indexes iotrace lint load log mode nullvalue once print " +
             "prompt quit restore save scanstats separator shell show stats system tables testcase " +
             "timeout timer trace vfsinfo vfslist vfsname width",
@@ -355,7 +365,9 @@ val Cassandra: SQLDialect = SQLDialect.define(
             "permission permissions primary quorum rename revoke schema select set storage superuser " +
             "table three to token truncate ttl two type unlogged update use user users using values " +
             "where with writetime infinity NaN",
-        types = SQL_TYPES + "ascii bigint blob counter frozen inet list map static text timeuuid tuple uuid varint",
+        types =
+        SQL_TYPES +
+            "ascii bigint blob counter frozen inet list map static text timeuuid tuple uuid varint",
         slashComments = true
     )
 )
@@ -365,7 +377,8 @@ val Cassandra: SQLDialect = SQLDialect.define(
  */
 val PLSQL: SQLDialect = SQLDialect.define(
     SqlDialectDef(
-        keywords = SQL_KEYWORDS + "abort accept access add all alter and any arraylen as asc assert " +
+        keywords =
+        SQL_KEYWORDS + "abort accept access add all alter and any arraylen as asc assert " +
             "assign at attributes audit authorization avg base_table begin between binary_integer body " +
             "by case cast char_base check close cluster clusters colauth column comment commit compress " +
             "connected constant constraint crash create current currval cursor data_base database dba " +
@@ -385,7 +398,8 @@ val PLSQL: SQLDialect = SQLDialect.define(
             "tablespace task terminate then to trigger truncate type union unique unlimited " +
             "unrecoverable unusable update use using validate value values variable view views when " +
             "whenever where while with work",
-        builtin = "appinfo arraysize autocommit autoprint autorecovery autotrace blockterminator break " +
+        builtin =
+        "appinfo arraysize autocommit autoprint autorecovery autotrace blockterminator break " +
             "btitle cmdsep colsep compatibility compute concat copycommit copytypecheck define echo " +
             "editfile embedded feedback flagger flush heading headsep instance linesize lno loboffset " +
             "logsource longchunksize markup native newpage numformat numwidth pagesize pause pno " +
@@ -393,7 +407,9 @@ val PLSQL: SQLDialect = SQLDialect.define(
             "sqlblanklines sqlcase sqlcode sqlcontinue sqlnumber sqlpluscompatibility sqlprefix " +
             "sqlprompt sqlterminator suffix tab term termout timing trimout trimspool ttitle underline " +
             "verify version wrap",
-        types = SQL_TYPES + "ascii bfile bfilename bigserial bit blob dec long number nvarchar nvarchar2 " +
+        types =
+        SQL_TYPES +
+            "ascii bfile bfilename bigserial bit blob dec long number nvarchar nvarchar2 " +
             "serial smallint string text uid varchar2 xml",
         operatorChars = "*/+-%<>!=~",
         doubleQuotedStrings = true,

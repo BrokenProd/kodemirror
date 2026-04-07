@@ -95,8 +95,11 @@ private fun findContext(context: CompletionContext): CompletionContext2? {
     }
     val word = context.matchBefore(Regex("""[\w\u00c0-\uffff]+$"""))
     if (word != null) return CompletionContext2(type = "expression", from = word.from)
-    if (context.explicit && node.name != "CommentText" && node.name != "StringLiteral" &&
-        node.name != "NumberLiteral" && node.name != "InlineComment"
+    if (context.explicit &&
+        node.name != "CommentText" &&
+        node.name != "StringLiteral" &&
+        node.name != "NumberLiteral" &&
+        node.name != "InlineComment"
     ) {
         return CompletionContext2(type = "expression")
     }

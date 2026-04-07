@@ -61,59 +61,258 @@ private val S = TagSpec()
 
 @Suppress("ktlint:standard:max-line-length")
 private val DefaultTags: Map<String, TagSpec> = mapOf(
-    "a" to TagSpec(attrs = mapOf("href" to null, "ping" to null, "type" to null, "media" to null, "target" to Targets, "hreflang" to null)),
+    "a" to
+        TagSpec(
+            attrs = mapOf(
+                "href" to null,
+                "ping" to null,
+                "type" to null,
+                "media" to null,
+                "target" to Targets,
+                "hreflang" to null
+            )
+        ),
     "abbr" to S, "address" to S,
-    "area" to TagSpec(attrs = mapOf("alt" to null, "coords" to null, "href" to null, "target" to null, "ping" to null, "media" to null, "hreflang" to null, "type" to null, "shape" to listOf("default", "rect", "circle", "poly"))),
+    "area" to
+        TagSpec(
+            attrs = mapOf(
+                "alt" to null, "coords" to null, "href" to null, "target" to null,
+                "ping" to null, "media" to null, "hreflang" to null, "type" to null,
+                "shape" to listOf("default", "rect", "circle", "poly")
+            )
+        ),
     "article" to S, "aside" to S,
-    "audio" to TagSpec(attrs = mapOf("src" to null, "mediagroup" to null, "crossorigin" to listOf("anonymous", "use-credentials"), "preload" to listOf("none", "metadata", "auto"), "autoplay" to listOf("autoplay"), "loop" to listOf("loop"), "controls" to listOf("controls"))),
+    "audio" to
+        TagSpec(
+            attrs = mapOf(
+                "src" to null,
+                "mediagroup" to null,
+                "crossorigin" to listOf("anonymous", "use-credentials"),
+                "preload" to listOf("none", "metadata", "auto"),
+                "autoplay" to listOf("autoplay"),
+                "loop" to listOf("loop"),
+                "controls" to listOf("controls")
+            )
+        ),
     "b" to S,
     "base" to TagSpec(attrs = mapOf("href" to null, "target" to Targets)),
     "bdi" to S, "bdo" to S,
     "blockquote" to TagSpec(attrs = mapOf("cite" to null)),
     "body" to S, "br" to S,
-    "button" to TagSpec(attrs = mapOf("form" to null, "formaction" to null, "name" to null, "value" to null, "autofocus" to listOf("autofocus"), "disabled" to listOf("autofocus"), "formenctype" to Encs, "formmethod" to Methods, "formnovalidate" to listOf("novalidate"), "formtarget" to Targets, "type" to listOf("submit", "reset", "button"))),
+    "button" to
+        TagSpec(
+            attrs = mapOf(
+                "form" to null, "formaction" to null, "name" to null, "value" to null,
+                "autofocus" to listOf("autofocus"), "disabled" to listOf("autofocus"),
+                "formenctype" to Encs, "formmethod" to Methods,
+                "formnovalidate" to listOf("novalidate"), "formtarget" to Targets,
+                "type" to listOf("submit", "reset", "button")
+            )
+        ),
     "canvas" to TagSpec(attrs = mapOf("width" to null, "height" to null)),
     "caption" to S, "center" to S, "cite" to S, "code" to S,
     "col" to TagSpec(attrs = mapOf("span" to null)),
     "colgroup" to TagSpec(attrs = mapOf("span" to null)),
-    "command" to TagSpec(attrs = mapOf("type" to listOf("command", "checkbox", "radio"), "label" to null, "icon" to null, "radiogroup" to null, "command" to null, "title" to null, "disabled" to listOf("disabled"), "checked" to listOf("checked"))),
+    "command" to
+        TagSpec(
+            attrs = mapOf(
+                "type" to listOf("command", "checkbox", "radio"),
+                "label" to null,
+                "icon" to null,
+                "radiogroup" to null,
+                "command" to null,
+                "title" to null,
+                "disabled" to listOf("disabled"),
+                "checked" to listOf("checked")
+            )
+        ),
     "data" to TagSpec(attrs = mapOf("value" to null)),
-    "datagrid" to TagSpec(attrs = mapOf("disabled" to listOf("disabled"), "multiple" to listOf("multiple"))),
+    "datagrid" to
+        TagSpec(attrs = mapOf("disabled" to listOf("disabled"), "multiple" to listOf("multiple"))),
     "datalist" to TagSpec(attrs = mapOf("data" to null)),
     "dd" to S,
     "del" to TagSpec(attrs = mapOf("cite" to null, "datetime" to null)),
     "details" to TagSpec(attrs = mapOf("open" to listOf("open"))),
     "dfn" to S, "div" to S, "dl" to S, "dt" to S, "em" to S,
-    "embed" to TagSpec(attrs = mapOf("src" to null, "type" to null, "width" to null, "height" to null)),
+    "embed" to
+        TagSpec(attrs = mapOf("src" to null, "type" to null, "width" to null, "height" to null)),
     "eventsource" to TagSpec(attrs = mapOf("src" to null)),
-    "fieldset" to TagSpec(attrs = mapOf("disabled" to listOf("disabled"), "form" to null, "name" to null)),
+    "fieldset" to
+        TagSpec(attrs = mapOf("disabled" to listOf("disabled"), "form" to null, "name" to null)),
     "figcaption" to S, "figure" to S, "footer" to S,
-    "form" to TagSpec(attrs = mapOf("action" to null, "name" to null, "accept-charset" to Charsets, "autocomplete" to listOf("on", "off"), "enctype" to Encs, "method" to Methods, "novalidate" to listOf("novalidate"), "target" to Targets)),
+    "form" to
+        TagSpec(
+            attrs = mapOf(
+                "action" to null,
+                "name" to null,
+                "accept-charset" to Charsets,
+                "autocomplete" to listOf("on", "off"),
+                "enctype" to Encs,
+                "method" to Methods,
+                "novalidate" to listOf("novalidate"),
+                "target" to Targets
+            )
+        ),
     "h1" to S, "h2" to S, "h3" to S, "h4" to S, "h5" to S, "h6" to S,
-    "head" to TagSpec(children = listOf("title", "base", "link", "style", "meta", "script", "noscript", "command")),
+    "head" to
+        TagSpec(
+            children = listOf(
+                "title",
+                "base",
+                "link",
+                "style",
+                "meta",
+                "script",
+                "noscript",
+                "command"
+            )
+        ),
     "header" to S, "hgroup" to S, "hr" to S,
     "html" to TagSpec(attrs = mapOf("manifest" to null)),
     "i" to S,
-    "iframe" to TagSpec(attrs = mapOf("src" to null, "srcdoc" to null, "name" to null, "width" to null, "height" to null, "sandbox" to listOf("allow-top-navigation", "allow-same-origin", "allow-forms", "allow-scripts"), "seamless" to listOf("seamless"))),
-    "img" to TagSpec(attrs = mapOf("alt" to null, "src" to null, "ismap" to null, "usemap" to null, "width" to null, "height" to null, "crossorigin" to listOf("anonymous", "use-credentials"))),
-    "input" to TagSpec(attrs = mapOf("alt" to null, "dirname" to null, "form" to null, "formaction" to null, "height" to null, "list" to null, "max" to null, "maxlength" to null, "min" to null, "name" to null, "pattern" to null, "placeholder" to null, "size" to null, "src" to null, "step" to null, "value" to null, "width" to null, "accept" to listOf("audio/*", "video/*", "image/*"), "autocomplete" to listOf("on", "off"), "autofocus" to listOf("autofocus"), "checked" to listOf("checked"), "disabled" to listOf("disabled"), "formenctype" to Encs, "formmethod" to Methods, "formnovalidate" to listOf("novalidate"), "formtarget" to Targets, "multiple" to listOf("multiple"), "readonly" to listOf("readonly"), "required" to listOf("required"), "type" to listOf("hidden", "text", "search", "tel", "url", "email", "password", "datetime", "date", "month", "week", "time", "datetime-local", "number", "range", "color", "checkbox", "radio", "file", "submit", "image", "reset", "button"))),
+    "iframe" to
+        TagSpec(
+            attrs = mapOf(
+                "src" to null,
+                "srcdoc" to null,
+                "name" to null,
+                "width" to null,
+                "height" to null,
+                "sandbox" to
+                    listOf(
+                        "allow-top-navigation",
+                        "allow-same-origin",
+                        "allow-forms",
+                        "allow-scripts"
+                    ),
+                "seamless" to listOf("seamless")
+            )
+        ),
+    "img" to
+        TagSpec(
+            attrs = mapOf(
+                "alt" to null,
+                "src" to null,
+                "ismap" to null,
+                "usemap" to null,
+                "width" to null,
+                "height" to null,
+                "crossorigin" to listOf("anonymous", "use-credentials")
+            )
+        ),
+    "input" to
+        TagSpec(
+            attrs = mapOf(
+                "alt" to null, "dirname" to null, "form" to null, "formaction" to null,
+                "height" to null, "list" to null, "max" to null, "maxlength" to null, "min" to null,
+                "name" to null, "pattern" to null, "placeholder" to null, "size" to null,
+                "src" to null, "step" to null, "value" to null, "width" to null,
+                "accept" to listOf("audio/*", "video/*", "image/*"),
+                "autocomplete" to listOf("on", "off"),
+                "autofocus" to listOf("autofocus"), "checked" to listOf("checked"),
+                "disabled" to listOf("disabled"), "formenctype" to Encs,
+                "formmethod" to Methods,
+                "formnovalidate" to listOf("novalidate"),
+                "formtarget" to Targets,
+                "multiple" to listOf("multiple"),
+                "readonly" to listOf("readonly"),
+                "required" to listOf("required"),
+                "type" to
+                    listOf("hidden", "text", "search", "tel", "url", "email", "password", "datetime", "date", "month", "week", "time", "datetime-local", "number", "range", "color", "checkbox", "radio", "file", "submit", "image", "reset", "button")
+            )
+        ),
     "ins" to TagSpec(attrs = mapOf("cite" to null, "datetime" to null)),
     "kbd" to S,
-    "keygen" to TagSpec(attrs = mapOf("challenge" to null, "form" to null, "name" to null, "autofocus" to listOf("autofocus"), "disabled" to listOf("disabled"), "keytype" to listOf("RSA"))),
+    "keygen" to
+        TagSpec(
+            attrs = mapOf(
+                "challenge" to null,
+                "form" to null,
+                "name" to null,
+                "autofocus" to listOf("autofocus"),
+                "disabled" to listOf("disabled"),
+                "keytype" to listOf("RSA")
+            )
+        ),
     "label" to TagSpec(attrs = mapOf("for" to null, "form" to null)),
     "legend" to S,
     "li" to TagSpec(attrs = mapOf("value" to null)),
-    "link" to TagSpec(attrs = mapOf("href" to null, "type" to null, "hreflang" to null, "media" to null, "sizes" to listOf("all", "16x16", "16x16 32x32", "16x16 32x32 64x64"))),
+    "link" to
+        TagSpec(
+            attrs = mapOf(
+                "href" to null,
+                "type" to null,
+                "hreflang" to null,
+                "media" to null,
+                "sizes" to listOf("all", "16x16", "16x16 32x32", "16x16 32x32 64x64")
+            )
+        ),
     "map" to TagSpec(attrs = mapOf("name" to null)),
     "mark" to S,
-    "menu" to TagSpec(attrs = mapOf("label" to null, "type" to listOf("list", "context", "toolbar"))),
-    "meta" to TagSpec(attrs = mapOf("content" to null, "charset" to Charsets, "name" to listOf("viewport", "application-name", "author", "description", "generator", "keywords"), "http-equiv" to listOf("content-language", "content-type", "default-style", "refresh"))),
-    "meter" to TagSpec(attrs = mapOf("value" to null, "min" to null, "low" to null, "high" to null, "max" to null, "optimum" to null)),
+    "menu" to
+        TagSpec(attrs = mapOf("label" to null, "type" to listOf("list", "context", "toolbar"))),
+    "meta" to
+        TagSpec(
+            attrs = mapOf(
+                "content" to null,
+                "charset" to Charsets,
+                "name" to
+                    listOf(
+                        "viewport",
+                        "application-name",
+                        "author",
+                        "description",
+                        "generator",
+                        "keywords"
+                    ),
+                "http-equiv" to
+                    listOf("content-language", "content-type", "default-style", "refresh")
+            )
+        ),
+    "meter" to
+        TagSpec(
+            attrs = mapOf(
+                "value" to null,
+                "min" to null,
+                "low" to null,
+                "high" to null,
+                "max" to null,
+                "optimum" to null
+            )
+        ),
     "nav" to S, "noscript" to S,
-    "object" to TagSpec(attrs = mapOf("data" to null, "type" to null, "name" to null, "usemap" to null, "form" to null, "width" to null, "height" to null, "typemustmatch" to listOf("typemustmatch"))),
-    "ol" to TagSpec(attrs = mapOf("reversed" to listOf("reversed"), "start" to null, "type" to listOf("1", "a", "A", "i", "I")), children = listOf("li", "script", "template", "ul", "ol")),
+    "object" to
+        TagSpec(
+            attrs = mapOf(
+                "data" to null,
+                "type" to null,
+                "name" to null,
+                "usemap" to null,
+                "form" to null,
+                "width" to null,
+                "height" to null,
+                "typemustmatch" to listOf("typemustmatch")
+            )
+        ),
+    "ol" to
+        TagSpec(
+            attrs = mapOf(
+                "reversed" to listOf("reversed"),
+                "start" to null,
+                "type" to listOf("1", "a", "A", "i", "I")
+            ),
+            children = listOf("li", "script", "template", "ul", "ol")
+        ),
     "optgroup" to TagSpec(attrs = mapOf("disabled" to listOf("disabled"), "label" to null)),
-    "option" to TagSpec(attrs = mapOf("disabled" to listOf("disabled"), "label" to null, "selected" to listOf("selected"), "value" to null)),
+    "option" to
+        TagSpec(
+            attrs = mapOf(
+                "disabled" to listOf("disabled"),
+                "label" to null,
+                "selected" to listOf("selected"),
+                "value" to null
+            )
+        ),
     "output" to TagSpec(attrs = mapOf("for" to null, "form" to null, "name" to null)),
     "p" to S,
     "param" to TagSpec(attrs = mapOf("name" to null, "value" to null)),
@@ -121,28 +320,83 @@ private val DefaultTags: Map<String, TagSpec> = mapOf(
     "progress" to TagSpec(attrs = mapOf("value" to null, "max" to null)),
     "q" to TagSpec(attrs = mapOf("cite" to null)),
     "rp" to S, "rt" to S, "ruby" to S, "samp" to S,
-    "script" to TagSpec(attrs = mapOf("type" to listOf("text/javascript"), "src" to null, "async" to listOf("async"), "defer" to listOf("defer"), "charset" to Charsets)),
+    "script" to
+        TagSpec(
+            attrs = mapOf(
+                "type" to listOf("text/javascript"),
+                "src" to null,
+                "async" to listOf("async"),
+                "defer" to listOf("defer"),
+                "charset" to Charsets
+            )
+        ),
     "section" to S,
-    "select" to TagSpec(attrs = mapOf("form" to null, "name" to null, "size" to null, "autofocus" to listOf("autofocus"), "disabled" to listOf("disabled"), "multiple" to listOf("multiple"))),
+    "select" to
+        TagSpec(
+            attrs = mapOf(
+                "form" to null,
+                "name" to null,
+                "size" to null,
+                "autofocus" to listOf("autofocus"),
+                "disabled" to listOf("disabled"),
+                "multiple" to listOf("multiple")
+            )
+        ),
     "slot" to TagSpec(attrs = mapOf("name" to null)),
     "small" to S,
     "source" to TagSpec(attrs = mapOf("src" to null, "type" to null, "media" to null)),
     "span" to S, "strong" to S,
-    "style" to TagSpec(attrs = mapOf("type" to listOf("text/css"), "media" to null, "scoped" to null)),
+    "style" to
+        TagSpec(attrs = mapOf("type" to listOf("text/css"), "media" to null, "scoped" to null)),
     "sub" to S, "summary" to S, "sup" to S, "table" to S,
     "tbody" to S,
     "td" to TagSpec(attrs = mapOf("colspan" to null, "rowspan" to null, "headers" to null)),
     "template" to S,
-    "textarea" to TagSpec(attrs = mapOf("dirname" to null, "form" to null, "maxlength" to null, "name" to null, "placeholder" to null, "rows" to null, "cols" to null, "autofocus" to listOf("autofocus"), "disabled" to listOf("disabled"), "readonly" to listOf("readonly"), "required" to listOf("required"), "wrap" to listOf("soft", "hard"))),
+    "textarea" to
+        TagSpec(
+            attrs = mapOf(
+                "dirname" to null, "form" to null, "maxlength" to null, "name" to null,
+                "placeholder" to null, "rows" to null, "cols" to null,
+                "autofocus" to listOf("autofocus"), "disabled" to listOf("disabled"),
+                "readonly" to listOf("readonly"), "required" to listOf("required"),
+                "wrap" to listOf("soft", "hard")
+            )
+        ),
     "tfoot" to S,
-    "th" to TagSpec(attrs = mapOf("colspan" to null, "rowspan" to null, "headers" to null, "scope" to listOf("row", "col", "rowgroup", "colgroup"))),
+    "th" to
+        TagSpec(
+            attrs = mapOf(
+                "colspan" to null,
+                "rowspan" to null,
+                "headers" to null,
+                "scope" to listOf("row", "col", "rowgroup", "colgroup")
+            )
+        ),
     "thead" to S,
     "time" to TagSpec(attrs = mapOf("datetime" to null)),
     "title" to S, "tr" to S,
-    "track" to TagSpec(attrs = mapOf("src" to null, "label" to null, "default" to null, "kind" to listOf("subtitles", "captions", "descriptions", "chapters", "metadata"), "srclang" to null)),
+    "track" to
+        TagSpec(
+            attrs = mapOf(
+                "src" to null,
+                "label" to null,
+                "default" to null,
+                "kind" to listOf("subtitles", "captions", "descriptions", "chapters", "metadata"),
+                "srclang" to null
+            )
+        ),
     "ul" to TagSpec(children = listOf("li", "script", "template", "ul", "ol")),
     "var" to S,
-    "video" to TagSpec(attrs = mapOf("src" to null, "poster" to null, "width" to null, "height" to null, "crossorigin" to listOf("anonymous", "use-credentials"), "preload" to listOf("auto", "metadata", "none"), "autoplay" to listOf("autoplay"), "mediagroup" to listOf("movie"), "muted" to listOf("muted"), "controls" to listOf("controls"))),
+    "video" to
+        TagSpec(
+            attrs = mapOf(
+                "src" to null, "poster" to null, "width" to null, "height" to null,
+                "crossorigin" to listOf("anonymous", "use-credentials"),
+                "preload" to listOf("auto", "metadata", "none"), "autoplay" to listOf("autoplay"),
+                "mediagroup" to listOf("movie"), "muted" to listOf("muted"),
+                "controls" to listOf("controls")
+            )
+        ),
     "wbr" to S
 )
 
@@ -283,7 +537,8 @@ private fun openTags(doc: Text, tree: SyntaxNode): List<String> {
     while (parent != null && !parent.type.isTop) {
         val tagName = elementName(doc, parent)
         if (tagName.isNotEmpty() && parent.lastChild?.name == "CloseTag") break
-        if (tagName.isNotEmpty() && !open.contains(tagName) &&
+        if (tagName.isNotEmpty() &&
+            !open.contains(tagName) &&
             (tree.name == "EndTag" || tree.from >= (parent.firstChild?.to ?: 0))
         ) {
             open.add(tagName)

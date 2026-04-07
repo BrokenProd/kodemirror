@@ -21,9 +21,8 @@ package com.monkopedia.kodemirror.legacy.modes
 import com.monkopedia.kodemirror.language.StreamParser
 import com.monkopedia.kodemirror.language.StringStream
 
-private fun octaveWordRegexp(words: List<String>): Regex {
-    return Regex("^(?:(?:${words.joinToString(")|(?:")}))\\b")
-}
+private fun octaveWordRegexp(words: List<String>): Regex =
+    Regex("^(?:(?:${words.joinToString(")|(?:")}))\\b")
 
 private val octaveSingleOperators = Regex("^[+\\-*/&|^~<>!@'\\\\]")
 private val octaveSingleDelimiters = Regex("^[(\\[{},;.:=]")
@@ -62,9 +61,7 @@ private val octaveKeywords = octaveWordRegexp(
 
 private val octaveNanInf = octaveWordRegexp(listOf("nan", "NaN", "inf", "Inf"))
 
-data class OctaveState(
-    var tokenize: (StringStream, OctaveState) -> String?
-)
+data class OctaveState(var tokenize: (StringStream, OctaveState) -> String?)
 
 private fun tokenTranspose(stream: StringStream, state: OctaveState): String? {
     if (!stream.sol() && stream.peek() == "'") {

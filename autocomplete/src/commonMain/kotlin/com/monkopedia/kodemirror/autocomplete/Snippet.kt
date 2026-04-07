@@ -55,10 +55,7 @@ data class SnippetField(val name: String, val from: DocPos, val to: DocPos)
  * Tracks the currently active snippet insertion — the list of tab-stop
  * [fields] and the index of the field the cursor is at.
  */
-data class ActiveSnippet(
-    val fields: List<SnippetField>,
-    val fieldIndex: Int
-) {
+data class ActiveSnippet(val fields: List<SnippetField>, val fieldIndex: Int) {
     /** The field the cursor is currently on, or `null` if [fieldIndex] is out of bounds. */
     val currentField: SnippetField? get() = fields.getOrNull(fieldIndex)
 }
@@ -101,10 +98,7 @@ val snippetState: StateField<ActiveSnippet?> = StateField.define(
 
 private data class ParsedField(val name: String, val index: Int)
 
-private data class ParsedSnippet(
-    val parts: List<String>,
-    val fields: List<ParsedField>
-)
+private data class ParsedSnippet(val parts: List<String>, val fields: List<ParsedField>)
 
 private fun parseTemplate(template: String): ParsedSnippet {
     val parts = mutableListOf<String>()
@@ -203,9 +197,8 @@ fun snippet(template: String): (CompletionApplyContext) -> Unit {
  * @param completion A base completion whose [Completion.label], [Completion.detail],
  *   etc. are used. The [Completion.applyFn] is overridden with the snippet applicator.
  */
-fun snippetCompletion(template: String, completion: Completion): Completion {
-    return completion.copy(applyFn = snippet(template))
-}
+fun snippetCompletion(template: String, completion: Completion): Completion =
+    completion.copy(applyFn = snippet(template))
 
 // ── Snippet state queries ──
 
@@ -300,9 +293,9 @@ val snippetFieldActiveBackground = ThemeKey(default = Color(0x66004488))
 
 // ── Decoration plugin ──
 
-private class SnippetDecorationPlugin(
-    private val view: EditorSession
-) : PluginValue, DecorationSource {
+private class SnippetDecorationPlugin(private val view: EditorSession) :
+    PluginValue,
+    DecorationSource {
     override var decorations: DecorationSet = buildDecorations()
         private set
 

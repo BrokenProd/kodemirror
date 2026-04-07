@@ -30,11 +30,7 @@ class StContext(
     val parent: StContext?
 )
 
-data class StToken(
-    val name: String?,
-    val context: StContext,
-    val eos: Boolean
-)
+data class StToken(val name: String?, val context: StContext, val eos: Boolean)
 
 data class SmalltalkState(
     var context: Any? = null,
@@ -212,7 +208,8 @@ val smalltalk: StreamParser<SmalltalkState> = object : StreamParser<SmalltalkSta
     override fun indent(state: SmalltalkState, textAfter: String, context: IndentContext): Int {
         val i = if (
             state.stContext.next == ::stNext &&
-            textAfter.isNotEmpty() && textAfter[0] == ']'
+            textAfter.isNotEmpty() &&
+            textAfter[0] == ']'
         ) {
             -1
         } else {

@@ -47,9 +47,13 @@ val troff: StreamParser<TroffState> = object : StreamParser<TroffState> {
         val ch = stream.next() ?: return null
 
         if (ch == "\\") {
-            if (stream.match("fB") || stream.match("fR") || stream.match("fI") ||
-                stream.match("u") || stream.match("d") ||
-                stream.match("%") || stream.match("&")
+            if (stream.match("fB") ||
+                stream.match("fR") ||
+                stream.match("fI") ||
+                stream.match("u") ||
+                stream.match("d") ||
+                stream.match("%") ||
+                stream.match("&")
             ) {
                 return "string"
             }
@@ -78,8 +82,10 @@ val troff: StreamParser<TroffState> = object : StreamParser<TroffState> {
             if (stream.match("B ") || stream.match("I ") || stream.match("R ")) {
                 return "attribute"
             }
-            if (stream.match("TH ") || stream.match("SH ") ||
-                stream.match("SS ") || stream.match("HP ")
+            if (stream.match("TH ") ||
+                stream.match("SH ") ||
+                stream.match("SS ") ||
+                stream.match("HP ")
             ) {
                 stream.skipToEnd()
                 return "quote"

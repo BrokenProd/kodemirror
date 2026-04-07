@@ -115,9 +115,7 @@ val commentKeymap: List<KeyBinding> = listOf(
     KeyBinding(key = "Alt-Shift-a", run = toggleBlockComment)
 )
 
-private fun getCommentTokens(state: EditorState): CommentTokens? {
-    return state.facet(commentTokens)
-}
+private fun getCommentTokens(state: EditorState): CommentTokens? = state.facet(commentTokens)
 
 private fun toggleLineComment(view: EditorSession, lineToken: String): Boolean {
     val state = view.state

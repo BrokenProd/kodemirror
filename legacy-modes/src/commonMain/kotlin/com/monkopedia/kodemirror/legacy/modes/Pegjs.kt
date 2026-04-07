@@ -31,9 +31,8 @@ data class PegjsState(
     var localState: Unit? = null
 )
 
-private fun pegjsIdentifier(stream: StringStream): MatchResult? {
-    return stream.match(Regex("^[a-zA-Z_][a-zA-Z0-9_]*"))
-}
+private fun pegjsIdentifier(stream: StringStream): MatchResult? =
+    stream.match(Regex("^[a-zA-Z_][a-zA-Z0-9_]*"))
 
 /** Stream parser for PEG.js. */
 val pegjs: StreamParser<PegjsState> = object : StreamParser<PegjsState> {
@@ -44,7 +43,8 @@ val pegjs: StreamParser<PegjsState> = object : StreamParser<PegjsState> {
     override fun copyState(state: PegjsState) = state.copy()
 
     override fun token(stream: StringStream, state: PegjsState): String? {
-        if (!state.inString && !state.inComment &&
+        if (!state.inString &&
+            !state.inComment &&
             (stream.peek() == "\"" || stream.peek() == "'")
         ) {
             state.stringType = stream.peek()

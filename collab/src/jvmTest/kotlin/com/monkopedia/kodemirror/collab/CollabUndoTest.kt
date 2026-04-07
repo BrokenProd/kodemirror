@@ -453,11 +453,7 @@ class CollabUndoTest {
 
     @Test
     fun supportsSharedEffects() {
-        data class Mark(
-            val from: DocPos,
-            val to: DocPos,
-            val id: String
-        ) {
+        data class Mark(val from: DocPos, val to: DocPos, val id: String) {
             fun map(mapping: ChangeDesc): Mark? {
                 val newFrom = mapping.mapPos(from, 1)
                 val newTo = mapping.mapPos(to, -1)
