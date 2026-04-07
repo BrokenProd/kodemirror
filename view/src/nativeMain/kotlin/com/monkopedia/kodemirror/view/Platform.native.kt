@@ -56,20 +56,3 @@ internal actual fun platformUnregisterKeyHandler() {
 internal actual fun platformFocusInput() {
     // No-op on native — Compose manages focus natively
 }
-
-internal actual fun platformClipboardGet(): String? {
-    // TODO: implement native clipboard (NSPasteboard on macOS, UIPasteboard on iOS)
-    return null
-}
-
-internal actual fun platformClipboardSet(text: String) {
-    // TODO: implement native clipboard
-}
-
-internal actual fun platformRegisterPasteHandler(handler: (String) -> Unit) {
-    // No-op on native — paste flows through Compose's text input
-}
-
-internal actual fun platformUnregisterPasteHandler() {
-    // No-op
-}

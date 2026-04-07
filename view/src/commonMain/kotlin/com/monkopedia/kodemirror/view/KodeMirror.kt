@@ -69,6 +69,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextLayoutResult
@@ -118,41 +119,22 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     }
 
     val compositionScope = rememberCoroutineScope()
+    val clipboardManager = LocalClipboardManager.current
 
     // Wire up session internals
     DisposableEffect(session) {
         impl.pluginHost = pluginHost
         impl.lineLayoutCache = lineLayoutCache
         impl.backingCoroutineScope = compositionScope
+        impl.clipboardManager = clipboardManager
         onDispose {
             pluginHost.destroy()
             lineLayoutCache.clear()
             impl.pluginHost = null
             impl.lineLayoutCache = null
             impl.backingCoroutineScope = null
+            impl.clipboardManager = null
         }
-    }
-
-    // Event-driven paste handler for wasmJs (where platformClipboardGet()
-    // returns null). The JS paste event listener invokes this callback directly.
-    DisposableEffect(session) {
-        platformRegisterPasteHandler { pasteText ->
-            val sel = session.state.selection.main
-            session.dispatch(
-                TransactionSpec(
-                    changes = ChangeSpec.Single(
-                        from = sel.from,
-                        to = sel.to,
-                        insert = pasteText.asInsert()
-                    ),
-                    selection = SelectionSpec.CursorSpec(
-                        DocPos(sel.from.value + pasteText.length)
-                    ),
-                    userEvent = "input.paste"
-                )
-            )
-        }
-        onDispose { platformUnregisterPasteHandler() }
     }
 
     // Derive rendering data from current state

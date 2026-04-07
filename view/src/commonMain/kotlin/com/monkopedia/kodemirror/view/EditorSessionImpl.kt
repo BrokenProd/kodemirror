@@ -21,6 +21,7 @@ package com.monkopedia.kodemirror.view
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.ClipboardManager
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.LineNumber
@@ -47,6 +48,9 @@ internal class EditorSessionImpl(
 
     /** Composition-scoped coroutine scope (initialised by the composable). */
     internal var backingCoroutineScope: CoroutineScope? = null
+
+    /** Clipboard manager provided by the composition (initialised by the composable). */
+    internal var clipboardManager: ClipboardManager? = null
 
     override val coroutineScope: CoroutineScope
         get() = backingCoroutineScope

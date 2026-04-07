@@ -21,9 +21,6 @@ package com.monkopedia.kodemirror.view
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.utf16CodePoint
-import java.awt.Toolkit
-import java.awt.datatransfer.DataFlavor
-import java.awt.datatransfer.StringSelection
 
 internal actual fun platformOsName(): String = System.getProperty("os.name") ?: "Linux"
 
@@ -63,23 +60,3 @@ internal actual fun platformUnregisterKeyHandler() {
 internal actual fun platformFocusInput() {
     // No-op on JVM — Compose Desktop manages focus natively
 }
-
-internal actual fun platformClipboardGet(): String? = try {
-    val clipboard = Toolkit.getDefaultToolkit().systemClipboard
-    clipboard.getData(DataFlavor.stringFlavor) as? String
-} catch (_: Exception) {
-    null
-}
-
-internal actual fun platformClipboardSet(text: String) {
-    try {
-        val clipboard = Toolkit.getDefaultToolkit().systemClipboard
-        clipboard.setContents(StringSelection(text), null)
-    } catch (_: Exception) {
-        // Clipboard not available
-    }
-}
-
-internal actual fun platformRegisterPasteHandler(handler: (String) -> Unit) {}
-
-internal actual fun platformUnregisterPasteHandler() {}

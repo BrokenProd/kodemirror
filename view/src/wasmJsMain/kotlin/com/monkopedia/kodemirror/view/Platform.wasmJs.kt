@@ -33,9 +33,6 @@ import kotlin.js.JsString
 )
 private external fun detectOsFromBrowser(): String
 
-@JsFun("(text) => { navigator.clipboard.writeText(text); }")
-private external fun jsClipboardWrite(text: String)
-
 // Capture the browser's layout-aware event.key on every keydown.
 // Installed eagerly at module load so it's ready before the first key event.
 // Uses capture phase on document so it fires before Skiko/Compose processes
@@ -80,14 +77,6 @@ private external fun jsClipboardWrite(text: String)
                 e.preventDefault();
             }
         }
-    }, true);
-    document.addEventListener('paste', function(e) {
-        var text = (e.clipboardData || window.clipboardData).getData('text');
-        if (text && globalThis.__kodePasteCallback) {
-            globalThis.__kodePasteCallback(text);
-        }
-        e.stopPropagation();
-        e.preventDefault();
     }, true);
 }"""
 )
@@ -143,12 +132,6 @@ internal actual fun platformFocusInput() {
     platformFocusCanvas()
 }
 
-@JsFun("(cb) => { globalThis.__kodePasteCallback = cb; }")
-private external fun jsSetPasteCallback(callback: (JsString) -> Unit)
-
-@JsFun("() => { globalThis.__kodePasteCallback = null; }")
-private external fun jsClearPasteCallback()
-
 // Eagerly install the capture listener when this file is first loaded.
 // platformOsName() is called during currentOs initialization (before any
 // key events), which triggers loading of this file and runs this initializer.
@@ -192,28 +175,4 @@ actual fun keyEventLayoutKey(event: KeyEvent): String? {
         return SHIFT_MAP[key[0]]?.toString() ?: key.uppercase()
     }
     return key
-}
-
-internal actual fun platformClipboardGet(): String? {
-    // Clipboard API on web is async; not supported in synchronous context.
-    // Returns null so clipboardPaste returns false, letting the browser's
-    // native paste event flow through to the hidden BasicTextField's
-    // onValueChange handler.
-    return null
-}
-
-internal actual fun platformClipboardSet(text: String) {
-    try {
-        jsClipboardWrite(text)
-    } catch (_: Throwable) {
-        // Clipboard API may not be available in all contexts
-    }
-}
-
-internal actual fun platformRegisterPasteHandler(handler: (String) -> Unit) {
-    jsSetPasteCallback { jsText -> handler(jsText.toString()) }
-}
-
-internal actual fun platformUnregisterPasteHandler() {
-    jsClearPasteCallback()
 }

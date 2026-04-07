@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.view
 
+import androidx.compose.ui.text.AnnotatedString
 import com.monkopedia.kodemirror.state.ChangeSpec
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.SelectionSpec
@@ -28,10 +29,11 @@ import com.monkopedia.kodemirror.state.asInsert
  * Copy the current selection to the system clipboard.
  */
 val clipboardCopy: (EditorSession) -> Boolean = { view ->
+    val impl = view as? EditorSessionImpl
     val sel = view.state.selection.main
     if (!sel.empty) {
         val text = view.state.doc.sliceString(sel.from, sel.to)
-        platformClipboardSet(text)
+        impl?.clipboardManager?.setText(AnnotatedString(text))
     }
     true
 }
@@ -40,10 +42,11 @@ val clipboardCopy: (EditorSession) -> Boolean = { view ->
  * Cut the current selection: copy to clipboard and delete.
  */
 val clipboardCut: (EditorSession) -> Boolean = { view ->
+    val impl = view as? EditorSessionImpl
     val sel = view.state.selection.main
     if (!sel.empty) {
         val text = view.state.doc.sliceString(sel.from, sel.to)
-        platformClipboardSet(text)
+        impl?.clipboardManager?.setText(AnnotatedString(text))
         view.dispatch(
             TransactionSpec(
                 changes = ChangeSpec.Single(from = sel.from, to = sel.to)
@@ -57,7 +60,8 @@ val clipboardCut: (EditorSession) -> Boolean = { view ->
  * Paste text from the system clipboard at the current cursor position.
  */
 val clipboardPaste: (EditorSession) -> Boolean = { view ->
-    val text = platformClipboardGet()
+    val impl = view as? EditorSessionImpl
+    val text = impl?.clipboardManager?.getText()?.text
     if (text != null && text.isNotEmpty()) {
         val sel = view.state.selection.main
         view.dispatch(
@@ -74,7 +78,7 @@ val clipboardPaste: (EditorSession) -> Boolean = { view ->
         )
         true
     } else {
-        // No clipboard text available (e.g. wasmJs async API).
+        // No clipboard text available.
         // Return false so the event propagates to the browser's native
         // paste mechanism via the hidden BasicTextField.
         false

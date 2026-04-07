@@ -72,24 +72,3 @@ internal expect fun platformUnregisterKeyHandler()
  * On JVM/Desktop, this is a no-op since Compose manages focus natively.
  */
 internal expect fun platformFocusInput()
-
-/** Read text from the system clipboard. Returns null if unavailable. */
-internal expect fun platformClipboardGet(): String?
-
-/** Write text to the system clipboard. */
-internal expect fun platformClipboardSet(text: String)
-
-/**
- * Register a callback to be invoked when the platform delivers paste text.
- *
- * On wasmJs, the browser clipboard API is async so [platformClipboardGet]
- * returns null. Instead, a DOM `paste` event listener captures clipboard
- * text and invokes [handler] directly. On JVM this is a no-op because
- * paste is handled synchronously through [platformClipboardGet].
- */
-internal expect fun platformRegisterPasteHandler(handler: (String) -> Unit)
-
-/**
- * Unregister the paste handler previously set by [platformRegisterPasteHandler].
- */
-internal expect fun platformUnregisterPasteHandler()
