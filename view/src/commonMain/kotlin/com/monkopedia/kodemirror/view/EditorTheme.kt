@@ -36,18 +36,33 @@ import com.monkopedia.kodemirror.state.Facet
 /**
  * Default font family for the editor.
  *
- * Uses [FontFamily.Monospace] which is the platform's default monospace font.
- * This works on all targets (JVM, Android, iOS, macOS, wasmJs).
+ * Uses [FontFamily.Monospace], which maps to the platform's default monospace
+ * font on JVM, Android, iOS, and macOS.
  *
- * For better typography (JetBrains Mono, RTL support, etc.), provide a
- * custom font via [editorContentStyle]:
- * ```
- * editorContentStyle.of(TextStyle(fontFamily = FontFamily(Font(Res.font.MyFont))))
+ * ## wasmJs / CanvasKit limitation
+ *
+ * On **wasmJs**, Compose renders via CanvasKit (Skiko), which maintains its
+ * own internal font registry separate from the OS font system. Generic family
+ * names such as `"Roboto Mono"` or `"JetBrains Mono"` **will not resolve**
+ * unless the font has been explicitly registered with CanvasKit. Even
+ * [FontFamily.Monospace] may fall back to a generic sans-serif glyph.
+ *
+ * To guarantee a specific monospace font on wasmJs (and all other targets),
+ * bundle the font as a Compose Resource and load it via
+ * [org.jetbrains.compose.resources.Font]:
+ *
+ * ```kotlin
+ * // In a @Composable context — Font() requires composition
+ * val monoFont = FontFamily(Font(Res.font.JetBrainsMono_Regular))
+ * val fontExtension = editorContentStyle.of(TextStyle(fontFamily = monoFont))
+ *
+ * // Pass the extension when creating the EditorState:
+ * val state = EditorState.create(
+ *     EditorStateConfig(extensions = listOf(basicSetup, fontExtension))
+ * )
  * ```
  *
- * On wasmJs, [FontFamily.Monospace] may not resolve to the preferred font.
- * The showcase uses `Font(Res.font.JetBrainsMono_Regular)` from bundled
- * resources for proper monospace rendering.
+ * See [editorContentStyle] for the full font-override API.
  */
 val defaultEditorFontFamily: FontFamily = FontFamily.Monospace
 
@@ -222,9 +237,34 @@ val defaultContentTextStyle: TextStyle = TextStyle(
  * // Override just font size:
  * editorContentStyle.of(TextStyle(fontSize = 18.sp, lineHeight = (18 * 1.4).sp))
  *
- * // Override font family:
- * editorContentStyle.of(TextStyle(fontFamily = myFont))
+ * // Override font family (works on all targets including wasmJs):
+ * editorContentStyle.of(TextStyle(fontFamily = myFontFamily))
  * ```
+ *
+ * ## wasmJs font loading
+ *
+ * On wasmJs system font names are not available to CanvasKit — fonts must be
+ * loaded from bundled Compose Resources. Because [org.jetbrains.compose.resources.Font]
+ * requires a composable context, build the extension inside a `@Composable`
+ * function and pass it to [EditorState][com.monkopedia.kodemirror.state.EditorState]:
+ *
+ * ```kotlin
+ * @Composable
+ * fun MyEditor() {
+ *     val monoFont = FontFamily(Font(Res.font.JetBrainsMono_Regular))
+ *     val session = rememberEditorSession(
+ *         EditorStateConfig(
+ *             extensions = listOf(
+ *                 basicSetup,
+ *                 editorContentStyle.of(TextStyle(fontFamily = monoFont))
+ *             )
+ *         )
+ *     )
+ *     KodeMirror(session)
+ * }
+ * ```
+ *
+ * See [defaultEditorFontFamily] for background on the wasmJs limitation.
  */
 val editorContentStyle: Facet<TextStyle, TextStyle> = Facet.define(
     combine = { values ->
