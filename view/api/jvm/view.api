@@ -645,6 +645,12 @@ public final class com/monkopedia/kodemirror/view/ReplaceDecorationSpec {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/monkopedia/kodemirror/view/SaveCommandKt {
+	public static final fun getOnSave ()Lcom/monkopedia/kodemirror/state/Facet;
+	public static final fun getSaveKeymap ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun save (Lcom/monkopedia/kodemirror/view/EditorSession;)Z
+}
+
 public final class com/monkopedia/kodemirror/view/ScrollMarginSpec {
 	public static final field $stable I
 	public fun <init> ()V
