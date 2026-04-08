@@ -173,7 +173,24 @@ object Vim : VimApiInterface {
         operators[name] = fn
     }
 
-    internal fun defineEx(name: String, prefix: String?, func: ExFn) {
+    /**
+     * Registers a custom ex command (invoked with `:name` in the editor).
+     *
+     * The [prefix] is the shortest unambiguous abbreviation that will also trigger the command.
+     * It must be a prefix of [name]. If `null` or empty, [name] itself is used as the prefix.
+     *
+     * Example:
+     * ```kotlin
+     * Vim.defineEx("write", "w") { cm, params ->
+     *     // handle :write or :w
+     * }
+     * ```
+     *
+     * @param name The full command name (e.g. `"write"`).
+     * @param prefix The short alias prefix (e.g. `"w"`), or `null` to use [name].
+     * @param func The handler called when the command is invoked.
+     */
+    fun defineEx(name: String, prefix: String?, func: ExFn) {
         val effectivePrefix = if (prefix.isNullOrEmpty()) name else prefix
         if (!name.startsWith(effectivePrefix)) {
             error("\"$effectivePrefix\" is not a prefix of \"$name\", command not registered")

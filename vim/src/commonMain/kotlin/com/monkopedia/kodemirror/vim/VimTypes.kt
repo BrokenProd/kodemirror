@@ -397,7 +397,22 @@ internal data class VimLastSelection(
 // Ex command params
 // ---------------------------------------------------------------------------
 
-internal data class ExParams(
+/**
+ * Parameters passed to a custom ex command handler registered via [Vim.defineEx].
+ *
+ * @property commandName The full name of the command that was invoked (e.g. `"write"`).
+ * @property argString The raw argument string following the command name.
+ * @property input The full raw input line from the ex command bar.
+ * @property args The argument string split on whitespace, or `null` if there were no arguments.
+ * @property line The line number the command was invoked on (0-based).
+ * @property lineEnd The end of the line range, if the command was given a range.
+ * @property hasLineRange Whether the command was invoked with an explicit line range.
+ * @property selectionLine The line number of the current selection start (0-based).
+ * @property selectionLineEnd The line number of the current selection end, if applicable.
+ * @property setCfg Key-value pairs from a `:set`-style argument, if present.
+ * @property callback An optional completion callback for async ex commands.
+ */
+data class ExParams(
     var commandName: String = "",
     var argString: String = "",
     var input: String = "",
@@ -484,7 +499,13 @@ internal typealias ActionFn = (
     vim: VimState
 ) -> Unit
 
-internal typealias ExFn = (
+/**
+ * Callback type for a custom ex command registered via [Vim.defineEx].
+ *
+ * @param cm The [VimEditor] instance for the active editor.
+ * @param params The [ExParams] containing arguments and context for the command.
+ */
+typealias ExFn = (
     cm: VimEditor,
     params: ExParams
 ) -> Unit
