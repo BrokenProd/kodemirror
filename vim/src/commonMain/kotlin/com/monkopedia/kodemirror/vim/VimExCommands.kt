@@ -18,6 +18,8 @@
  */
 package com.monkopedia.kodemirror.vim
 
+import com.monkopedia.kodemirror.view.save
+
 /**
  * All ex command functions. Each takes a VimEditor and ExParams.
  */
@@ -718,8 +720,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
     // write
     // -----------------------------------------------------------------------
     "write" to { cm, _ ->
-        // Save is not available in Compose. This is a no-op.
-        cm.signal("vim-write")
+        save(cm.session)
     },
 
     // -----------------------------------------------------------------------
