@@ -39,8 +39,15 @@ import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.ExtensionList
 import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.plus
+import com.monkopedia.kodemirror.themeamy.amy
+import com.monkopedia.kodemirror.themeayulight.ayuLight
+import com.monkopedia.kodemirror.themebespin.bespin
+import com.monkopedia.kodemirror.themecobalt.cobalt
+import com.monkopedia.kodemirror.themecoolglow.coolGlow
 import com.monkopedia.kodemirror.themedracula.dracula
-import com.monkopedia.kodemirror.themegithublight.gitHubLight
+import com.monkopedia.kodemirror.themenoctislilac.noctisLilac
+import com.monkopedia.kodemirror.themesolarizedlight.solarizedLight
+import com.monkopedia.kodemirror.themetomorrow.tomorrow
 import com.monkopedia.kodemirror.themonedark.oneDark
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.rememberEditorSession
@@ -53,8 +60,15 @@ private enum class LangChoice(val label: String, val ext: Extension, val doc: St
 private enum class ThemeChoice(val label: String, val ext: Extension) {
     NONE("Default", ExtensionList(emptyList())),
     ONE_DARK("One Dark", oneDark),
-    GITHUB("GitHub Light", gitHubLight),
-    DRACULA("Dracula", dracula)
+    DRACULA("Dracula", dracula),
+    AMY("Amy", amy),
+    AYU_LIGHT("Ayu Light", ayuLight),
+    BESPIN("Bespin", bespin),
+    COBALT("Cobalt", cobalt),
+    COOL_GLOW("Cool Glow", coolGlow),
+    NOCTIS_LILAC("Noctis Lilac", noctisLilac),
+    SOLARIZED_LIGHT("Solarized Light", solarizedLight),
+    TOMORROW("Tomorrow", tomorrow)
 }
 
 @Composable

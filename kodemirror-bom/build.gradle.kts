@@ -51,8 +51,22 @@ dependencies {
 
         // Themes
         api(project(":theme-one-dark"))
-        api(project(":theme-github-light"))
         api(project(":theme-dracula"))
+        api(project(":theme-amy"))
+        api(project(":theme-ayu-light"))
+        api(project(":theme-barf"))
+        api(project(":theme-bespin"))
+        api(project(":theme-birds-of-paradise"))
+        api(project(":theme-boys-and-girls"))
+        api(project(":theme-clouds"))
+        api(project(":theme-cobalt"))
+        api(project(":theme-cool-glow"))
+        api(project(":theme-espresso"))
+        api(project(":theme-noctis-lilac"))
+        api(project(":theme-rose-pine-dawn"))
+        api(project(":theme-smoothy"))
+        api(project(":theme-solarized-light"))
+        api(project(":theme-tomorrow"))
         api(project(":material-theme"))
 
         // Convenience bundles

@@ -47,8 +47,15 @@ kotlin {
             implementation(project(":lang-java"))
 
             implementation(project(":theme-one-dark"))
-            implementation(project(":theme-github-light"))
             implementation(project(":theme-dracula"))
+            implementation(project(":theme-amy"))
+            implementation(project(":theme-ayu-light"))
+            implementation(project(":theme-bespin"))
+            implementation(project(":theme-cobalt"))
+            implementation(project(":theme-cool-glow"))
+            implementation(project(":theme-noctis-lilac"))
+            implementation(project(":theme-solarized-light"))
+            implementation(project(":theme-tomorrow"))
             implementation(project(":material-theme"))
 
             implementation(compose.runtime)
