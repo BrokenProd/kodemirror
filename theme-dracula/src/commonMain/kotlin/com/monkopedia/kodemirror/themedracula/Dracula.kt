@@ -101,7 +101,7 @@ val draculaTheme: EditorTheme = EditorTheme(
     foreground = DraculaColors.foreground,
     cursor = DraculaColors.caret,
     selection = DraculaColors.selection,
-    activeLineBackground = DraculaColors.lineHighlight,
+    activeLineBackground = DraculaColors.lineHighlight.copy(alpha = 0.31f),
     gutterBackground = DraculaColors.gutterBackground,
     gutterForeground = DraculaColors.gutterForeground,
     dark = true
