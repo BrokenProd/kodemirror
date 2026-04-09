@@ -1,0 +1,6 @@
+public final class com/monkopedia/kodemirror/themerosepinedawn/RosePineDawnKt {
+	public static final fun getRosePineDawn ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getRosePineDawnHighlightStyle ()Lcom/monkopedia/kodemirror/language/HighlightStyle;
+	public static final fun getRosePineDawnTheme ()Lcom/monkopedia/kodemirror/view/EditorTheme;
+}
+

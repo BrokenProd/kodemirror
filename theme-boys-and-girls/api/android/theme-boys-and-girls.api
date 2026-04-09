@@ -1,0 +1,6 @@
+public final class com/monkopedia/kodemirror/themeboysandgirls/BoysAndGirlsKt {
+	public static final fun getBoysAndGirls ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getBoysAndGirlsHighlightStyle ()Lcom/monkopedia/kodemirror/language/HighlightStyle;
+	public static final fun getBoysAndGirlsTheme ()Lcom/monkopedia/kodemirror/view/EditorTheme;
+}
+

@@ -1,0 +1,6 @@
+public final class com/monkopedia/kodemirror/themeclouds/CloudsKt {
+	public static final fun getClouds ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getCloudsHighlightStyle ()Lcom/monkopedia/kodemirror/language/HighlightStyle;
+	public static final fun getCloudsTheme ()Lcom/monkopedia/kodemirror/view/EditorTheme;
+}
+

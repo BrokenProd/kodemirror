@@ -1,0 +1,6 @@
+public final class com/monkopedia/kodemirror/themetomorrow/TomorrowKt {
+	public static final fun getTomorrow ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getTomorrowHighlightStyle ()Lcom/monkopedia/kodemirror/language/HighlightStyle;
+	public static final fun getTomorrowTheme ()Lcom/monkopedia/kodemirror/view/EditorTheme;
+}
+

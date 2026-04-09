@@ -1,0 +1,6 @@
+public final class com/monkopedia/kodemirror/themeayulight/AyuLightKt {
+	public static final fun getAyuLight ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getAyuLightHighlightStyle ()Lcom/monkopedia/kodemirror/language/HighlightStyle;
+	public static final fun getAyuLightTheme ()Lcom/monkopedia/kodemirror/view/EditorTheme;
+}
+

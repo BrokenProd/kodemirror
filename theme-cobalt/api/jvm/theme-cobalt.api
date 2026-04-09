@@ -1,0 +1,6 @@
+public final class com/monkopedia/kodemirror/themecobalt/CobaltKt {
+	public static final fun getCobalt ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getCobaltHighlightStyle ()Lcom/monkopedia/kodemirror/language/HighlightStyle;
+	public static final fun getCobaltTheme ()Lcom/monkopedia/kodemirror/view/EditorTheme;
+}
+

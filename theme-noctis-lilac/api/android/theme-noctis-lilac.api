@@ -1,0 +1,6 @@
+public final class com/monkopedia/kodemirror/themenoctislilac/NoctisLilacKt {
+	public static final fun getNoctisLilac ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getNoctisLilacHighlightStyle ()Lcom/monkopedia/kodemirror/language/HighlightStyle;
+	public static final fun getNoctisLilacTheme ()Lcom/monkopedia/kodemirror/view/EditorTheme;
+}
+

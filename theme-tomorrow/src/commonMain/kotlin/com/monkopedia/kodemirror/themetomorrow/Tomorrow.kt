@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Ported from thememirror (https://github.com/vadimdemedes/thememirror)
- * by Vadim Demedes, licensed under MIT. See NOTICE file for details.
- * Original theme by Chris Kempson.
+ * Originally based on CodeMirror 6 by Marijn Haverbeke, licensed under MIT.
+ * See NOTICE file for details.
  */
 package com.monkopedia.kodemirror.themetomorrow
 
@@ -39,7 +38,13 @@ val tomorrowHighlightStyle = HighlightStyle.define(
     listOf(
         TagStyleSpec(Tags.comment, SpanStyle(color = Color(0xFF8E908C))),
         TagStyleSpec(
-            listOf(Tags.variableName, Tags.self, Tags.propertyName, Tags.attributeName, Tags.regexp),
+            listOf(
+                Tags.variableName,
+                Tags.self,
+                Tags.propertyName,
+                Tags.attributeName,
+                Tags.regexp
+            ),
             SpanStyle(color = Color(0xFFC82829))
         ),
         TagStyleSpec(

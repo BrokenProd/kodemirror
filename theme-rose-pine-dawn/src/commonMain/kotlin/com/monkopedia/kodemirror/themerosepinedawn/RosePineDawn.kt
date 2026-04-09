@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Ported from thememirror (https://github.com/vadimdemedes/thememirror)
- * by Vadim Demedes, licensed under MIT. See NOTICE file for details.
- * Original theme by Rosé Pine.
+ * Originally based on CodeMirror 6 by Marijn Haverbeke, licensed under MIT.
+ * See NOTICE file for details.
  */
 package com.monkopedia.kodemirror.themerosepinedawn
 

@@ -1,0 +1,6 @@
+public final class com/monkopedia/kodemirror/themecoolglow/CoolGlowKt {
+	public static final fun getCoolGlow ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getCoolGlowHighlightStyle ()Lcom/monkopedia/kodemirror/language/HighlightStyle;
+	public static final fun getCoolGlowTheme ()Lcom/monkopedia/kodemirror/view/EditorTheme;
+}
+

@@ -18,7 +18,7 @@ kotlin {
             implementation(project(":lang-javascript"))
             implementation(project(":lang-markdown"))
             implementation(project(":theme-one-dark"))
-            implementation(project(":theme-github-light"))
+            implementation(project(":theme-solarized-light"))
             implementation(project(":theme-dracula"))
             implementation(project(":material-theme"))
             implementation(compose.runtime)

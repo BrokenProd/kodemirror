@@ -42,7 +42,7 @@ import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.plus
 import com.monkopedia.kodemirror.materialtheme.rememberMaterialEditorTheme
 import com.monkopedia.kodemirror.themedracula.dracula
-import com.monkopedia.kodemirror.themegithublight.gitHubLight
+import com.monkopedia.kodemirror.themesolarizedlight.solarizedLight
 import com.monkopedia.kodemirror.themonedark.oneDark
 import com.monkopedia.kodemirror.view.KodeMirror
 import com.monkopedia.kodemirror.view.onChange
@@ -115,7 +115,7 @@ fun main() = application {
                         Tab.GITHUB_LIGHT -> EditorPane(
                             doc = SAMPLE_JS,
                             extensions = basicSetup + javascript().extension +
-                                gitHubLight
+                                solarizedLight
                         )
                         Tab.DRACULA -> EditorPane(
                             doc = SAMPLE_JS,
@@ -140,7 +140,7 @@ enum class Tab(val label: String) {
     JAVASCRIPT("JavaScript"),
     MARKDOWN("Markdown"),
     DARK("One Dark"),
-    GITHUB_LIGHT("GitHub Light"),
+    GITHUB_LIGHT("Solarized Light"),
     DRACULA("Dracula"),
     MATERIAL("Material Theme")
 }

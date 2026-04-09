@@ -1,0 +1,6 @@
+public final class com/monkopedia/kodemirror/themebarf/BarfKt {
+	public static final fun getBarf ()Lcom/monkopedia/kodemirror/state/Extension;
+	public static final fun getBarfHighlightStyle ()Lcom/monkopedia/kodemirror/language/HighlightStyle;
+	public static final fun getBarfTheme ()Lcom/monkopedia/kodemirror/view/EditorTheme;
+}
+
