@@ -197,8 +197,10 @@ internal fun buildLineContentWithTabs(
     val builder = AnnotatedString.Builder(expandedText)
     val lineFromVal = lineFrom.value
 
-    // Collect all MarkDecorations that overlap this line
-    for (set in decorationSets) {
+    // Collect all MarkDecorations that overlap this line.
+    // Iterate in reverse so that higher-precedence decoration sets
+    // (earlier in the list) are applied last and win in addStyle().
+    for (set in decorationSets.asReversed()) {
         set.between(lineFrom, lineTo) { from, to, value ->
             if (value is MarkDecoration && value.spec.style != null) {
                 val startInLine =

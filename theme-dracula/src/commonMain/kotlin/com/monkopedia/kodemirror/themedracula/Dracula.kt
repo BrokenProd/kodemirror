@@ -157,7 +157,7 @@ val draculaTheme: EditorTheme = EditorTheme(
     foreground = DraculaColors.foreground,
     cursor = DraculaColors.foreground,
     selection = DraculaColors.selection,
-    activeLineBackground = DraculaColors.currentLine,
+    activeLineBackground = DraculaColors.currentLine.copy(alpha = 0.31f),
     gutterBackground = DraculaColors.background,
     gutterForeground = DraculaColors.comment,
     gutterActiveForeground = DraculaColors.foreground,
@@ -176,7 +176,7 @@ val draculaTheme: EditorTheme = EditorTheme(
     tooltipBackground = DraculaColors.darkBackground,
     foldPlaceholderColor = DraculaColors.foreground,
     foldPlaceholderBackground = Color(0x33F8F8F2),
-    activeLineGutterBackground = DraculaColors.currentLine,
+    activeLineGutterBackground = DraculaColors.currentLine.copy(alpha = 0.31f),
     dark = true
 )
 
