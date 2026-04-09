@@ -47,6 +47,30 @@ diff the upstream source between the "Ported Version" and the latest release to 
 | `:theme-one-dark` | `@codemirror/theme-one-dark` | 6.1.3 |
 | `:legacy-modes` | `@codemirror/legacy-modes` | 6.5.2 |
 
+### thememirror Themes
+
+The following theme modules are ported from [thememirror](https://github.com/vadimdemedes/thememirror)
+by Vadim Demedes (MIT license), fetched at commit HEAD as of 2026-04-08.
+
+| Kodemirror Module | thememirror Theme | Original Author |
+|---|---|---|
+| `:theme-amy` | `amy` | William D. Neumann |
+| `:theme-ayu-light` | `ayuLight` | Konstantin Pschera |
+| `:theme-barf` | `barf` | unknown |
+| `:theme-bespin` | `bespin` | Michael Diolosa |
+| `:theme-birds-of-paradise` | `birdsOfParadise` | Joe Bergantine |
+| `:theme-boys-and-girls` | `boysAndGirls` | unknown |
+| `:theme-clouds` | `clouds` | Fred LeBlanc |
+| `:theme-cobalt` | `cobalt` | Jacob Rus |
+| `:theme-cool-glow` | `coolGlow` | unknown |
+| `:theme-dracula` | `dracula` | Zeno Rocha |
+| `:theme-espresso` | `espresso` | TextMate |
+| `:theme-noctis-lilac` | `noctisLilac` | Liviu Schera |
+| `:theme-rose-pine-dawn` | `rosePineDawn` | Rosé Pine |
+| `:theme-smoothy` | `smoothy` | Kenneth Reitz |
+| `:theme-solarized-light` | `solarizedLight` | Ethan Schoonover |
+| `:theme-tomorrow` | `tomorrow` | Chris Kempson |
+
 ### Language Packages
 
 | Kodemirror Module | Upstream Package | Ported Version |

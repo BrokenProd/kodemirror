@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Originally based on CodeMirror 6 by Marijn Haverbeke, licensed under MIT.
- * See NOTICE file for details.
+ * Ported from thememirror (https://github.com/vadimdemedes/thememirror)
+ * by Vadim Demedes, licensed under MIT. See NOTICE file for details.
+ * Original theme by Zeno Rocha.
  */
 package com.monkopedia.kodemirror.themedracula
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import com.monkopedia.kodemirror.language.HighlightStyle
 import com.monkopedia.kodemirror.language.TagStyleSpec
 import com.monkopedia.kodemirror.language.syntaxHighlighting
@@ -33,150 +31,80 @@ import com.monkopedia.kodemirror.view.EditorTheme
 import com.monkopedia.kodemirror.view.editorTheme
 
 /**
- * Named color constants from the Dracula palette.
+ * Named color constants from the thememirror Dracula palette.
  *
- * @see <a href="https://draculatheme.com/contribute">Dracula Color Palette</a>
+ * Original theme by Zeno Rocha, ported from thememirror.
  */
 object DraculaColors {
-    val background = Color(0xFF282A36)
-    val currentLine = Color(0xFF44475A)
-    val foreground = Color(0xFFF8F8F2)
-    val comment = Color(0xFF6272A4)
-    val cyan = Color(0xFF8BE9FD)
-    val green = Color(0xFF50FA7B)
-    val orange = Color(0xFFFFB86C)
-    val pink = Color(0xFFFF79C6)
-    val purple = Color(0xFFBD93F9)
-    val red = Color(0xFFFF5555)
-    val yellow = Color(0xFFF1FA8C)
-    val selection = Color(0xFF44475A)
-    val darkBackground = Color(0xFF21222C)
+    val background = Color(0xFF2d2f3f)
+    val foreground = Color(0xFFf8f8f2)
+    val caret = Color(0xFFf8f8f0)
+    val selection = Color(0xFF44475a)
+    val gutterBackground = Color(0xFF282a36)
+    val gutterForeground = Color(0xFF909194)
+    val lineHighlight = Color(0xFF44475a)
+    val comment = Color(0xFF6272a4)
+    val string = Color(0xFFf1fa8c)
+    val numberSelfBoolNull = Color(0xFFbd93f9)
+    val keywordOperator = Color(0xFFff79c6)
+    val definitionKeywordTypeName = Color(0xFF8be9fd)
+    val typeDefinition = Color(0xFFf8f8f2)
+    val classPropertyFunctionAttribute = Color(0xFF50fa7b)
 }
 
 /**
  * Dracula syntax highlighting style.
  *
- * Maps Lezer syntax tags to colors matching the Dracula color scheme.
+ * Ported from thememirror dracula.ts.
  */
 val draculaHighlightStyle = HighlightStyle.define(
     listOf(
-        TagStyleSpec(Tags.keyword, SpanStyle(color = DraculaColors.pink)),
+        TagStyleSpec(Tags.comment, SpanStyle(color = DraculaColors.comment)),
         TagStyleSpec(
-            listOf(Tags.name, Tags.deleted, Tags.character, Tags.macroName),
-            SpanStyle(color = DraculaColors.foreground)
+            listOf(Tags.string, Tags.special(Tags.brace)),
+            SpanStyle(color = DraculaColors.string)
         ),
         TagStyleSpec(
-            listOf(Tags.propertyName),
-            SpanStyle(color = DraculaColors.green)
+            listOf(Tags.number, Tags.self, Tags.bool, Tags.`null`),
+            SpanStyle(color = DraculaColors.numberSelfBoolNull)
         ),
         TagStyleSpec(
-            listOf(Tags.function(Tags.variableName), Tags.labelName),
-            SpanStyle(color = DraculaColors.green)
+            listOf(Tags.keyword, Tags.operator),
+            SpanStyle(color = DraculaColors.keywordOperator)
         ),
         TagStyleSpec(
-            listOf(Tags.color, Tags.constant(Tags.name), Tags.standard(Tags.name)),
-            SpanStyle(color = DraculaColors.purple)
+            listOf(Tags.definitionKeyword, Tags.typeName),
+            SpanStyle(color = DraculaColors.definitionKeywordTypeName)
         ),
         TagStyleSpec(
-            listOf(Tags.definition(Tags.name), Tags.separator),
-            SpanStyle(color = DraculaColors.foreground)
+            Tags.definition(Tags.typeName),
+            SpanStyle(color = DraculaColors.typeDefinition)
         ),
         TagStyleSpec(
             listOf(
-                Tags.typeName,
                 Tags.className,
-                Tags.changed,
-                Tags.annotation,
-                Tags.modifier,
-                Tags.self,
-                Tags.namespace
+                Tags.definition(Tags.propertyName),
+                Tags.function(Tags.variableName),
+                Tags.attributeName
             ),
-            SpanStyle(color = DraculaColors.cyan, fontStyle = FontStyle.Italic)
-        ),
-        TagStyleSpec(
-            Tags.number,
-            SpanStyle(color = DraculaColors.purple)
-        ),
-        TagStyleSpec(
-            listOf(
-                Tags.operator,
-                Tags.operatorKeyword,
-                Tags.url,
-                Tags.escape,
-                Tags.regexp,
-                Tags.link,
-                Tags.special(Tags.string)
-            ),
-            SpanStyle(color = DraculaColors.pink)
-        ),
-        TagStyleSpec(
-            listOf(Tags.meta, Tags.comment),
-            SpanStyle(color = DraculaColors.comment)
-        ),
-        TagStyleSpec(Tags.strong, SpanStyle(fontWeight = FontWeight.Bold)),
-        TagStyleSpec(Tags.emphasis, SpanStyle(fontStyle = FontStyle.Italic)),
-        TagStyleSpec(
-            Tags.strikethrough,
-            SpanStyle(textDecoration = TextDecoration.LineThrough)
-        ),
-        TagStyleSpec(
-            Tags.link,
-            SpanStyle(
-                color = DraculaColors.cyan,
-                textDecoration = TextDecoration.Underline
-            )
-        ),
-        TagStyleSpec(
-            Tags.heading,
-            SpanStyle(
-                fontWeight = FontWeight.Bold,
-                color = DraculaColors.purple
-            )
-        ),
-        TagStyleSpec(
-            listOf(Tags.atom, Tags.bool, Tags.special(Tags.variableName)),
-            SpanStyle(color = DraculaColors.purple)
-        ),
-        TagStyleSpec(
-            listOf(Tags.processingInstruction, Tags.string, Tags.inserted),
-            SpanStyle(color = DraculaColors.yellow)
-        ),
-        TagStyleSpec(Tags.invalid, SpanStyle(color = DraculaColors.red))
+            SpanStyle(color = DraculaColors.classPropertyFunctionAttribute)
+        )
     )
 )
 
 /**
  * Complete Dracula editor theme with UI styling.
  *
- * Provides background, gutter, cursor, selection, search-match,
- * bracket-match, tooltip, panel, and fold-placeholder colors matching
- * the Dracula color scheme.
+ * Ported from thememirror dracula.ts.
  */
 val draculaTheme: EditorTheme = EditorTheme(
     background = DraculaColors.background,
     foreground = DraculaColors.foreground,
-    cursor = DraculaColors.foreground,
+    cursor = DraculaColors.caret,
     selection = DraculaColors.selection,
-    activeLineBackground = DraculaColors.currentLine,
-    gutterBackground = DraculaColors.background,
-    gutterForeground = DraculaColors.comment,
-    gutterActiveForeground = DraculaColors.foreground,
-    gutterBorderColor = Color.Transparent,
-    searchMatchBackground = Color(0x59FFB86C),
-    searchMatchSelectedBackground = Color(0x2FFFB86C),
-    selectionMatchBackground = Color(0x1ABD93F9),
-    matchingBracketBackground = Color(0x4750FA7B),
-    nonMatchingBracketBackground = Color(0x47FF5555),
-    panelBackground = DraculaColors.darkBackground,
-    panelBorderColor = Color(0xFF555555),
-    buttonBackground = Color(0xFF44475A),
-    buttonBorderColor = Color(0xFF6272A4),
-    inputBackground = Color.Transparent,
-    inputBorderColor = Color(0xFF6272A4),
-    tooltipBackground = DraculaColors.darkBackground,
-    foldPlaceholderColor = DraculaColors.foreground,
-    foldPlaceholderBackground = Color(0x33F8F8F2),
-    activeLineGutterBackground = DraculaColors.currentLine,
+    activeLineBackground = DraculaColors.lineHighlight,
+    gutterBackground = DraculaColors.gutterBackground,
+    gutterForeground = DraculaColors.gutterForeground,
     dark = true
 )
 
