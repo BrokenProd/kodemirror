@@ -33,7 +33,13 @@ val clipboardCopy: (EditorSession) -> Boolean = { view ->
     val sel = view.state.selection.main
     if (!sel.empty) {
         val text = view.state.doc.sliceString(sel.from, sel.to)
-        impl?.clipboardManager?.setText(AnnotatedString(text))
+        impl?.internalClipboard = text
+        try {
+            impl?.clipboardManager?.setText(AnnotatedString(text))
+        } catch (_: Throwable) {
+            // On wasmJs the browser clipboard API may fail (security policy,
+            // async limitations).  The internal buffer is the reliable fallback.
+        }
     }
     true
 }
@@ -46,7 +52,13 @@ val clipboardCut: (EditorSession) -> Boolean = { view ->
     val sel = view.state.selection.main
     if (!sel.empty) {
         val text = view.state.doc.sliceString(sel.from, sel.to)
-        impl?.clipboardManager?.setText(AnnotatedString(text))
+        impl?.internalClipboard = text
+        try {
+            impl?.clipboardManager?.setText(AnnotatedString(text))
+        } catch (_: Throwable) {
+            // Best-effort system clipboard write; internal buffer is the
+            // reliable fallback on wasmJs.
+        }
         view.dispatch(
             TransactionSpec(
                 changes = ChangeSpec.Single(from = sel.from, to = sel.to)
@@ -61,7 +73,14 @@ val clipboardCut: (EditorSession) -> Boolean = { view ->
  */
 val clipboardPaste: (EditorSession) -> Boolean = { view ->
     val impl = view as? EditorSessionImpl
-    val text = impl?.clipboardManager?.getText()?.text
+    // Try the system clipboard first; fall back to the internal buffer.
+    // On wasmJs the browser clipboard API is async so getText() often
+    // returns null even after a successful setText().
+    val text = try {
+        impl?.clipboardManager?.getText()?.text
+    } catch (_: Throwable) {
+        null
+    } ?: impl?.internalClipboard
     if (text != null && text.isNotEmpty()) {
         val sel = view.state.selection.main
         view.dispatch(

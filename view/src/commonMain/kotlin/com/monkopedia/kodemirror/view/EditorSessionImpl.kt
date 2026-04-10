@@ -52,6 +52,17 @@ internal class EditorSessionImpl(
     /** Clipboard manager provided by the composition (initialised by the composable). */
     internal var clipboardManager: ClipboardManager? = null
 
+    /**
+     * Internal clipboard buffer for copy/paste within the editor.
+     *
+     * On wasmJs the browser clipboard API is asynchronous, so Compose's
+     * [ClipboardManager.getText] may return null even after a successful
+     * [ClipboardManager.setText]. This buffer ensures that text copied with
+     * Ctrl+C / Ctrl+X can always be pasted with Ctrl+V within the same
+     * session.
+     */
+    internal var internalClipboard: String? = null
+
     override val coroutineScope: CoroutineScope
         get() = backingCoroutineScope
             ?: error("EditorSession is not attached to a KodeMirror composable")
