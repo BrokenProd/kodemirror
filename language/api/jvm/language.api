@@ -167,6 +167,8 @@ public class com/monkopedia/kodemirror/language/Language {
 	public final fun getName ()Ljava/lang/String;
 	public final fun getParser ()Lcom/monkopedia/kodemirror/lezer/common/Parser;
 	public fun getTree (Lcom/monkopedia/kodemirror/state/EditorState;)Lcom/monkopedia/kodemirror/lezer/common/Tree;
+	public fun startParse (Lcom/monkopedia/kodemirror/state/Text;Ljava/util/List;)Lcom/monkopedia/kodemirror/lezer/common/PartialParse;
+	public static synthetic fun startParse$default (Lcom/monkopedia/kodemirror/language/Language;Lcom/monkopedia/kodemirror/state/Text;Ljava/util/List;ILjava/lang/Object;)Lcom/monkopedia/kodemirror/lezer/common/PartialParse;
 }
 
 public final class com/monkopedia/kodemirror/language/LanguageDescription {

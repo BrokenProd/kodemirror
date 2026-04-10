@@ -18,6 +18,7 @@
  */
 package com.monkopedia.kodemirror.lang.javascript
 
+import com.monkopedia.kodemirror.language.forceParsing
 import com.monkopedia.kodemirror.language.syntaxTree
 import com.monkopedia.kodemirror.lezer.common.Tree
 import com.monkopedia.kodemirror.state.ChangeSpec
@@ -73,7 +74,7 @@ class JsSyntaxTest {
         ).state
         assertEquals(
             "ExpressionStatement",
-            tr(state).topNode.childAfter(0)!!.name
+            forceParsing(state).topNode.childAfter(0)!!.name
         )
     }
 }

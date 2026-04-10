@@ -310,10 +310,7 @@ fun ensureSyntaxTree(
  * @param upto The position to check coverage for. Defaults to the
  *   full document length.
  */
-fun syntaxTreeAvailable(
-    state: EditorState,
-    upto: Int = state.doc.length
-): Boolean {
+fun syntaxTreeAvailable(state: EditorState, upto: Int = state.doc.length): Boolean {
     if (state.facet(language) == null) return false
     val ls = state.field(languageStateField, require = false) ?: return false
     return !ls.parsing && ls.tree.length >= upto
@@ -355,11 +352,23 @@ fun forceParsing(state: EditorState): Tree {
  * to update the tree in the editor state.
  */
 private class ParseWorker(private val session: EditorSession) : PluginValue {
-    private val supervisorJob = SupervisorJob(session.coroutineScope.coroutineContext[Job])
-    private val scope = CoroutineScope(session.coroutineScope.coroutineContext + supervisorJob)
+    // Null until the first update() call — deferred so we don't touch
+    // session.coroutineScope at construction time. The session's backing
+    // coroutine scope is set by KodeMirror.kt after the remember{} block
+    // that calls ViewPlugin.create, so it is guaranteed to be available by
+    // the time update() is first invoked.
+    private var supervisorJob: Job? = null
+    private var scope: CoroutineScope? = null
 
     /** The currently running parse job, if any. */
     private var parseJob: Job? = null
+
+    private fun ensureScope(): CoroutineScope {
+        scope?.let { return it }
+        val job = SupervisorJob(session.coroutineScope.coroutineContext[Job])
+        supervisorJob = job
+        return CoroutineScope(session.coroutineScope.coroutineContext + job).also { scope = it }
+    }
 
     override fun update(update: ViewUpdate) {
         val ls = update.state.field(languageStateField, require = false) ?: return
@@ -372,7 +381,7 @@ private class ParseWorker(private val session: EditorSession) : PluginValue {
         val doc = update.state.doc
         val fragments = ls.fragments
 
-        parseJob = scope.launch {
+        parseJob = ensureScope().launch {
             val parse = lang.startParse(doc, fragments)
             var mark = TimeSource.Monotonic.markNow()
             while (true) {
@@ -395,7 +404,8 @@ private class ParseWorker(private val session: EditorSession) : PluginValue {
     }
 
     override fun destroy() {
-        supervisorJob.cancel()
+        parseJob?.cancel()
+        supervisorJob?.cancel()
     }
 
     companion object {
