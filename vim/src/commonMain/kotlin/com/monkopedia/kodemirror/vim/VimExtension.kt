@@ -57,6 +57,7 @@ import com.monkopedia.kodemirror.view.showPanel
  */
 fun vim(status: Boolean = false): Extension {
     return extensionListOf(
+        vimContextField,
         vimKeymap,
         vimPlugin.asExtension(),
         vimInputSuppressor,
