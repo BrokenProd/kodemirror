@@ -19,8 +19,10 @@
 package com.monkopedia.kodemirror.view
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -211,9 +213,6 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
         }
     }
 
-    // Prevent tap from overriding drag selection
-    var recentlyDragged by remember { mutableStateOf(false) }
-
     val density = LocalDensity.current
     val lineHeightDp = with(density) { contentStyle.lineHeight.toDp() }
 
@@ -300,77 +299,100 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                         false
                     }
                     .pointerInput(session) {
-                        detectTapGestures { offset ->
-                            if (recentlyDragged) {
-                                recentlyDragged = false
-                                return@detectTapGestures
-                            }
+                        // Unified tap/drag handler: always request focus on
+                        // pointer down BEFORE deciding if it's a tap or drag.
+                        // This fixes the race condition (issue #2) where
+                        // separate tap/drag coroutines competed for the DOWN
+                        // event and focus could be skipped.
+                        awaitEachGesture {
+                            val down = awaitFirstDown()
+                            // Always focus immediately on any pointer down
                             focusRequester.requestFocus()
                             platformFocusInput()
-                            // Use LazyColumn layout info (always reliable) with
-                            // cache-based positioning as fallback.
-                            val pos = posFromVisibleItems(
-                                offset,
-                                lazyState,
-                                columnItems,
-                                textLayoutResults,
-                                hasGutters,
-                                gutterWidthDp,
-                                density
-                            )
-                                ?: session.posAtCoords(offset.x, offset.y)
-                                ?: return@detectTapGestures
-                            session.dispatch(
-                                TransactionSpec(
-                                    selection = SelectionSpec.CursorSpec(DocPos(pos))
-                                )
-                            )
-                        }
-                    }
-                    .pointerInput(session) {
-                        var dragStart = Offset.Zero
-                        var dragCurrent = Offset.Zero
-                        detectDragGestures(
-                            onDragStart = { offset ->
-                                recentlyDragged = true
-                                focusRequester.requestFocus()
-                                platformFocusInput()
-                                dragStart = offset
-                                dragCurrent = offset
-                            },
-                            onDrag = { _, dragAmount ->
-                                dragCurrent += dragAmount
+
+                            val downPosition = down.position
+                            var isDrag = false
+                            var dragStart = downPosition
+                            var dragCurrent = downPosition
+
+                            // Try to detect if this becomes a drag
+                            val slopChange = awaitTouchSlopOrCancellation(
+                                down.id
+                            ) { change, overSlop ->
+                                change.consume()
+                                isDrag = true
+                                dragCurrent = change.position
+                            }
+
+                            if (slopChange != null && isDrag) {
+                                // It's a drag — handle drag selection
+                                dragStart = downPosition
                                 if (altPressed) {
                                     handleRectangularDrag(
-                                        session,
-                                        dragStart,
-                                        dragCurrent
+                                        session, dragStart, dragCurrent
                                     )
                                 } else {
                                     handleDrag(
-                                        session,
-                                        dragStart,
-                                        dragCurrent
+                                        session, dragStart, dragCurrent
                                     )
                                 }
-                                val pos = session.posAtCoords(
-                                    dragCurrent.x,
-                                    dragCurrent.y
-                                )
                                 session.plugin(dropCursorViewPlugin)
-                                    ?.moveTo(pos)
-                            },
-                            onDragEnd = {
-                                recentlyDragged = false
+                                    ?.moveTo(
+                                        session.posAtCoords(
+                                            dragCurrent.x, dragCurrent.y
+                                        )
+                                    )
+
+                                drag(slopChange.id) { change ->
+                                    change.consume()
+                                    dragCurrent = change.position
+                                    if (altPressed) {
+                                        handleRectangularDrag(
+                                            session, dragStart, dragCurrent
+                                        )
+                                    } else {
+                                        handleDrag(
+                                            session, dragStart, dragCurrent
+                                        )
+                                    }
+                                    session.plugin(dropCursorViewPlugin)
+                                        ?.moveTo(
+                                            session.posAtCoords(
+                                                dragCurrent.x, dragCurrent.y
+                                            )
+                                        )
+                                }
+                                // Drag ended
                                 session.plugin(dropCursorViewPlugin)
                                     ?.moveTo(null)
-                            },
-                            onDragCancel = {
-                                recentlyDragged = false
+                            } else if (!isDrag) {
+                                // Pointer released without exceeding slop —
+                                // treat as a tap for cursor positioning.
+                                val pos = posFromVisibleItems(
+                                    downPosition,
+                                    lazyState,
+                                    columnItems,
+                                    textLayoutResults,
+                                    hasGutters,
+                                    gutterWidthDp,
+                                    density
+                                )
+                                    ?: session.posAtCoords(
+                                        downPosition.x, downPosition.y
+                                    )
+                                    ?: return@awaitEachGesture
+                                session.dispatch(
+                                    TransactionSpec(
+                                        selection = SelectionSpec
+                                            .CursorSpec(DocPos(pos))
+                                    )
+                                )
+                            } else {
+                                // Drag cancelled
                                 session.plugin(dropCursorViewPlugin)
                                     ?.moveTo(null)
                             }
-                        )
+                        }
                     }
                     .pointerInput(session) {
                         awaitPointerEventScope {
