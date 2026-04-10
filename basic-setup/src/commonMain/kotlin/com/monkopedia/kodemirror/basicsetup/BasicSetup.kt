@@ -123,12 +123,16 @@ val basicSetup: Extension = extensionListOf(
     crosshairCursor,
     highlightActiveLine,
     highlightSelectionMatches(),
+    // closeBracketsKeymap must come last so that, after handleKeyEvent
+    // reverses the binding list, deleteBracketPair runs before
+    // deleteCharBackward and can consume the Backspace event when the
+    // cursor is between a bracket pair.
     keymapOf(
-        closeBracketsKeymap +
-            defaultKeymap +
+        defaultKeymap +
             searchKeymap +
             foldKeymap +
             completionKeymap +
-            lintKeymap
+            lintKeymap +
+            closeBracketsKeymap
     )
 )
