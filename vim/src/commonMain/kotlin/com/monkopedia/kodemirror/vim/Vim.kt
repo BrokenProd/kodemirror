@@ -80,9 +80,6 @@ object Vim : VimApiInterface {
     }
 
     @Suppress("ktlint:standard:function-naming")
-    internal fun getVimGlobalState_(cm: VimEditor): VimContext = cm.vimContext
-
-    @Suppress("ktlint:standard:function-naming")
     internal fun maybeInitVimState_(cm: VimEditor): VimState {
         return maybeInitVimState(cm)
     }
