@@ -121,12 +121,17 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     val compositionScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
 
-    // Wire up session internals
+    // Wire up session internals eagerly (during composition, not in a side
+    // effect) so that TooltipLayer and the hover pointerInput block can access
+    // pluginHost on the very first frame.  DisposableEffect still handles
+    // cleanup on dispose; the repeated assignments on recomposition are
+    // harmless because remember() always returns the same instances.
+    impl.pluginHost = pluginHost
+    impl.lineLayoutCache = lineLayoutCache
+    impl.backingCoroutineScope = compositionScope
+    impl.clipboardManager = clipboardManager
+
     DisposableEffect(session) {
-        impl.pluginHost = pluginHost
-        impl.lineLayoutCache = lineLayoutCache
-        impl.backingCoroutineScope = compositionScope
-        impl.clipboardManager = clipboardManager
         onDispose {
             pluginHost.destroy()
             lineLayoutCache.clear()
