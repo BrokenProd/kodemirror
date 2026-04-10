@@ -56,10 +56,6 @@ private external fun detectOsFromBrowser(): String
     document.addEventListener('keydown', function(e) {
         globalThis.__kodeKey = e.key;
         var isModified = e.ctrlKey || e.metaKey || e.altKey;
-        if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
-            e.stopPropagation();
-            return;
-        }
         if (isModified || special.indexOf(e.key) !== -1) {
             e.preventDefault();
         }
