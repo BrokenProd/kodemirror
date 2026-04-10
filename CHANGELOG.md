@@ -38,12 +38,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `recentlyDragged` flag in pointer input handling
 
 ### Fixed
-- Theme syntax highlighting colors overridden by fallback `defaultHighlightStyle` (decoration precedence bug)
-- Dracula active line background fully opaque, washing out comment text
-- Tooltips not appearing until first state change (session internals not initialized on first frame)
-- Canvas click breaking keyboard input due to tap/drag gesture race condition
-- Multiple editor instances stealing keyboard/paste handlers from each other
-- Vim mode sharing registers, macro state, and search history across editors
+- Theme syntax highlighting colors overridden by fallback `defaultHighlightStyle` (decoration precedence bug) (#13)
+- Dracula active line background fully opaque, washing out comment text (#13)
+- Tooltips not appearing until first state change (session internals not initialized on first frame) (#1)
+- Canvas click breaking keyboard input due to tap/drag gesture race condition (#2)
+- Multiple editor instances stealing keyboard/paste handlers from each other (#6)
+- Vim mode sharing registers, macro state, and search history across editors (#6)
+- Clipboard paste broken on wasmJs due to async browser clipboard API (#16)
+- Vim visual mode reporting "visual-block" instead of "visual" (#17)
+- Bracket auto-delete broken by wrong keymap priority (#18)
+- Async parsing race dispatching stale tree for changed document (#19)
 
 ## [0.1.0] - 2026-04-03
 
