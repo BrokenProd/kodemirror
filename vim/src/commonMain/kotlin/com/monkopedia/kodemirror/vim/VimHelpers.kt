@@ -262,13 +262,14 @@ internal fun commandMatches(
     keys: String,
     keyMap: List<VimKeyCommand>,
     context: String?,
-    inputState: InputState
+    inputState: InputState,
+    noremapActive: Boolean = false
 ): CommandMatchResult {
     var ctx = context
     if (inputState.operator != null) ctx = "operatorPending"
     val partial = mutableListOf<VimKeyCommand>()
     val full = mutableListOf<VimKeyCommand>()
-    val startIndex = if (noremap) keyMap.size - defaultKeymapLength else 0
+    val startIndex = if (noremapActive) keyMap.size - defaultKeymapLength else 0
     for (i in startIndex until keyMap.size) {
         val command = keyMap[i]
         if (ctx == "insert" && command.context != "insert") continue
@@ -731,7 +732,7 @@ internal fun expandTagUnderCursor(
 
 internal fun recordJumpPosition(cm: VimEditor, oldCur: LinePos, newCur: LinePos) {
     if (!cursorEqual(oldCur, newCur)) {
-        vimGlobalState.jumpList.add(cm, oldCur, newCur)
+        cm.vimContext.jumpList.add(cm, oldCur, newCur)
     }
 }
 
@@ -739,10 +740,10 @@ internal fun recordJumpPosition(cm: VimEditor, oldCur: LinePos, newCur: LinePos)
 // recordLastCharacterSearch
 // ---------------------------------------------------------------------------
 
-internal fun recordLastCharacterSearch(increment: Int, args: MotionArgs) {
-    vimGlobalState.lastCharacterSearch.increment = increment
-    vimGlobalState.lastCharacterSearch.forward = args.forward == true
-    vimGlobalState.lastCharacterSearch.selectedCharacter = args.selectedCharacter ?: ""
+internal fun recordLastCharacterSearch(cm: VimEditor, increment: Int, args: MotionArgs) {
+    cm.vimContext.lastCharacterSearch.increment = increment
+    cm.vimContext.lastCharacterSearch.forward = args.forward == true
+    cm.vimContext.lastCharacterSearch.selectedCharacter = args.selectedCharacter ?: ""
 }
 
 // ---------------------------------------------------------------------------
@@ -1700,8 +1701,8 @@ internal fun unescapeRegexReplace(str: String): String {
     return output.toString()
 }
 
-internal fun parseQuery(query: String, ignoreCase: Boolean, smartCase: Boolean): Regex? {
-    val lastSearchRegister = vimGlobalState.registerController.getRegister("/")
+internal fun parseQuery(cm: VimEditor, query: String, ignoreCase: Boolean, smartCase: Boolean): Regex? {
+    val lastSearchRegister = cm.vimContext.registerController.getRegister("/")
     lastSearchRegister.setText(query)
 
     val slashes = findUnescapedSlashes(query)
@@ -1746,7 +1747,7 @@ internal fun updateSearchQuery(
 ): Regex? {
     if (rawQuery.isEmpty()) return null
     val state = getSearchState(cm)
-    val query = parseQuery(rawQuery, ignoreCase, smartCase) ?: return null
+    val query = parseQuery(cm, rawQuery, ignoreCase, smartCase) ?: return null
     highlightSearchMatches(cm, query)
     if (regexEqual(query, state.getQuery())) {
         return query
@@ -1884,7 +1885,7 @@ internal fun getUserVisibleLines(cm: VimEditor): Pair<Int, Int> {
 
 internal fun getMarkPos(cm: VimEditor, vim: VimState, markName: String): LinePos? {
     if (markName == "'" || markName == "`") {
-        return vimGlobalState.jumpList.find(cm, -1) ?: LinePos(0, 0)
+        return cm.vimContext.jumpList.find(cm, -1) ?: LinePos(0, 0)
     } else if (markName == ".") {
         return getLastEditPos(cm)
     }
@@ -1938,7 +1939,7 @@ internal fun showPrompt(cm: VimEditor, options: PromptOptions) {
     } else {
         // In test/headless mode, use the virtual prompt mechanism so that
         // subsequent handleKey calls are routed to sendKeyToPrompt.
-        virtualPrompt = options
+        cm.vimContext.virtualPrompt = options
     }
 }
 
@@ -1963,7 +1964,7 @@ internal class ExCommandDispatcher {
 
     private fun processCommandInternal(cm: VimEditor, input: String, optParams: ExParams? = null) {
         val vim = cm.vim!!
-        val commandHistoryRegister = vimGlobalState.registerController.getRegister(":")
+        val commandHistoryRegister = cm.vimContext.registerController.getRegister(":")
         val previousCommand = commandHistoryRegister.toString()
         commandHistoryRegister.setText(input)
         val params = optParams ?: ExParams()
@@ -2243,7 +2244,7 @@ internal fun executeMacroRegister(
     macroModeState: MacroModeState,
     registerName: String
 ) {
-    val register = vimGlobalState.registerController.getRegister(registerName)
+    val register = cm.vimContext.registerController.getRegister(registerName)
     if (registerName == ":") {
         if (register.keyBuffer.isNotEmpty()) {
             exCommandDispatcher.processCommand(cm, register.keyBuffer[0])
@@ -2274,24 +2275,24 @@ internal fun executeMacroRegister(
     macroModeState.isPlaying = false
 }
 
-internal fun logKey(macroModeState: MacroModeState, key: String) {
+internal fun logKey(cm: VimEditor, macroModeState: MacroModeState, key: String) {
     if (macroModeState.isPlaying) return
     val registerName = macroModeState.latestRegister ?: return
-    val register = vimGlobalState.registerController.getRegister(registerName)
+    val register = cm.vimContext.registerController.getRegister(registerName)
     register.pushText(key)
 }
 
-internal fun logInsertModeChange(macroModeState: MacroModeState) {
+internal fun logInsertModeChange(cm: VimEditor, macroModeState: MacroModeState) {
     if (macroModeState.isPlaying) return
     val registerName = macroModeState.latestRegister ?: return
-    val register = vimGlobalState.registerController.getRegister(registerName)
+    val register = cm.vimContext.registerController.getRegister(registerName)
     register.pushInsertModeChanges(macroModeState.lastInsertModeChanges)
 }
 
-internal fun logSearchQuery(macroModeState: MacroModeState, query: String) {
+internal fun logSearchQuery(cm: VimEditor, macroModeState: MacroModeState, query: String) {
     if (macroModeState.isPlaying) return
     val registerName = macroModeState.latestRegister ?: return
-    val register = vimGlobalState.registerController.getRegister(registerName)
+    val register = cm.vimContext.registerController.getRegister(registerName)
     register.pushSearchQuery(query)
 }
 
@@ -2300,7 +2301,7 @@ internal fun logSearchQuery(macroModeState: MacroModeState, query: String) {
 // ---------------------------------------------------------------------------
 
 internal fun onChange(cm: VimEditor, changeObj: Change?) {
-    val macroModeState = vimGlobalState.macroModeState
+    val macroModeState = cm.vimContext.macroModeState
     val lastChange = macroModeState.lastInsertModeChanges
     if (!macroModeState.isPlaying) {
         val vim = cm.vim
@@ -2347,7 +2348,7 @@ internal fun onChange(cm: VimEditor, changeObj: Change?) {
 internal fun onCursorActivity(cm: VimEditor) {
     val vim = cm.vim ?: return
     if (vim.insertMode) {
-        val macroModeState = vimGlobalState.macroModeState
+        val macroModeState = cm.vimContext.macroModeState
         if (macroModeState.isPlaying) return
         val lastChange = macroModeState.lastInsertModeChanges
         if (lastChange.expectCursorActivityForChange) {
@@ -2394,8 +2395,8 @@ internal fun handleExternalSelection(cm: VimEditor, vim: VimState) {
 
 internal fun exitInsertMode(cm: VimEditor, keepCursor: Boolean = false) {
     val vim = cm.vim ?: return
-    val macroModeState = vimGlobalState.macroModeState
-    val insertModeChangeRegister = vimGlobalState.registerController.getRegister(".")
+    val macroModeState = cm.vimContext.macroModeState
+    val insertModeChangeRegister = cm.vimContext.registerController.getRegister(".")
     val isPlaying = macroModeState.isPlaying
     val lastChange = macroModeState.lastInsertModeChanges
     if (!isPlaying) {
@@ -2417,7 +2418,7 @@ internal fun exitInsertMode(cm: VimEditor, keepCursor: Boolean = false) {
     insertModeChangeRegister.setText(lastChange.changes.joinToString(""))
     cm.signal("vim-mode-change", mapOf("mode" to "normal"))
     if (macroModeState.isRecording) {
-        logInsertModeChange(macroModeState)
+        logInsertModeChange(cm, macroModeState)
     }
 }
 
@@ -2426,7 +2427,7 @@ internal fun exitInsertMode(cm: VimEditor, keepCursor: Boolean = false) {
 // ---------------------------------------------------------------------------
 
 internal fun repeatLastEdit(cm: VimEditor, vim: VimState, repeat: Int, repeatForInsert: Boolean) {
-    val macroModeState = vimGlobalState.macroModeState
+    val macroModeState = cm.vimContext.macroModeState
     macroModeState.isPlaying = true
     val lastAction = vim.lastEditActionCommand
     val cachedInputState = vim.inputState
@@ -2492,7 +2493,7 @@ internal fun sendCmKey(cm: VimEditor, key: String) {
 
 internal fun repeatInsertModeChanges(cm: VimEditor, changes: MutableList<Any>, repeat: Int) {
     val head = cm.getCursor("head")
-    val visualBlock = vimGlobalState.macroModeState.lastInsertModeChanges.visualBlock
+    val visualBlock = cm.vimContext.macroModeState.lastInsertModeChanges.visualBlock
     val hasVisualBlock = visualBlock != null && visualBlock != 0
     var rpt = repeat
     if (hasVisualBlock) {
@@ -2625,8 +2626,8 @@ internal fun doReplace(
     }
 
     fun stop() {
-        if (virtualPrompt != null) {
-            virtualPrompt = null
+        if (cm.vimContext.virtualPrompt != null) {
+            cm.vimContext.virtualPrompt = null
         }
         cm.focus()
         val pos = lastPos
@@ -3116,7 +3117,7 @@ internal class MacroModeState {
 
     fun enterMacroRecordMode(cm: VimEditor, registerName: String?) {
         if (isRecording) return
-        val register = vimGlobalState.registerController.getRegister(registerName)
+        val register = cm.vimContext.registerController.getRegister(registerName)
         register.clear()
         latestRegister = registerName
         isRecording = true
@@ -3134,6 +3135,10 @@ internal data class LastCharacterSearch(
     var selectedCharacter: String = ""
 )
 
+/**
+ * Legacy global [VimGlobalState] kept for the [defineRegister] public API which
+ * has no editor context. New code should use [VimContext] via [vimContextField].
+ */
 internal val vimGlobalState = VimGlobalState()
 
 internal fun resetVimGlobalState() {
@@ -3151,9 +3156,25 @@ internal fun resetVimGlobalState() {
     vimGlobalState.exCommandHistoryController.historyBuffer.clear()
     vimApi.mapclear()
     exCommandDispatcher.buildCommandMap()
-    virtualPrompt = null
-    noremap = false
-    keyToKeyStack.clear()
+}
+
+/**
+ * Reset the per-editor [VimContext] state.
+ */
+internal fun resetVimContext(cm: VimEditor) {
+    val ctx = cm.vimContext
+    ctx.macroModeState = MacroModeState()
+    ctx.registerController = RegisterController()
+    ctx.lastCharacterSearch = LastCharacterSearch()
+    ctx.lastSubstituteReplacePart = null
+    ctx.query = null
+    ctx.isReversed = false
+    ctx.jumpList.clear()
+    ctx.searchHistoryController.historyBuffer.clear()
+    ctx.exCommandHistoryController.historyBuffer.clear()
+    ctx.virtualPrompt = null
+    ctx.noremap = false
+    ctx.keyToKeyStack.clear()
 }
 
 // ---------------------------------------------------------------------------

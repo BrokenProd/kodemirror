@@ -42,6 +42,7 @@ class SearchDebugTest {
         val cm = VimEditor(session)
         Vim.maybeInitVimState_(cm)
         Vim.resetVimGlobalState_()
+        resetVimContext(cm)
         return cm
     }
 

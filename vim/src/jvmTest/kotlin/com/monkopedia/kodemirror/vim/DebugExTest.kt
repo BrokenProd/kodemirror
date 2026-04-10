@@ -26,16 +26,16 @@ class DebugExTest {
     fun debug_ex_go_to_line() = testVim(value = "a\nb\nc\nd\ne\n") { h ->
         h.cm.setCursor(0, 0)
         println("Before doEx: cursor=${h.cm.getCursor()}")
-        println("  virtualPrompt=$virtualPrompt")
+        println("  virtualPrompt=${h.cm.vimContext.virtualPrompt}")
         h.doKeys(":")
-        val promptValue = virtualPrompt?.value
-        val promptPrefix = virtualPrompt?.prefix
+        val promptValue = h.cm.vimContext.virtualPrompt?.value
+        val promptPrefix = h.cm.vimContext.virtualPrompt?.prefix
         println("After ':': virtualPrompt value='$promptValue' prefix='$promptPrefix'")
         typeKey(h.cm, "4")
-        val promptValue2 = virtualPrompt?.value
+        val promptValue2 = h.cm.vimContext.virtualPrompt?.value
         println("After '4': virtualPrompt value='$promptValue2'")
         typeKey(h.cm, "Enter")
-        println("After Enter: virtualPrompt=$virtualPrompt")
+        println("After Enter: virtualPrompt=${h.cm.vimContext.virtualPrompt}")
         println("  cursor=${h.cm.getCursor()}")
         assertEquals(3, h.cm.getCursor().line)
     }
