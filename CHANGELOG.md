@@ -4,7 +4,46 @@ All notable changes to Kodemirror will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [0.2.0] - 2026-04-10
+
+### Highlights
+- 16 new editor themes ported from [thememirror](https://github.com/vadimdemedes/thememirror) (MIT)
+- Async incremental parsing — large documents no longer block the UI
+- Multiple editor instances now work correctly (vim and platform handlers)
+- Fixed syntax highlighting colors being wrong when themes were applied
+
+### Added
+- 15 new theme modules: Amy, Ayu Light, Barf, Bespin, Birds of Paradise, Boys and Girls, Clouds, Cobalt, Cool Glow, Espresso, Noctis Lilac, Rose Pine Dawn, Smoothy, Solarized Light, Tomorrow
+- `ParseWorker` ViewPlugin — coroutine-based async parsing with 25ms time-sliced `advance()` and `yield()` between chunks
+- `TreeFragment` reuse via `applyChanges()` — edits only reparse changed regions
+- `syntaxParserRunning()` now returns actual parsing state
+- `forceParsing()` for synchronous parse completion in tests
+- `VimContext` StateField — all vim mutable state is now per-editor
+- `PlatformKeyHandlerToken` — platform key handlers support multiple registrations with disposal tokens
+- `ThemeTestPage` in showcase for theme comparison testing
+
+### Changed
+- **Breaking:** `vimGlobalState` removed — vim registers, jump lists, search history, macro state, and key stacks are now per-editor via `VimContext` StateField
+- **Breaking:** `platformRegisterKeyHandler` returns a `PlatformKeyHandlerToken` for disposal instead of being fire-and-forget
+- **Breaking:** `:theme-github-light` module removed (replaced by thememirror light themes)
+- `:theme-dracula` replaced with thememirror port (different tag-to-color mappings)
+- Decoration sets applied in reverse precedence order so theme styles override fallback styles
+- Pointer input refactored from three competing `pointerInput` modifiers to a single unified tap/drag handler
+- Session internals (`pluginHost`, `lineLayoutCache`, etc.) assigned before first composition instead of in `DisposableEffect`
+
+### Removed
+- `:theme-github-light` module
+- `lastVimPlugin` global singleton
+- `vimGlobalState` global singleton
+- `recentlyDragged` flag in pointer input handling
+
+### Fixed
+- Theme syntax highlighting colors overridden by fallback `defaultHighlightStyle` (decoration precedence bug)
+- Dracula active line background fully opaque, washing out comment text
+- Tooltips not appearing until first state change (session internals not initialized on first frame)
+- Canvas click breaking keyboard input due to tap/drag gesture race condition
+- Multiple editor instances stealing keyboard/paste handlers from each other
+- Vim mode sharing registers, macro state, and search history across editors
 
 ## [0.1.0] - 2026-04-03
 
