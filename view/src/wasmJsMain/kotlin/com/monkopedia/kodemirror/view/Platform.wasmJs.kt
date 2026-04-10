@@ -87,7 +87,13 @@ private external fun installKeyCapture()
  * individually unregistered without affecting other editors.
  */
 actual class PlatformKeyHandlerToken(
-    internal val handler: (key: String, ctrl: Boolean, alt: Boolean, meta: Boolean, shift: Boolean) -> Boolean
+    internal val handler: (
+        key: String,
+        ctrl: Boolean,
+        alt: Boolean,
+        meta: Boolean,
+        shift: Boolean
+    ) -> Boolean
 )
 
 /** All currently registered key handlers, in registration order. */

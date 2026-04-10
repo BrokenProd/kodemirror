@@ -1701,7 +1701,12 @@ internal fun unescapeRegexReplace(str: String): String {
     return output.toString()
 }
 
-internal fun parseQuery(cm: VimEditor, query: String, ignoreCase: Boolean, smartCase: Boolean): Regex? {
+internal fun parseQuery(
+    cm: VimEditor,
+    query: String,
+    ignoreCase: Boolean,
+    smartCase: Boolean
+): Regex? {
     val lastSearchRegister = cm.vimContext.registerController.getRegister("/")
     lastSearchRegister.setText(query)
 

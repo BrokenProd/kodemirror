@@ -72,7 +72,8 @@ object Vim : VimApiInterface {
 
     // -- Public API ----------------------------------------------------------
 
-    internal fun getRegisterController(cm: VimEditor): RegisterController = cm.vimContext.registerController
+    internal fun getRegisterController(cm: VimEditor): RegisterController =
+        cm.vimContext.registerController
 
     @Suppress("ktlint:standard:function-naming")
     fun resetVimGlobalState_() {
@@ -565,7 +566,8 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
         context: String,
         cm: VimEditor? = null
     ): MatchResult {
-        val matches = commandMatches(keys, keyMap, context, inputState, cm?.vimContext?.noremap ?: false)
+        val matches =
+            commandMatches(keys, keyMap, context, inputState, cm?.vimContext?.noremap ?: false)
         val bestMatch = matches.full.firstOrNull()
         if (bestMatch == null) {
             if (matches.partial.isNotEmpty()) {

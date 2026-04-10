@@ -24,6 +24,7 @@ import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.EditorStateConfig
 import com.monkopedia.kodemirror.state.SelectionSpec
 import com.monkopedia.kodemirror.state.asDoc
+import com.monkopedia.kodemirror.state.extensionListOf
 import com.monkopedia.kodemirror.view.EditorSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -35,7 +36,7 @@ class SearchDebugTest {
             EditorStateConfig(
                 doc = text.asDoc(),
                 selection = SelectionSpec.CursorSpec(DocPos(cursorOffset)),
-                extensions = history()
+                extensions = extensionListOf(vimContextField, history())
             )
         )
         val session = EditorSession(state)

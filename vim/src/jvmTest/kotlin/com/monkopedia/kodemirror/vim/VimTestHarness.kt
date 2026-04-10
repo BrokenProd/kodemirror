@@ -233,6 +233,7 @@ internal fun testVim(
             doc = value.asDoc(),
             selection = SelectionSpec.CursorSpec(DocPos(cursorOffset)),
             extensions = extensionListOf(
+                vimContextField,
                 history(),
                 EditorState.allowMultipleSelections.of(true),
                 indentService.of { context, pos ->
