@@ -82,6 +82,20 @@ private external fun detectOsFromBrowser(): String
 )
 private external fun installKeyCapture()
 
+/**
+ * Token identifying a registered platform key handler so it can be
+ * individually unregistered without affecting other editors.
+ */
+actual class PlatformKeyHandlerToken(
+    internal val handler: (key: String, ctrl: Boolean, alt: Boolean, meta: Boolean, shift: Boolean) -> Boolean
+)
+
+/** All currently registered key handlers, in registration order. */
+private val keyHandlers = mutableListOf<PlatformKeyHandlerToken>()
+
+/** Whether the JS-side dispatcher has been installed. */
+private var jsDispatcherInstalled = false
+
 @JsFun(
     """(cb) => {
     globalThis.__kodeKeyCallback = function(key, ctrl, alt, meta, shift) {
@@ -95,6 +109,22 @@ private external fun jsSetKeyCallback(
 
 @JsFun("() => { globalThis.__kodeKeyCallback = null; }")
 private external fun jsClearKeyCallback()
+
+/**
+ * Install the JS-side dispatcher that fans out to all registered Kotlin
+ * handlers. Installed lazily on the first [platformRegisterKeyHandler] call.
+ */
+private fun ensureJsDispatcher() {
+    if (jsDispatcherInstalled) return
+    jsDispatcherInstalled = true
+    jsSetKeyCallback { key, ctrl, alt, meta, shift ->
+        val keyStr = key.toString()
+        for (token in keyHandlers) {
+            if (token.handler(keyStr, ctrl, alt, meta, shift)) return@jsSetKeyCallback true
+        }
+        false
+    }
+}
 
 @JsFun("() => globalThis.__kodeKey || ''")
 private external fun readCapturedKey(): String
@@ -118,14 +148,19 @@ private external fun platformFocusCanvas()
 
 internal actual fun platformRegisterKeyHandler(
     handler: (key: String, ctrl: Boolean, alt: Boolean, meta: Boolean, shift: Boolean) -> Boolean
-) {
-    jsSetKeyCallback { key, ctrl, alt, meta, shift ->
-        handler(key.toString(), ctrl, alt, meta, shift)
-    }
+): PlatformKeyHandlerToken {
+    ensureJsDispatcher()
+    val token = PlatformKeyHandlerToken(handler)
+    keyHandlers.add(token)
+    return token
 }
 
-internal actual fun platformUnregisterKeyHandler() {
-    jsClearKeyCallback()
+internal actual fun platformUnregisterKeyHandler(token: PlatformKeyHandlerToken) {
+    keyHandlers.remove(token)
+    if (keyHandlers.isEmpty()) {
+        jsClearKeyCallback()
+        jsDispatcherInstalled = false
+    }
 }
 
 internal actual fun platformFocusInput() {

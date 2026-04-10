@@ -191,7 +191,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
     // For real users (events targeting the canvas), both this callback AND
     // onPreviewKeyEvent fire — the flag prevents double-handling.
     DisposableEffect(session) {
-        platformRegisterKeyHandler handler@{ key, ctrl, alt, meta, shift ->
+        val token = platformRegisterKeyHandler handler@{ key, ctrl, alt, meta, shift ->
             // Clear the flag at the start of each key event.
             // It will be set to true only if we handle this key.
             keyProcessedByCallback[0] = false
@@ -202,7 +202,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
             handled
         }
         onDispose {
-            platformUnregisterKeyHandler()
+            platformUnregisterKeyHandler(token)
         }
     }
 

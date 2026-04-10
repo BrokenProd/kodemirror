@@ -47,13 +47,16 @@ actual fun keyEventLayoutKey(event: KeyEvent): String? {
     return char.toString()
 }
 
+actual class PlatformKeyHandlerToken
+
 internal actual fun platformRegisterKeyHandler(
     handler: (key: String, ctrl: Boolean, alt: Boolean, meta: Boolean, shift: Boolean) -> Boolean
-) {
+): PlatformKeyHandlerToken {
     // No-op on JVM — Compose Desktop generates KeyEvents for all keys
+    return PlatformKeyHandlerToken()
 }
 
-internal actual fun platformUnregisterKeyHandler() {
+internal actual fun platformUnregisterKeyHandler(token: PlatformKeyHandlerToken) {
     // No-op
 }
 
