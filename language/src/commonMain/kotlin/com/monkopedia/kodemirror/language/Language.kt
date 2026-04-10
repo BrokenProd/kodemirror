@@ -18,20 +18,43 @@
  */
 package com.monkopedia.kodemirror.language
 
+import com.monkopedia.kodemirror.lezer.common.ChangedRange
 import com.monkopedia.kodemirror.lezer.common.Input
 import com.monkopedia.kodemirror.lezer.common.NodeProp
 import com.monkopedia.kodemirror.lezer.common.Parser
+import com.monkopedia.kodemirror.lezer.common.PartialParse
 import com.monkopedia.kodemirror.lezer.common.Tree
+import com.monkopedia.kodemirror.lezer.common.TreeFragment
 import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.EditorState
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.state.Facet
 import com.monkopedia.kodemirror.state.FacetEnabler
+import com.monkopedia.kodemirror.state.StateEffect
+import com.monkopedia.kodemirror.state.StateEffectType
 import com.monkopedia.kodemirror.state.StateField
 import com.monkopedia.kodemirror.state.StateFieldSpec
 import com.monkopedia.kodemirror.state.Text
 import com.monkopedia.kodemirror.state.Transaction
+import com.monkopedia.kodemirror.state.TransactionSpec
 import com.monkopedia.kodemirror.state.extensionListOf
+import com.monkopedia.kodemirror.view.EditorSession
+import com.monkopedia.kodemirror.view.PluginValue
+import com.monkopedia.kodemirror.view.ViewPlugin
+import com.monkopedia.kodemirror.view.ViewUpdate
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
+
+/**
+ * [StateEffect] used internally to swap in an asynchronously-completed parse tree.
+ * The value is the new [Tree] produced by the parse worker.
+ */
+internal val setTreeEffect: StateEffectType<Tree> = StateEffect.define()
 
 // Internal state field holding the parsed tree.
 // Defined first so the `language` facet can reference it in enables.
@@ -49,6 +72,11 @@ private val languageStateField: StateField<LanguageState> = StateField.define(
     )
 )
 
+/** ViewPlugin that drives the async parse worker coroutine. */
+private val parseWorkerPlugin: ViewPlugin<ParseWorker> = ViewPlugin.define(
+    create = { session -> ParseWorker(session) }
+)
+
 /**
  * The facet used to associate a language with an editor state.
  *
@@ -64,7 +92,9 @@ val language: Facet<Language, Language?> = Facet.define(
         }
         languages.firstOrNull()
     },
-    enables = FacetEnabler.StaticExtension(languageStateField)
+    enables = FacetEnabler.StaticExtension(
+        extensionListOf(languageStateField, parseWorkerPlugin.asExtension())
+    )
 )
 
 /**
@@ -84,6 +114,13 @@ open class Language(val parser: Parser, val name: String = "") {
      * the underlying parser.
      */
     open fun getTree(state: EditorState): Tree = parser.parse(DocInput(state.doc))
+
+    /**
+     * Start an incremental parse of [doc], reusing tree portions from [fragments].
+     * Returns a [PartialParse] whose [PartialParse.advance] can be called repeatedly.
+     */
+    open fun startParse(doc: Text, fragments: List<TreeFragment> = emptyList()): PartialParse =
+        parser.startParse(DocInput(doc), fragments)
 }
 
 /**
@@ -170,40 +207,91 @@ internal class DocInput(private val doc: Text) : Input {
     override val lineChunks: Boolean get() = false
 }
 
-private class LanguageState(val tree: Tree) {
+/**
+ * Internal state holding the current parse tree and metadata for
+ * incremental async parsing.
+ *
+ * [tree] is always a valid tree (possibly stale while a parse is in progress).
+ * [fragments] holds the reusable tree fragments for the next incremental parse.
+ * [parsing] is `true` when a [PartialParse] is in flight.
+ */
+private class LanguageState(
+    val tree: Tree,
+    val fragments: List<TreeFragment> = emptyList(),
+    val parsing: Boolean = false
+) {
     fun apply(tr: Transaction): LanguageState {
+        // Handle async tree completion via setTreeEffect
+        for (effect in tr.effects) {
+            val treeEffect = effect.asType(setTreeEffect)
+            if (treeEffect != null) {
+                val newTree = treeEffect.value
+                return LanguageState(
+                    tree = newTree,
+                    fragments = TreeFragment.addTree(newTree),
+                    parsing = false
+                )
+            }
+        }
+
         if (!tr.docChanged) return this
         val lang = tr.state.facet(language) ?: return LanguageState(Tree.empty)
-        val newTree = lang.getTree(tr.state)
-        return LanguageState(newTree)
+
+        // Build changed ranges from the transaction's ChangeSet
+        val changedRanges = mutableListOf<ChangedRange>()
+        tr.changes.iterChangedRanges({ fromA, toA, fromB, toB ->
+            changedRanges.add(
+                ChangedRange(fromA.value, toA.value, fromB.value, toB.value)
+            )
+        })
+
+        // Get fragments from the current tree, then apply changes
+        val oldFragments = TreeFragment.addTree(tree, fragments, parsing)
+        val newFragments = TreeFragment.applyChanges(oldFragments, changedRanges)
+
+        // Return with old tree and mark as parsing — the parse worker will
+        // pick this up and advance the PartialParse asynchronously.
+        return LanguageState(
+            tree = tree,
+            fragments = newFragments,
+            parsing = true
+        )
     }
 
     companion object {
         fun init(state: EditorState): LanguageState {
             val lang = state.facet(language) ?: return LanguageState(Tree.empty)
+            // Do a synchronous parse for the initial state so that
+            // highlighting is available immediately on first render.
             val tree = lang.getTree(state)
-            return LanguageState(tree)
+            return LanguageState(
+                tree = tree,
+                fragments = TreeFragment.addTree(tree),
+                parsing = false
+            )
         }
     }
 }
 
 /**
- * Get the syntax tree for a state, which is the current parse tree
- * of the active language, or [Tree.empty] if no language is configured.
+ * Get the syntax tree for a state, which is the current (possibly stale)
+ * parse tree of the active language, or [Tree.empty] if no language is
+ * configured. During async parsing the returned tree may not yet reflect
+ * the latest document changes — use [syntaxParserRunning] to check.
  */
 fun syntaxTree(state: EditorState): Tree =
     state.field(languageStateField, require = false)?.tree ?: Tree.empty
 
 /**
  * Get the syntax tree for the state if it covers at least up to
- * position [upto]. In Kodemirror's synchronous parsing model, the
- * tree always covers the full document, so this always returns the
- * tree when one is available.
+ * position [upto]. When async parsing is in progress and the current
+ * tree does not yet reach [upto], returns `null`.
  *
  * @param upto The minimum document position the tree must cover.
- * @param timeout Ignored in the synchronous parsing model. Present
+ * @param timeout Ignored in the current implementation. Present
  *   for API compatibility with upstream CodeMirror.
- * @return The syntax tree, or `null` if no language is configured.
+ * @return The syntax tree, or `null` if no language is configured
+ *   or the tree does not yet cover [upto].
  */
 fun ensureSyntaxTree(
     state: EditorState,
@@ -211,42 +299,110 @@ fun ensureSyntaxTree(
     @Suppress("UNUSED_PARAMETER") timeout: Int = 0
 ): Tree? {
     val tree = syntaxTree(state)
-    return if (tree.length == 0 && state.facet(language) == null) null else tree
+    if (tree.length == 0 && state.facet(language) == null) return null
+    return if (tree.length >= upto) tree else null
 }
 
 /**
  * Check whether a complete syntax tree is available up to the
- * given position. In Kodemirror's synchronous parsing model, the
- * tree always covers the full document, so this returns `true`
- * whenever a language is configured.
+ * given position.
  *
  * @param upto The position to check coverage for. Defaults to the
  *   full document length.
  */
 fun syntaxTreeAvailable(
     state: EditorState,
-    @Suppress("UNUSED_PARAMETER") upto: Int = state.doc.length
-): Boolean = state.facet(language) != null
+    upto: Int = state.doc.length
+): Boolean {
+    if (state.facet(language) == null) return false
+    val ls = state.field(languageStateField, require = false) ?: return false
+    return !ls.parsing && ls.tree.length >= upto
+}
 
 /**
  * Check whether the syntax parser is currently running in the
- * background. In Kodemirror's synchronous parsing model, parsing
- * completes immediately on every state update, so this always
- * returns `false`.
+ * background (i.e. an async incremental parse is in progress).
  */
-@Suppress("UNUSED_PARAMETER")
-fun syntaxParserRunning(state: EditorState): Boolean = false
+fun syntaxParserRunning(state: EditorState): Boolean =
+    state.field(languageStateField, require = false)?.parsing ?: false
 
 /**
- * Force a complete re-parse of the document. In Kodemirror's
- * synchronous parsing model, the tree is always current, so this
- * returns the existing tree.
+ * Force a complete re-parse of the document. If an async parse is
+ * in progress, this blocks until parsing is complete and returns
+ * the up-to-date tree.
  *
  * This function is provided for API compatibility with upstream
- * CodeMirror, where it forces async parsing to complete
- * synchronously.
+ * CodeMirror.
  */
-fun forceParsing(state: EditorState): Tree = syntaxTree(state)
+fun forceParsing(state: EditorState): Tree {
+    val ls = state.field(languageStateField, require = false) ?: return Tree.empty
+    if (!ls.parsing) return ls.tree
+    // Synchronously complete the parse
+    val lang = state.facet(language) ?: return ls.tree
+    val parse = lang.startParse(state.doc, ls.fragments)
+    while (true) {
+        val done = parse.advance()
+        if (done != null) return done
+    }
+}
+
+/**
+ * ViewPlugin that drives async incremental parsing.
+ *
+ * When [LanguageState.parsing] becomes `true` (a document change occurred),
+ * this plugin launches a coroutine that advances a [PartialParse] in
+ * time-limited chunks and, on completion, dispatches a [setTreeEffect]
+ * to update the tree in the editor state.
+ */
+private class ParseWorker(private val session: EditorSession) : PluginValue {
+    private val supervisorJob = SupervisorJob(session.coroutineScope.coroutineContext[Job])
+    private val scope = CoroutineScope(session.coroutineScope.coroutineContext + supervisorJob)
+
+    /** The currently running parse job, if any. */
+    private var parseJob: Job? = null
+
+    override fun update(update: ViewUpdate) {
+        val ls = update.state.field(languageStateField, require = false) ?: return
+        if (!ls.parsing) return
+
+        // Cancel any in-flight parse — a new document change supersedes it
+        parseJob?.cancel()
+
+        val lang = update.state.facet(language) ?: return
+        val doc = update.state.doc
+        val fragments = ls.fragments
+
+        parseJob = scope.launch {
+            val parse = lang.startParse(doc, fragments)
+            var mark = TimeSource.Monotonic.markNow()
+            while (true) {
+                val done = parse.advance()
+                if (done != null) {
+                    // Parse complete — dispatch the tree back into the state
+                    session.dispatch(
+                        TransactionSpec(
+                            effects = listOf(setTreeEffect.of(done))
+                        )
+                    )
+                    break
+                }
+                if (mark.elapsedNow() >= PARSE_BUDGET) {
+                    yield() // Yield to other coroutines / UI
+                    mark = TimeSource.Monotonic.markNow()
+                }
+            }
+        }
+    }
+
+    override fun destroy() {
+        supervisorJob.cancel()
+    }
+
+    companion object {
+        /** Maximum time per parse slice before yielding. */
+        private val PARSE_BUDGET = 25.milliseconds
+    }
+}
 
 /**
  * Metadata descriptor for a language. Used for language detection
