@@ -36,7 +36,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
         if (!vim.visualMode) {
             val repeat = actionArgs.repeat
             val forward = actionArgs.forward
-            val jumpList = vimGlobalState.jumpList
+            val jumpList = cm.vimContext.jumpList
             val mark = jumpList.move(cm, if (forward == true) repeat else -repeat)
             val markPos = mark?.find() ?: cm.getCursor()
             cm.setCursor(markPos)
@@ -73,7 +73,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
     "replayMacro" to { cm, actionArgs, vim ->
         var registerName = actionArgs.selectedCharacter ?: ""
         var repeat = actionArgs.repeat
-        val macroModeState = vimGlobalState.macroModeState
+        val macroModeState = cm.vimContext.macroModeState
         if (registerName == "@") {
             registerName = macroModeState.latestRegister ?: ""
         } else {
@@ -89,9 +89,9 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
     // enterMacroRecordMode
     // -----------------------------------------------------------------------
     "enterMacroRecordMode" to { cm, actionArgs, _ ->
-        val macroModeState = vimGlobalState.macroModeState
+        val macroModeState = cm.vimContext.macroModeState
         val registerName = actionArgs.selectedCharacter
-        if (vimGlobalState.registerController.isValidRegister(registerName)) {
+        if (cm.vimContext.registerController.isValidRegister(registerName)) {
             macroModeState.enterMacroRecordMode(cm, registerName)
         }
     },
@@ -190,7 +190,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
                 cm.setOption("keyMap", "vim-insert")
                 cm.signal("vim-mode-change", mapOf("mode" to "insert"))
             }
-            if (!vimGlobalState.macroModeState.isPlaying) {
+            if (!cm.vimContext.macroModeState.isPlaying) {
                 if (vim.insertEnd != null) vim.insertEnd!!.clear()
                 vim.insertEnd = cm.setBookmark(
                     head,
@@ -361,7 +361,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
     // paste
     // -----------------------------------------------------------------------
     "paste" to { cm, actionArgs, vim ->
-        val register = vimGlobalState.registerController.getRegister(actionArgs.registerName)
+        val register = cm.vimContext.registerController.getRegister(actionArgs.registerName)
         val text = register.toString()
         actions["continuePaste"]?.invoke(cm, actionArgs, vim)
     },
@@ -370,7 +370,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
     // continuePaste (internal helper used by paste)
     // -----------------------------------------------------------------------
     "continuePaste" to { cm, actionArgs, vim ->
-        val register = vimGlobalState.registerController.getRegister(actionArgs.registerName)
+        val register = cm.vimContext.registerController.getRegister(actionArgs.registerName)
         var cur = copyCursor(cm.getCursor())
         var text = register.toString()
         if (text.isEmpty()) return@to
@@ -446,7 +446,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
             if (vim.lastSelection != null) {
                 lastSelectionCurEnd = vim.lastSelection!!.headMark.find()
             }
-            vimGlobalState.registerController.unnamedRegister.setText(selectedText)
+            cm.vimContext.registerController.unnamedRegister.setText(selectedText)
             if (blockwise) {
                 cm.replaceSelections(emptyStrings)
                 val se = LinePos(selectionStart.line + text.split('\n').size - 1, selectionStart.ch)
@@ -555,7 +555,7 @@ internal val actions: MutableMap<String, ActionFn> = mutableMapOf(
     // -----------------------------------------------------------------------
     "insertRegister" to { cm, actionArgs, _ ->
         val registerName = actionArgs.selectedCharacter
-        val register = vimGlobalState.registerController.getRegister(registerName)
+        val register = cm.vimContext.registerController.getRegister(registerName)
         val text = register.toString()
         if (text.isNotEmpty()) {
             cm.replaceSelection(text)

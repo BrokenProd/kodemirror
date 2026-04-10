@@ -49,9 +49,8 @@ private val vimToCmKeyMap: Map<String, String> = buildMap {
     }
 }
 
-internal var noremap = false
-internal val keyToKeyStack = mutableListOf<VimKeyCommand>()
-internal var virtualPrompt: PromptOptions? = null
+// noremap, keyToKeyStack, and virtualPrompt have been moved to per-editor
+// VimContext (accessed via cm.vimContext). See VimContext.kt.
 
 // ---------------------------------------------------------------------------
 // Default keymap length tracking (for mapclear)
@@ -73,15 +72,12 @@ object Vim : VimApiInterface {
 
     // -- Public API ----------------------------------------------------------
 
-    internal fun getRegisterController(): RegisterController = vimGlobalState.registerController
+    internal fun getRegisterController(cm: VimEditor): RegisterController = cm.vimContext.registerController
 
     @Suppress("ktlint:standard:function-naming")
     fun resetVimGlobalState_() {
         resetVimGlobalState()
     }
-
-    @Suppress("ktlint:standard:function-naming")
-    internal fun getVimGlobalState_(): VimGlobalState = vimGlobalState
 
     @Suppress("ktlint:standard:function-naming")
     internal fun maybeInitVimState_(cm: VimEditor): VimState {
@@ -90,8 +86,8 @@ object Vim : VimApiInterface {
 
     override fun handleKey(cm: VimEditor, key: String, origin: String): Boolean {
         // When a virtual prompt is active (test/headless mode), route key input there.
-        if (virtualPrompt != null) {
-            sendKeyToPrompt(key)
+        if (cm.vimContext.virtualPrompt != null) {
+            sendKeyToPrompt(cm, key)
             return true
         }
         val command = findKey(cm, key, origin)
@@ -277,7 +273,7 @@ object Vim : VimApiInterface {
         val vim = maybeInitVimState(cm)
 
         fun handleMacroRecording(): Boolean {
-            val macroModeState = vimGlobalState.macroModeState
+            val macroModeState = cm.vimContext.macroModeState
             if (macroModeState.isRecording) {
                 if (key == "q") {
                     macroModeState.exitMacroRecordMode()
@@ -285,7 +281,7 @@ object Vim : VimApiInterface {
                     return true
                 }
                 if (origin != "mapping") {
-                    logKey(macroModeState, key)
+                    logKey(cm, macroModeState, key)
                 }
             }
             return false
@@ -315,7 +311,8 @@ object Vim : VimApiInterface {
                 keys,
                 defaultKeymap,
                 vim.inputState,
-                "insert"
+                "insert",
+                cm
             )
             val changeQueue = vim.inputState.changeQueue
 
@@ -363,7 +360,7 @@ object Vim : VimApiInterface {
                                 here
                             )
                         }
-                        vimGlobalState.macroModeState
+                        cm.vimContext.macroModeState
                             .lastInsertModeChanges.changes.removeLastOrNull()
                     }
                     if (match.command == null) clearInputState(cm)
@@ -400,7 +397,8 @@ object Vim : VimApiInterface {
                 mainKey,
                 defaultKeymap,
                 vim.inputState,
-                context
+                context,
+                cm
             )
             return when (match.type) {
                 "none" -> {
@@ -564,9 +562,10 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
         keys: String,
         keyMap: List<VimKeyCommand>,
         inputState: InputState,
-        context: String
+        context: String,
+        cm: VimEditor? = null
     ): MatchResult {
-        val matches = commandMatches(keys, keyMap, context, inputState)
+        val matches = commandMatches(keys, keyMap, context, inputState, cm?.vimContext?.noremap ?: false)
         val bestMatch = matches.full.firstOrNull()
         if (bestMatch == null) {
             if (matches.partial.isNotEmpty()) {
@@ -704,7 +703,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
         clearInputState(cm)
         vim.lastMotion = null
         if (command.isEdit == true) {
-            recordLastEdit(vim, inputState, command)
+            recordLastEdit(cm, vim, inputState, command)
         }
         val actionFn = actions[command.action]
         if (actionFn != null) {
@@ -719,7 +718,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
 
         when (command.searchArgs.querySrc) {
             "prompt" -> {
-                val macroModeState = vimGlobalState.macroModeState
+                val macroModeState = cm.vimContext.macroModeState
                 if (macroModeState.isPlaying) {
                     val query = macroModeState.replaySearchQueries.removeFirstOrNull() ?: ""
                     handleSearchQuery(cm, vim, command, query, ignoreCase = true, smartCase = false)
@@ -738,7 +737,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
                                     smartCase = true
                                 )
                                 if (macroModeState.isRecording) {
-                                    logSearchQuery(macroModeState, query.orEmpty())
+                                    logSearchQuery(cm, macroModeState, query.orEmpty())
                                 }
                             },
                             prefix = promptPrefix
@@ -765,7 +764,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
                 } else {
                     escapeRegex(query)
                 }
-                vimGlobalState.jumpList.cachedCursor = cm.getCursor()
+                cm.vimContext.jumpList.cachedCursor = cm.getCursor()
                 cm.setCursor(word.start)
                 handleSearchQuery(cm, vim, command, query, ignoreCase = true, smartCase = false)
             }
@@ -847,7 +846,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
         var newAnchor: LinePos? = null
 
         if (operator != null) {
-            recordLastEdit(vim, inputState)
+            recordLastEdit(cm, vim, inputState)
         }
 
         var repeat: Int
@@ -879,7 +878,7 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
             if (motionResult == null) return
 
             if (motionArgs.toJumplist == true) {
-                val jumpList = vimGlobalState.jumpList
+                val jumpList = cm.vimContext.jumpList
                 val cachedCursor = jumpList.cachedCursor
                 val resultPos = motionResult.toPos() ?: origHead
                 if (cachedCursor != null) {
@@ -1050,11 +1049,12 @@ internal object VimCommandDispatcher : CommandDispatcherInterface {
     }
 
     fun recordLastEdit(
+        cm: VimEditor,
         vim: VimState,
         inputState: InputState,
         actionCommand: ActionCommand? = null
     ) {
-        val macroModeState = vimGlobalState.macroModeState
+        val macroModeState = cm.vimContext.macroModeState
         if (macroModeState.isPlaying) return
         vim.lastEditInputState = inputState
         vim.lastEditActionCommand = actionCommand
@@ -1078,21 +1078,22 @@ internal data class CmSelectionResult(
 // Virtual prompt for key-to-key mappings
 // ---------------------------------------------------------------------------
 
-internal fun sendKeyToPrompt(key: String) {
-    val prompt = virtualPrompt ?: error("No prompt to send key to")
+internal fun sendKeyToPrompt(cm: VimEditor, key: String) {
+    val ctx = cm.vimContext
+    val prompt = ctx.virtualPrompt ?: error("No prompt to send key to")
     var effectiveKey = key
     // Normalize bare key names (e.g. "Enter", "Return") to their canonical form
     when (effectiveKey) {
         "Enter", "Return" -> effectiveKey = "\n"
         "Escape", "Esc" -> {
             // Cancel the prompt without invoking onClose
-            virtualPrompt = null
+            ctx.virtualPrompt = null
             return
         }
         "Backspace" -> {
             val current = prompt.value ?: ""
             if (current.isNotEmpty()) {
-                virtualPrompt = prompt.copy(value = current.dropLast(1))
+                ctx.virtualPrompt = prompt.copy(value = current.dropLast(1))
             }
             return
         }
@@ -1108,12 +1109,12 @@ internal fun sendKeyToPrompt(key: String) {
             "bs" -> {
                 val current = prompt.value ?: ""
                 if (current.isNotEmpty()) {
-                    virtualPrompt = prompt.copy(value = current.dropLast(1))
+                    ctx.virtualPrompt = prompt.copy(value = current.dropLast(1))
                 }
                 return
             }
             "esc" -> {
-                virtualPrompt = null
+                ctx.virtualPrompt = null
                 return
             }
             else -> {
@@ -1121,7 +1122,7 @@ internal fun sendKeyToPrompt(key: String) {
                 if (cmKey != null) {
                     val event = VimKeyEvent(key = cmKey)
                     prompt.onKeyDown?.invoke(event)
-                    virtualPrompt?.onKeyUp?.invoke(event)
+                    ctx.virtualPrompt?.onKeyUp?.invoke(event)
                     return
                 }
             }
@@ -1136,19 +1137,20 @@ internal fun sendKeyToPrompt(key: String) {
         }
     }
     if (effectiveKey == "\n") {
-        virtualPrompt = null
+        ctx.virtualPrompt = null
         prompt.onClose?.invoke(prompt.value)
     } else {
-        virtualPrompt = prompt.copy(value = (prompt.value ?: "") + effectiveKey)
+        ctx.virtualPrompt = prompt.copy(value = (prompt.value ?: "") + effectiveKey)
     }
 }
 
 internal fun doKeyToKey(cm: VimEditor, keys: String, fromKey: VimKeyCommand? = null) {
-    val noremapBefore = noremap
+    val ctx = cm.vimContext
+    val noremapBefore = ctx.noremap
     if (fromKey != null) {
-        if (keyToKeyStack.contains(fromKey)) return
-        keyToKeyStack.add(fromKey)
-        noremap = fromKey.noremap != false
+        if (ctx.keyToKeyStack.contains(fromKey)) return
+        ctx.keyToKeyStack.add(fromKey)
+        ctx.noremap = fromKey.noremap != false
     }
 
     try {
@@ -1157,8 +1159,8 @@ internal fun doKeyToKey(cm: VimEditor, keys: String, fromKey: VimKeyCommand? = n
         for (match in keyRe.findAll(keys)) {
             val matchedKey = match.value
             val wasInsert = vim.insertMode
-            if (virtualPrompt != null) {
-                sendKeyToPrompt(matchedKey)
+            if (ctx.virtualPrompt != null) {
+                sendKeyToPrompt(cm, matchedKey)
                 continue
             }
             val result = Vim.handleKey(cm, matchedKey, "mapping")
@@ -1185,11 +1187,11 @@ internal fun doKeyToKey(cm: VimEditor, keys: String, fromKey: VimKeyCommand? = n
             }
         }
     } finally {
-        keyToKeyStack.removeLastOrNull()
-        noremap = if (keyToKeyStack.isNotEmpty()) noremapBefore else false
-        if (keyToKeyStack.isEmpty() && virtualPrompt != null) {
-            val promptOptions = virtualPrompt!!
-            virtualPrompt = null
+        ctx.keyToKeyStack.removeLastOrNull()
+        ctx.noremap = if (ctx.keyToKeyStack.isNotEmpty()) noremapBefore else false
+        if (ctx.keyToKeyStack.isEmpty() && ctx.virtualPrompt != null) {
+            val promptOptions = ctx.virtualPrompt!!
+            ctx.virtualPrompt = null
             showPrompt(cm, promptOptions)
         }
     }

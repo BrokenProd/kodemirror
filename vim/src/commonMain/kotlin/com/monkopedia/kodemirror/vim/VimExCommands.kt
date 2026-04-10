@@ -238,7 +238,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
     // -----------------------------------------------------------------------
     "registers" to { cm, params ->
         val regArgs = params.args
-        val registers = vimGlobalState.registerController.registers
+        val registers = cm.vimContext.registerController.registers
         val regInfo = StringBuilder("----------Registers----------\n\n")
         if (regArgs == null) {
             for ((registerName, register) in registers) {
@@ -251,7 +251,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
             val registerNames = regArgs.joinToString("")
             for (ch in registerNames) {
                 val registerName = ch.toString()
-                if (!vimGlobalState.registerController.isValidRegister(registerName)) continue
+                if (!cm.vimContext.registerController.isValidRegister(registerName)) continue
                 val register = registers[registerName] ?: Register()
                 regInfo.append("\"$registerName    ${register}\n")
             }
@@ -637,7 +637,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
                 } else {
                     translateRegexReplace(rawReplace)
                 }
-                vimGlobalState.lastSubstituteReplacePart = replacePart
+                cm.vimContext.lastSubstituteReplacePart = replacePart
             }
             trailing = if (tokens.size > 2) tokens[2].split(" ") else null
         } else {
@@ -667,7 +667,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
                 return@to
             }
         }
-        val effectiveReplacePart = replacePart ?: vimGlobalState.lastSubstituteReplacePart
+        val effectiveReplacePart = replacePart ?: cm.vimContext.lastSubstituteReplacePart
         if (effectiveReplacePart == null) {
             showConfirm(cm, "No previous substitute regular expression")
             return@to
@@ -743,7 +743,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
         }
         val text = cm.getRange(LinePos(line, 0), LinePos(lineEnd + 1, 0))
         val registerName = params.args?.getOrNull(0) ?: "0"
-        vimGlobalState.registerController.pushText(
+        cm.vimContext.registerController.pushText(
             registerName, "yank", text, true, false
         )
         val count = lineEnd + 1 - line
@@ -780,7 +780,7 @@ internal val exCommands: MutableMap<String, ExFn> = mutableMapOf(
         val startPos = LinePos(line, 0)
         val endPos = LinePos(lineEnd + 1, 0)
         val text = cm.getRange(startPos, endPos)
-        vimGlobalState.registerController.unnamedRegister.setText(text, true, false)
+        cm.vimContext.registerController.unnamedRegister.setText(text, true, false)
         cm.replaceRange("", startPos, endPos)
     },
 

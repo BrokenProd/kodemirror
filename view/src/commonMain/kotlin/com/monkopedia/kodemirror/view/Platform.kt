@@ -44,6 +44,12 @@ internal expect fun keyEventCharacter(event: KeyEvent): Char?
 expect fun keyEventLayoutKey(event: KeyEvent): String?
 
 /**
+ * Token returned by [platformRegisterKeyHandler] that allows unregistering
+ * a specific handler without affecting other editors' handlers.
+ */
+expect class PlatformKeyHandlerToken
+
+/**
  * Register a platform-level key handler that receives raw keyboard events.
  *
  * On wasmJs, Skiko doesn't generate Compose KeyEvents for all keys (e.g.,
@@ -51,16 +57,23 @@ expect fun keyEventLayoutKey(event: KeyEvent): String?
  * keydown events from the document-level listener and can process keys
  * that Skiko misses. The handler should return true if the key was handled.
  *
+ * Multiple handlers can be registered (one per editor instance). When a key
+ * event arrives, handlers are called in registration order; the first handler
+ * that returns true wins and subsequent handlers are skipped.
+ *
  * On JVM, this is a no-op since Compose handles all keys natively.
+ *
+ * @return A token that can be passed to [platformUnregisterKeyHandler] to
+ *   remove this specific handler.
  */
 internal expect fun platformRegisterKeyHandler(
     handler: (key: String, ctrl: Boolean, alt: Boolean, meta: Boolean, shift: Boolean) -> Boolean
-)
+): PlatformKeyHandlerToken
 
 /**
- * Unregister the key handler set by [platformRegisterKeyHandler].
+ * Unregister the key handler identified by [token].
  */
-internal expect fun platformUnregisterKeyHandler()
+internal expect fun platformUnregisterKeyHandler(token: PlatformKeyHandlerToken)
 
 /**
  * Ensure the editor's backing text input element has platform focus.

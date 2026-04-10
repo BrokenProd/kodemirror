@@ -57,6 +57,7 @@ import com.monkopedia.kodemirror.view.showPanel
  */
 fun vim(status: Boolean = false): Extension {
     return extensionListOf(
+        vimContextField,
         vimKeymap,
         vimPlugin.asExtension(),
         vimInputSuppressor,
@@ -70,15 +71,19 @@ fun vim(status: Boolean = false): Extension {
 
 /**
  * Provide block cursor positions to the selection overlay for rendering.
+ * Looks up the vim plugin for this specific editor from the per-editor
+ * [vimPlugins] map.
  */
 private val vimBlockCursorProvider: Extension = blockCursorProvider.of {
-    val plugin = lastVimPlugin ?: return@of emptyList()
+    val plugin = activeVimPlugin ?: return@of emptyList()
     computeBlockCursorPositions(plugin.session.state, plugin.cm)
 }
 
 /**
  * Suppress text input when vim is in normal or visual mode.
  * Characters should execute vim commands, not insert text.
+ * Looks up the vim plugin for this specific editor from the per-editor
+ * [vimPlugins] map.
  */
 private val vimInputSuppressor: Extension = inputSuppressor.of(::shouldSuppressVimInput)
 
@@ -87,16 +92,29 @@ private val vimInputSuppressor: Extension = inputSuppressor.of(::shouldSuppressV
  * character keys should execute commands, not insert text.
  */
 private fun shouldSuppressVimInput(): Boolean {
-    // Check the most recently initialized vim state. The vim plugin
-    // sets insertMode when entering/exiting insert mode.
-    val plugin = lastVimPlugin ?: return false
+    val plugin = activeVimPlugin ?: return false
     val vim = plugin.cm.vim ?: return false
     return !vim.insertMode
 }
 
-// Track the last active VimPluginValue for inputSuppressor checks.
-// Set during VimPluginValue init, cleared on destroy.
-internal var lastVimPlugin: VimPluginValue? = null
+/**
+ * Per-editor map of [EditorSession] to [VimPluginValue]. Each editor
+ * registers its plugin on init and removes it on destroy. The facet
+ * callbacks ([vimBlockCursorProvider], [vimInputSuppressor]) look up
+ * the correct plugin via [activeVimPlugin].
+ *
+ * Because Compose is single-threaded, the most recently composed editor's
+ * plugin is the one whose facets are currently being evaluated. We track
+ * the "active" plugin via [activeVimPlugin], set during [VimPluginValue]
+ * update and init.
+ */
+internal val vimPlugins = mutableMapOf<EditorSession, VimPluginValue>()
+
+/**
+ * The vim plugin for the editor currently being composed/updated.
+ * Set during [VimPluginValue.init] and [VimPluginValue.update].
+ */
+internal var activeVimPlugin: VimPluginValue? = null
 
 /**
  * Get the [VimEditor] associated with an [EditorSession], or null
@@ -231,7 +249,8 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
     private val vimState: VimState
 
     init {
-        lastVimPlugin = this
+        vimPlugins[session] = this
+        activeVimPlugin = this
         Vim.enterVimMode(cm)
         cm.vimPlugin = this
         vimState = cm.vim ?: Vim.maybeInitVimState_(cm)
@@ -291,6 +310,7 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
         private set
 
     override fun update(update: ViewUpdate) {
+        activeVimPlugin = this
         if (update.docChanged) {
             cm.onChange(update)
         }
@@ -379,12 +399,13 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
 
     /**
      * Sync the panel visibility and [virtualPromptField] with the current
-     * [virtualPrompt] global. Shows the panel when a prompt is active, hides
-     * it when dismissed. Dispatches [virtualPromptEffect] on every call so
-     * that the panel composable recomposes with the latest prompt value.
+     * per-editor [VimContext.virtualPrompt]. Shows the panel when a prompt
+     * is active, hides it when dismissed. Dispatches [virtualPromptEffect]
+     * on every call so that the panel composable recomposes with the latest
+     * prompt value.
      */
     private fun syncPromptPanel() {
-        val currentPrompt = virtualPrompt
+        val currentPrompt = cm.vimContext.virtualPrompt
         val promptActive = currentPrompt != null
         // Always dispatch the current prompt value so the StateField stays
         // in sync and the panel composable recomposes when the value changes.
@@ -412,7 +433,8 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
     }
 
     override fun destroy() {
-        if (lastVimPlugin === this) lastVimPlugin = null
+        vimPlugins.remove(session)
+        if (activeVimPlugin === this) activeVimPlugin = null
         Vim.leaveVimMode(cm)
     }
 }

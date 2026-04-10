@@ -104,7 +104,7 @@ internal class VimHelpers(
     /**
      * Get the register controller for inspecting register contents.
      */
-    internal fun getRegisterController() = Vim.getRegisterController()
+    internal fun getRegisterController() = Vim.getRegisterController(cm)
 
     /**
      * Get the current selection text.
@@ -184,7 +184,7 @@ internal fun typeKey(cm: VimEditor, key: String) {
                     // Record as InsertModeKey for macro/repeat tracking,
                     // matching upstream onKeyEventTargetKeyDown behavior.
                     val lastChange =
-                        vimGlobalState.macroModeState.lastInsertModeChanges
+                        cm.vimContext.macroModeState.lastInsertModeChanges
                     if (lastChange.maybeReset == true) {
                         lastChange.changes.clear()
                         lastChange.maybeReset = false
@@ -291,6 +291,7 @@ internal fun testVim(
     // Initialize vim mode
     val vim = Vim.maybeInitVimState_(cm)
     Vim.resetVimGlobalState_()
+    resetVimContext(cm)
 
     val helpers = VimHelpers(cm, vim)
 
@@ -402,6 +403,7 @@ fun testSubstituteConfirm(
 fun testJumplist(keys: List<String>, endPos: LinePos, startPos: LinePos, value: String) =
     testVim(value = value) { h ->
         Vim.resetVimGlobalState_()
+        resetVimContext(h.cm)
         h.cm.setCursor(startPos.line, startPos.ch)
         h.doKeys(*keys.toTypedArray())
         h.assertCursorAt(endPos)

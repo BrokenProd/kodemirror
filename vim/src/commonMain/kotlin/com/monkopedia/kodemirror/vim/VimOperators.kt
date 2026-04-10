@@ -77,7 +77,7 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
             cm.replaceSelections(replacement)
             finalHead = cursorMin(ranges[0].head, ranges[0].anchor)
         }
-        vimGlobalState.registerController.pushText(
+        cm.vimContext.registerController.pushText(
             args.registerName,
             "change",
             text,
@@ -133,7 +133,7 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
             cm.replaceSelections(replacement)
             finalHead = cursorMin(ranges[0].head, ranges[0].anchor)
         }
-        vimGlobalState.registerController.pushText(
+        cm.vimContext.registerController.pushText(
             args.registerName,
             "delete",
             text,
@@ -286,7 +286,7 @@ internal val operators: MutableMap<String, OperatorFn> = mutableMapOf(
         } else {
             oldAnchor
         }
-        vimGlobalState.registerController.pushText(
+        cm.vimContext.registerController.pushText(
             args.registerName,
             "yank",
             text,

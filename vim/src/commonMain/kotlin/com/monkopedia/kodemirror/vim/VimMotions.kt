@@ -364,7 +364,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
             head
         )
         val increment = if (motionArgs.forward == true) -1 else 1
-        recordLastCharacterSearch(increment, motionArgs)
+        recordLastCharacterSearch(cm, increment, motionArgs)
         if (curEnd == null) {
             null
         } else {
@@ -374,7 +374,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
 
     "moveToCharacter" to { cm, head, motionArgs, _vim, _inputState ->
         val repeat = motionArgs.repeat
-        recordLastCharacterSearch(0, motionArgs)
+        recordLastCharacterSearch(cm, 0, motionArgs)
         val result = moveToCharacter(
             cm,
             repeat,
@@ -591,7 +591,7 @@ internal val motions: MutableMap<String, MotionFn> = mutableMapOf(
     },
 
     "repeatLastCharacterSearch" to { cm, head, motionArgs, _vim, _inputState ->
-        val lastSearch = vimGlobalState.lastCharacterSearch
+        val lastSearch = cm.vimContext.lastCharacterSearch
         val repeat = motionArgs.repeat
         val forward = motionArgs.forward == lastSearch.forward
         val increment =
