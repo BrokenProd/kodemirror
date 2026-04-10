@@ -100,10 +100,10 @@ class FocusManagementTest {
     private fun SessionHolder.assertHasFocus() {
         val impl = session as EditorSessionImpl
         assert(impl.hasFocus) {
-            "Expected editor to have focus (BasicTextField.onFocusChanged reported isFocused=true), " +
+            "Expected editor to have focus (BasicTextField.onFocusChanged isFocused=true), " +
                 "but hasFocus=${impl.hasFocus}. " +
-                "This means focusRequester.requestFocus() was not called after the click, " +
-                "which would leave the keyboard handler inactive."
+                "focusRequester.requestFocus() was not called after the click, " +
+                "leaving the keyboard handler inactive."
         }
     }
 
