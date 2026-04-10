@@ -17,6 +17,8 @@ package com.monkopedia.kodemirror.samples.showcase
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import kotlin.JsFun
@@ -28,19 +30,31 @@ private external fun getTestParam(): String
 @JsFun("() => new URLSearchParams(window.location.search).get('demo') || ''")
 private external fun getDemoParam(): String
 
+@JsFun("() => new URLSearchParams(window.location.search).get('theme') || ''")
+private external fun getThemeParam(): String
+
 @JsFun("(cb) => document.fonts.ready.then(() => cb())")
 private external fun onFontsReady(callback: () -> Unit)
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+    val themeParam = getThemeParam()
     onFontsReady {
         val body = document.body ?: return@onFontsReady
         ComposeViewport(body) {
-            MaterialTheme(colorScheme = darkColorScheme()) {
+            val colorScheme = remember {
+                if (themeParam == "default" || themeParam == "solarizedlight") {
+                    lightColorScheme()
+                } else {
+                    darkColorScheme()
+                }
+            }
+            MaterialTheme(colorScheme = colorScheme) {
                 val demoParam = getDemoParam()
                 when {
                     getTestParam() == "true" -> TestEditorPage()
                     getTestParam() == "vim" -> VimTestEditorPage()
+                    themeParam.isNotEmpty() -> ThemeTestPage(themeParam)
                     demoParam.isNotEmpty() -> EmbeddedDemo(demoParam)
                     else -> ShowcaseApp()
                 }
