@@ -265,7 +265,7 @@ internal class VimPluginValue(internal val session: EditorSession) : PluginValue
             if (eventMap != null) {
                 vimSt.mode = eventMap["mode"] as? String
                 val sub = eventMap["subMode"] as? String
-                if (sub != null) {
+                if (!sub.isNullOrEmpty()) {
                     vimSt.mode = (vimSt.mode ?: "") +
                         if (sub == "linewise") " line" else " block"
                 }
