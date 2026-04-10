@@ -329,17 +329,22 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                 dragStart = downPosition
                                 if (altPressed) {
                                     handleRectangularDrag(
-                                        session, dragStart, dragCurrent
+                                        session,
+                                        dragStart,
+                                        dragCurrent
                                     )
                                 } else {
                                     handleDrag(
-                                        session, dragStart, dragCurrent
+                                        session,
+                                        dragStart,
+                                        dragCurrent
                                     )
                                 }
                                 session.plugin(dropCursorViewPlugin)
                                     ?.moveTo(
                                         session.posAtCoords(
-                                            dragCurrent.x, dragCurrent.y
+                                            dragCurrent.x,
+                                            dragCurrent.y
                                         )
                                     )
 
@@ -348,17 +353,22 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                     dragCurrent = change.position
                                     if (altPressed) {
                                         handleRectangularDrag(
-                                            session, dragStart, dragCurrent
+                                            session,
+                                            dragStart,
+                                            dragCurrent
                                         )
                                     } else {
                                         handleDrag(
-                                            session, dragStart, dragCurrent
+                                            session,
+                                            dragStart,
+                                            dragCurrent
                                         )
                                     }
                                     session.plugin(dropCursorViewPlugin)
                                         ?.moveTo(
                                             session.posAtCoords(
-                                                dragCurrent.x, dragCurrent.y
+                                                dragCurrent.x,
+                                                dragCurrent.y
                                             )
                                         )
                                 }
