@@ -15,7 +15,13 @@
  */
 package com.monkopedia.kodemirror.samples.showcase
 
+import com.monkopedia.kodemirror.language.defaultHighlightStyle
+import com.monkopedia.kodemirror.language.oneDarkHighlightStyle
+import com.monkopedia.kodemirror.language.syntaxTree
+import com.monkopedia.kodemirror.lezer.highlight.classHighlighter
+import com.monkopedia.kodemirror.lezer.highlight.highlightTree
 import com.monkopedia.kodemirror.search.searchPanelOpen
+import com.monkopedia.kodemirror.state.DocPos
 import com.monkopedia.kodemirror.state.Extension
 import com.monkopedia.kodemirror.view.EditorSession
 import com.monkopedia.kodemirror.view.PluginValue
@@ -39,6 +45,13 @@ private external fun initBridge()
 }"""
 )
 private external fun syncState(json: String, version: Int)
+
+@JsFun(
+    """(json) => {
+    globalThis.__kodemirror.highlights = JSON.parse(json);
+}"""
+)
+private external fun syncHighlights(json: String)
 
 private var bridgeVersion = 0
 
@@ -120,15 +133,66 @@ private fun escapeJsonString(s: String): String = buildString {
     append('"')
 }
 
+private fun serializeHighlights(session: EditorSession): String {
+    val tree = syntaxTree(session.state)
+    val doc = session.state.doc
+
+    // Walk with classHighlighter
+    val classSpans = mutableListOf<Triple<Int, Int, String>>()
+    highlightTree(tree, classHighlighter, { from, to, cls ->
+        classSpans.add(Triple(from, to, cls))
+    })
+
+    // Walk with defaultHighlightStyle
+    val defaultSpans = mutableListOf<Triple<Int, Int, String>>()
+    highlightTree(tree, defaultHighlightStyle, { from, to, cls ->
+        defaultSpans.add(Triple(from, to, cls))
+    })
+
+    // Walk with oneDarkHighlightStyle
+    val oneDarkSpans = mutableListOf<Triple<Int, Int, String>>()
+    highlightTree(tree, oneDarkHighlightStyle, { from, to, cls ->
+        oneDarkSpans.add(Triple(from, to, cls))
+    })
+
+    // Build a map from (from,to) -> style class for quick lookup
+    val defaultMap = defaultSpans.associate { (f, t, c) -> "$f-$t" to c }
+    val oneDarkMap = oneDarkSpans.associate { (f, t, c) -> "$f-$t" to c }
+
+    return buildString {
+        append('[')
+        classSpans.forEachIndexed { i, (from, to, cls) ->
+            if (i > 0) append(',')
+            val key = "$from-$to"
+            append("{\"f\":")
+            append(from)
+            append(",\"t\":")
+            append(to)
+            append(",\"c\":")
+            append(escapeJsonString(cls))
+            append(",\"x\":")
+            append(escapeJsonString(doc.sliceString(DocPos(from), DocPos(to)).take(40)))
+            append(",\"dc\":")
+            append(escapeJsonString(defaultMap[key] ?: ""))
+            append(",\"odc\":")
+            append(escapeJsonString(oneDarkMap[key] ?: ""))
+            append('}')
+        }
+        append(']')
+    }
+}
+
 private class TestBridgePlugin(session: EditorSession) : PluginValue {
     init {
         bridgeVersion++
         syncState(serializeState(session), bridgeVersion)
+        syncHighlights(serializeHighlights(session))
     }
 
     override fun update(update: ViewUpdate) {
         bridgeVersion++
         syncState(serializeState(update.session), bridgeVersion)
+        syncHighlights(serializeHighlights(update.session))
     }
 }
 
