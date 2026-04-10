@@ -381,18 +381,31 @@ private class ParseWorker(private val session: EditorSession) : PluginValue {
         val doc = update.state.doc
         val fragments = ls.fragments
 
+        // Capture the document version so we can discard stale results.
+        // If the document changes while we're parsing, update() will cancel
+        // this job — but there's a race between advance() completing and
+        // the cancellation arriving. Checking the doc identity guards against
+        // dispatching a tree built for an outdated document.
+        val parsedDoc = doc
         parseJob = ensureScope().launch {
-            val parse = lang.startParse(doc, fragments)
+            val parse = lang.startParse(parsedDoc, fragments)
             var mark = TimeSource.Monotonic.markNow()
             while (true) {
                 val done = parse.advance()
                 if (done != null) {
-                    // Parse complete — dispatch the tree back into the state
-                    session.dispatch(
-                        TransactionSpec(
-                            effects = listOf(setTreeEffect.of(done))
+                    if (session.state.doc === parsedDoc) {
+                        // Document unchanged — dispatch the completed tree
+                        session.dispatch(
+                            TransactionSpec(
+                                effects = listOf(setTreeEffect.of(done))
+                            )
                         )
-                    )
+                    }
+                    // If the doc changed, the tree is stale — discard it.
+                    // The cancellation from update() should have caught this,
+                    // but in the race window it didn't. The next update() call
+                    // (triggered by the document change that invalidated us)
+                    // will already have started a fresh parse.
                     break
                 }
                 if (mark.elapsedNow() >= PARSE_BUDGET) {
