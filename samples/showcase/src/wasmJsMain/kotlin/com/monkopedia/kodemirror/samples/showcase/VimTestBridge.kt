@@ -125,10 +125,13 @@ private fun serializeVimState(session: EditorSession): String {
 
     // Get vim mode info from public state fields
     val vimModeRaw = state.field(vimModeField)
-    // Map internal mode strings to test-facing names
+    // Map internal mode strings to test-facing names.
+    // "replace" is a subtype of insert mode (overwrite=true, insertMode=true);
+    // report it as "insert" to match CM6's getState() behaviour.
     val vimMode = when (vimModeRaw) {
         "visual line" -> "visual-line"
         "visual block" -> "visual-block"
+        "replace" -> "insert"
         else -> vimModeRaw
     }
     val vimStatus = state.field(vimStatusField)
