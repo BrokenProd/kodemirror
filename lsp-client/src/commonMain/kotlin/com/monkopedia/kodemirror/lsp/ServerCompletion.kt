@@ -429,10 +429,12 @@ internal fun parseCompletionResult(result: TextDocumentCompletionResult?): Compl
  * cancelled cooperatively through structured concurrency. (Upstream instead
  * sends an explicit cancel notification.)
  *
- * **`isIncomplete`:** when the server marks the list incomplete, the result is
- * returned with `validFor = null` so `:autocomplete` re-queries on the next
- * keystroke instead of filtering the stale list; complete lists get the
- * `validFor` regex so they can be filtered locally.
+ * **`isIncomplete`:** the result always carries a `validFor` prefix regex
+ * (from [config] or [prefixRegexp]), even when the server marks the list
+ * incomplete, so `:autocomplete` narrows the already-returned items by the
+ * typed prefix as the user types. Many servers mark every member list
+ * `isIncomplete = true`; gating `validFor` on that flag left such lists
+ * unfiltered (and the accept range stale), so it is set unconditionally (#114).
  */
 fun serverCompletionSource(
     client: LSPClient,
@@ -463,7 +465,13 @@ fun serverCompletionSource(
     val items = result.items
     val (from, to) = completionResultRange(context, items)
     val options = items.map { mapCompletionItem(it, doc) }
-    val validFor = if (result.isIncomplete) null else (config.validFor ?: prefixRegexp(items))
+    // Always provide a validFor prefix regex, even for isIncomplete results, so the
+    // client filters the already-returned items by the typed prefix as the user types
+    // (#114). Many servers (e.g. kotlin-lsp) mark EVERY member list isIncomplete=true;
+    // gating validFor on that left the list unfiltered (and the accept-range stale →
+    // "`.xplus`"). Servers that return a genuinely partial list still get client-side
+    // narrowing of what they sent, which is the right behaviour for a full member list.
+    val validFor = config.validFor ?: prefixRegexp(items)
 
     CompletionResult(
         from = from,
