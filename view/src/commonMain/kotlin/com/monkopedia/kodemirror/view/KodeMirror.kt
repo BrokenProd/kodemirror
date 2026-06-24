@@ -452,6 +452,27 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
             .collect { impl.lastHorizontalScrollPx = it }
     }
 
+    // The single hit-test entry point for all pointer interactions (tap, drag,
+    // hover, drop-cursor). It resolves a document position from the LIVE
+    // LazyColumn layout (posFromVisibleItems) so it tracks scrolling, and only
+    // falls back to the cache-based posAtCoords when there are no visible text
+    // lines at all (empty doc / first frame). This is the #165 fix: the cache's
+    // line positions go stale after a scroll-without-recomposition, so routing
+    // every hit-test through the live layout keeps clicks/drags/hover on the
+    // glyph under the pointer instead of its pre-scroll position.
+    val resolvePos: (Offset) -> Int? = { offset ->
+        posFromVisibleItems(
+            offset,
+            lazyState,
+            columnItems,
+            textLayoutResults,
+            hasGutters,
+            gutterWidthDp,
+            density,
+            if (wrapLines) 0 else horizontalScrollState.value
+        ) ?: session.posAtCoords(offset.x, offset.y)
+    }
+
     CompositionLocalProvider(
         LocalEditorTheme provides theme,
         LocalContentTextStyle provides contentStyle,
@@ -546,22 +567,19 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                     handleRectangularDrag(
                                         session,
                                         dragStart,
-                                        dragCurrent
+                                        dragCurrent,
+                                        resolvePos
                                     )
                                 } else {
                                     handleDrag(
                                         session,
                                         dragStart,
-                                        dragCurrent
+                                        dragCurrent,
+                                        resolvePos
                                     )
                                 }
                                 session.plugin(dropCursorViewPlugin)
-                                    ?.moveTo(
-                                        session.posAtCoords(
-                                            dragCurrent.x,
-                                            dragCurrent.y
-                                        )
-                                    )
+                                    ?.moveTo(resolvePos(dragCurrent))
 
                                 drag(slopChange.id) { change ->
                                     change.consume()
@@ -570,22 +588,19 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                         handleRectangularDrag(
                                             session,
                                             dragStart,
-                                            dragCurrent
+                                            dragCurrent,
+                                            resolvePos
                                         )
                                     } else {
                                         handleDrag(
                                             session,
                                             dragStart,
-                                            dragCurrent
+                                            dragCurrent,
+                                            resolvePos
                                         )
                                     }
                                     session.plugin(dropCursorViewPlugin)
-                                        ?.moveTo(
-                                            session.posAtCoords(
-                                                dragCurrent.x,
-                                                dragCurrent.y
-                                            )
-                                        )
+                                        ?.moveTo(resolvePos(dragCurrent))
                                 }
                                 // Drag ended
                                 session.plugin(dropCursorViewPlugin)
@@ -593,19 +608,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                             } else if (!isDrag) {
                                 // Pointer released without exceeding slop —
                                 // treat as a tap for cursor positioning.
-                                val pos = posFromVisibleItems(
-                                    downPosition,
-                                    lazyState,
-                                    columnItems,
-                                    textLayoutResults,
-                                    hasGutters,
-                                    gutterWidthDp,
-                                    density,
-                                    if (wrapLines) 0 else horizontalScrollState.value
-                                )
-                                    ?: session.posAtCoords(
-                                        downPosition.x, downPosition.y
-                                    )
+                                val pos = resolvePos(downPosition)
                                     ?: return@awaitEachGesture
                                 session.dispatch(
                                     TransactionSpec(
@@ -630,7 +633,7 @@ fun KodeMirror(session: EditorSession, modifier: Modifier = Modifier) {
                                 val pos = event.changes
                                     .firstOrNull()?.position
                                 if (pos != null) {
-                                    val docPos = session.posAtCoords(pos.x, pos.y)
+                                    val docPos = resolvePos(pos)
                                     if (docPos != lastHoverDocPos) {
                                         lastHoverDocPos = docPos
                                         val hoverTooltips =
@@ -1359,9 +1362,47 @@ private class PendingLineLayout(
 )
 
 /**
+ * Pick the index of the visible text line a hit at vertical position [y]
+ * resolves to. [tops] and [sizes] are the parallel arrays of each visible
+ * line's top and height (live LazyColumn layout, in layout order).
+ *
+ * Returns the line whose `tops[i]..tops[i] + sizes[i]` range contains [y]; if
+ * [y] falls in an inter-line gap or outside the rendered range, it clamps to
+ * the nearest line — preferring the line BELOW (first whose top is past [y]) so
+ * downward gaps resolve consistently with [LineLayoutCache.posAtCoords], then
+ * the last visible line for a [y] below everything. Returns null ONLY when
+ * there are no visible lines.
+ *
+ * Extracted from [posFromVisibleItems] so this never-null clamping — the #165
+ * fix that stops a click falling back to the stale absolute-position cache — is
+ * unit-testable without a live LazyColumn.
+ */
+internal fun chooseHitLineIndex(tops: FloatArray, sizes: FloatArray, y: Float): Int? {
+    if (tops.isEmpty()) return null
+    for (i in tops.indices) {
+        val top = tops[i]
+        if (y >= top && y < top + sizes[i]) return i
+    }
+    for (i in tops.indices) {
+        if (tops[i] > y) return i
+    }
+    return tops.size - 1
+}
+
+/**
  * Compute a document position from a tap offset using the [LazyColumn]'s own
- * layout info. This is reliable even when [LineLayoutCache] hasn't been
- * populated yet (first render / page switch).
+ * layout info (the LIVE line positions), not the [LineLayoutCache].
+ *
+ * This is the authoritative hit-test for click/drag/hover: it reads
+ * `lazyState.layoutInfo` every call, so it tracks scrolling even when the
+ * cache's `topPx`/`leftPx` (written in `onGloballyPositioned`) have gone stale
+ * because the callback didn't re-fire after a scroll (#165). It returns null
+ * ONLY when there are no visible text lines at all (e.g. an empty document or
+ * the very first frame); for any in-viewport coordinate it resolves to a line,
+ * clamping a y that falls in an inter-line gap or outside the rendered range to
+ * the nearest visible line — so the caller never has to fall back to the
+ * absolute-position cache, which is the stale source the click used to land on
+ * (a pre-scroll, up-and-to-the-left position).
  */
 private fun posFromVisibleItems(
     offset: Offset,
@@ -1376,30 +1417,29 @@ private fun posFromVisibleItems(
     val contentStartPx = with(density) {
         (if (hasGutters) gutterWidthDp.toPx() else 0f) + 6.dp.toPx()
     }
-    for (info in lazyState.layoutInfo.visibleItemsInfo) {
-        val item = columnItems.getOrNull(info.index)
-            as? ColumnItem.TextLine ?: continue
-        val itemTop = info.offset.toFloat()
-        val itemBottom = itemTop + info.size.toFloat()
-        if (offset.y >= itemTop && offset.y < itemBottom) {
-            val layout = textLayoutResults[item.lineNumber.value]
-                ?: return item.from.value // no layout yet, return line start
-            val localY = offset.y - itemTop
-            // Add the horizontal scroll offset: the click x is in viewport
-            // space, but the text is shifted left by the scroll amount, so the
-            // true position within the line is x - contentStart + scroll.
-            val localX = (offset.x - contentStartPx + horizontalScrollPx)
-                .coerceAtLeast(0f)
-            val expandedOffset = layout.getOffsetForPosition(
-                Offset(localX, localY)
-            )
-            val charOffset = unmapTabOffset(
-                expandedOffset,
-                item.tabOffsetMap
-            )
-            return item.from.value +
-                charOffset.coerceIn(0, item.to.value - item.from.value)
-        }
+    // Visible text-line items in layout order (skip block widgets / gutters).
+    val textItems = lazyState.layoutInfo.visibleItemsInfo.mapNotNull { info ->
+        (columnItems.getOrNull(info.index) as? ColumnItem.TextLine)
+            ?.let { item -> info to item }
     }
-    return null
+    if (textItems.isEmpty()) return null
+
+    val tops = FloatArray(textItems.size) { textItems[it].first.offset.toFloat() }
+    val sizes = FloatArray(textItems.size) { textItems[it].first.size.toFloat() }
+    val idx = chooseHitLineIndex(tops, sizes, offset.y) ?: return null
+    val (info, item) = textItems[idx]
+
+    val itemTop = info.offset.toFloat()
+    val layout = textLayoutResults[item.lineNumber.value]
+        ?: return item.from.value // no layout yet, return line start
+    val localY = (offset.y - itemTop).coerceIn(0f, info.size.toFloat())
+    // Add the horizontal scroll offset: the click x is in viewport space, but
+    // the text is shifted left by the scroll amount, so the true position
+    // within the line is x - contentStart + scroll.
+    val localX = (offset.x - contentStartPx + horizontalScrollPx)
+        .coerceAtLeast(0f)
+    val expandedOffset = layout.getOffsetForPosition(Offset(localX, localY))
+    val charOffset = unmapTabOffset(expandedOffset, item.tabOffsetMap)
+    return item.from.value +
+        charOffset.coerceIn(0, item.to.value - item.from.value)
 }
