@@ -20,18 +20,25 @@ package com.monkopedia.kodemirror.view.input
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.ScrollWheel
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performMouseInput
 import com.monkopedia.kodemirror.view.lineWrapping
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalTestApi::class)
 class HorizontalScrollTest {
 
     private val longLine = (1..60).joinToString(" ") { "word$it" }
 
+    /**
+     * Not run on macOS native: the test harness cannot deliver a wheel event there, because
+     * Compose's `MacOsScrollConfig` reads the scroll delta off the underlying AppKit `NSEvent`
+     * and a synthesized one carries none. It is a harness limitation, not an editor or a
+     * Compose-on-macOS one — real wheel and trackpad gestures scroll normally, and iOS, whose
+     * `UiKitScrollConfig` needs no native event, runs this test. See `view/build.gradle.kts`.
+     */
     @Test
     fun wheelScrollAdvancesClickOffset() = runEditorTest(
         doc = longLine,
@@ -44,12 +51,10 @@ class HorizontalScrollTest {
         waitForIdle()
         val before = holder.session.state.selection.main.head.value
 
-        // Scroll horizontally with the wheel, then click the same screen point.
-        onNodeWithTag("KodeMirror").performMouseInput {
-            moveTo(Offset(150f, 15f))
-            scroll(600f, ScrollWheel.Horizontal)
-        }
-        waitForIdle()
+        // Scroll horizontally with the wheel, then click the same screen point. The wheel
+        // delta needed to travel a given number of pixels differs per platform, so this
+        // scrolls until the content stops moving rather than assuming one event suffices.
+        wheelScrollRightToEnd(holder, Offset(150f, 15f))
 
         onNodeWithTag("KodeMirror").performMouseInput {
             click(Offset(250f, 15f))
@@ -57,10 +62,11 @@ class HorizontalScrollTest {
         waitForIdle()
         val after = holder.session.state.selection.main.head.value
 
-        assert(after > before + 50) {
+        assertTrue(
+            after > before + 50,
             "Expected click offset to advance after horizontal scroll, " +
                 "but before=$before after=$after"
-        }
+        )
     }
 
     @Test
